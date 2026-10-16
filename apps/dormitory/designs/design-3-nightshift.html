@@ -198,6 +198,8 @@
     .bottom-nav .em { font-size: 20px; line-height: 1; }
     body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
   }
+  .cmd-t { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  @media (max-width: 767px) { .cmd kbd { display: none; } }
   /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
   input, select, textarea { font-size: max(16px, 1em) !important; }
   @media (max-width: 1023px), (pointer: coarse) {
@@ -250,7 +252,7 @@
         <p>รอบบิล ต.ค. 2569 · ครบกำหนด 5 ต.ค. · อัปเดต 18:42 น.</p>
       </div>
       <div class="head-tools">
-        <label class="cmd"><svg class="i"><use href="#i-search"/></svg>ค้นห้อง ผู้เช่า เลขบิล<kbd>⌘K</kbd></label>
+        <label class="cmd"><svg class="i"><use href="#i-search"/></svg><span class="cmd-t">ค้นห้อง ผู้เช่า เลขบิล</span><kbd>⌘K</kbd></label>
         <button class="btn btn-outline"><svg class="i"><use href="#i-cal"/></svg>ต.ค. 2569</button>
         <button class="btn btn-amber"><svg class="i"><use href="#i-plus"/></svg>ออกบิลพิเศษ</button>
       </div>

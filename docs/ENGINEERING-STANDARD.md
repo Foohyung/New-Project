@@ -806,7 +806,7 @@ main
 - **ต้อง** มี test อัตโนมัติว่าหน้าหลักไม่มี scroll แนวนอนที่ความกว้าง 320px (`document.documentElement.scrollWidth <= window.innerWidth`) โดยทำเป็น helper กลางใน `packages/testing`
 - **ควร** ทำ visual regression (`toHaveScreenshot`) ของหน้าหลักในทุก breakpoint
 - ก่อน go-live ต้องทดสอบบน**อุปกรณ์จริง** อย่างน้อย Android 1 เครื่อง, iPhone 1 เครื่อง และเปิดผ่าน LINE in-app browser
-- HTML mockup ใน `designs/` ต้องตรวจที่ 390px และ 1440px ก่อนเสนอให้เลือก
+- HTML mockup ใน `designs/` ต้องตรวจที่ 320, 390, 768, 1024 และ 1440px ก่อนเสนอให้เลือก และต้องผ่านกฎด้านพฤติกรรมใน §15.2.3–15.2.5 (ไม่มี scroll แนวนอน, เมนูตามขนาดจอ, พื้นที่แตะ, input ≥ 16px, hover, reduced motion) — design ใหม่ **ต้อง** เขียน CSS แบบ mobile-first ด้วย breakpoint ใน §15.2.1 ส่วน mockup รุ่นแรกที่เขียนแบบ desktop-first ใช้ชุด "Responsive baseline" ร่วมกันแทน เพราะจะเขียนใหม่เป็น Tailwind ตอน scaffold
 
 #### 15.2.8 อุปกรณ์หลักของแต่ละโปรเจกต์
 
@@ -1025,4 +1025,4 @@ feat / fix / refactor / chore / docs
 |---|---|---|
 | 1.0 | 2026-10-15 | ฉบับแรก |
 | 1.1 | 2026-10-16 | เพิ่มภาคผนวก A.4 เว็บไซต์บริษัท |
-| 1.2 | 2026-10-16 | เพิ่ม §15.2 Responsive & การรองรับอุปกรณ์ (breakpoints, device matrix, touch, การทดสอบ) |
+| 1.2 | 2026-10-16 | เพิ่ม §15.2 Responsive & การรองรับอุปกรณ์ (breakpoints, device matrix, touch, การทดสอบ) และกติกาสำหรับ HTML mockup |
