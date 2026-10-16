@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DormDee · Design 2 — Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Noto+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2F7F3;
+    --surface: #FFFFFF;
+    --ink: #16302B;
+    --muted: #5E7470;
+    --line: #E1ECE5;
+    --green: #1F9D6B;
+    --green-deep: #0F5F45;
+    --mint: #D8F1E4;
+    --sun: #FFC857;
+    --sun-soft: #FFF4D6;
+    --coral: #E5604D;
+    --coral-soft: #FDE5E1;
+    --sky: #3D8FD1;
+    --sky-soft: #E1F0FB;
+    --lilac: #8B74E8;
+    --lilac-soft: #EEEAFE;
+    --radius: 22px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans Thai Looped', system-ui, sans-serif; background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.65; }
+  h1, h2, h3, .num { font-family: 'Mitr', sans-serif; font-weight: 500; line-height: 1.3; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+  ul { list-style: none; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+  /* Nav */
+  .nav { display: flex; align-items: center; gap: 20px; height: 76px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: 'Mitr'; font-size: 20px; font-weight: 600; color: var(--green-deep); }
+  .logo-mark { width: 40px; height: 40px; border-radius: 14px; background: var(--green); color: #fff; display: grid; place-items: center; }
+  .building-pill { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 500; }
+  .links { display: flex; gap: 4px; margin-left: 8px; }
+  .links a { padding: 8px 14px; border-radius: 999px; color: var(--muted); font-weight: 500; }
+  @media (hover: hover) { .links a:hover { background: var(--surface); color: var(--ink); } }
+  .links a.on { background: var(--ink); color: #fff; }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .round { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; position: relative; color: var(--muted); }
+  .round .dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--coral); border: 2px solid var(--surface); }
+  .me { width: 42px; height: 42px; border-radius: 50%; background: var(--sun); display: grid; place-items: center; font-weight: 600; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: center; padding: 30px 36px; border-radius: 30px; background: linear-gradient(120deg, #1F9D6B 0%, #2EB88A 100%); color: #fff; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; width: 420px; height: 420px; border-radius: 50%; background: rgba(255, 255, 255, .08); left: -120px; bottom: -260px; }
+  .hero > * { position: relative; }
+  .hero .kicker { opacity: .85; }
+  .hero h1 { font-size: 32px; margin: 4px 0 14px; }
+  .hero h1 b { color: var(--sun); font-weight: 600; }
+  .progress { height: 14px; border-radius: 99px; background: rgba(255, 255, 255, .22); overflow: hidden; max-width: 560px; }
+  .progress span { display: block; height: 100%; border-radius: 99px; background: #fff; }
+  .hero .meta { margin-top: 8px; opacity: .9; }
+  .hero-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .btn { height: 44px; padding: 0 18px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+  .btn-white { background: #fff; color: var(--green-deep); }
+  .btn-ghost { background: rgba(255, 255, 255, .18); color: #fff; }
+
+  /* Building illustration */
+  .art { height: 200px; position: relative; }
+  .bldg { position: absolute; bottom: 0; left: 50px; width: 180px; height: 186px; background: #F7FFFB; border-radius: 14px 14px 0 0; padding: 16px 14px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; box-shadow: 0 -6px 0 0 #0F5F45 inset; }
+  .bldg i { border-radius: 6px; background: #CFEBDD; }
+  .bldg i.lit { background: var(--sun); box-shadow: 0 0 12px rgba(255, 200, 87, .7); }
+  .bldg i.door { grid-column: 2 / span 2; background: #0F5F45; border-radius: 8px 8px 0 0; }
+  .roof { position: absolute; bottom: 186px; left: 40px; width: 200px; height: 14px; border-radius: 8px; background: #0F5F45; }
+  .tree { position: absolute; bottom: 0; width: 56px; height: 90px; }
+  .tree::before { content: ''; position: absolute; bottom: 36px; left: 0; width: 56px; height: 56px; border-radius: 50%; background: #0F5F45; }
+  .tree::after { content: ''; position: absolute; bottom: 0; left: 25px; width: 6px; height: 40px; border-radius: 3px; background: #0B4433; }
+  .tree.t1 { left: 0; } .tree.t2 { right: 0; transform: scale(.8); transform-origin: bottom; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 20px 0; }
+  .stat { display: flex; align-items: center; gap: 14px; padding: 18px; background: var(--surface); border-radius: var(--radius); }
+  .stat-ic { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; flex: none; }
+  .stat .num { font-size: 24px; }
+  .stat small { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+  /* Main grid */
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; padding-bottom: 48px; }
+  .card { background: var(--surface); border-radius: var(--radius); padding: 22px; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 19px; }
+  .card-head p { color: var(--muted); font-size: 13px; }
+
+  .floor-tabs { display: flex; gap: 6px; padding: 4px; background: var(--bg); border-radius: 999px; }
+  .floor-tabs button { padding: 6px 16px; border-radius: 999px; color: var(--muted); font-weight: 500; }
+  .floor-tabs button.on { background: var(--green); color: #fff; }
+
+  .room-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .room { position: relative; padding: 14px; border-radius: 18px; border: 2px solid transparent; min-height: 112px; display: flex; flex-direction: column; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  @media (hover: hover) { .room:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(22, 48, 43, .08); } }
+  .room .no { font-family: 'Mitr'; font-size: 22px; font-weight: 500; line-height: 1.1; }
+  .room .who { color: var(--muted); font-size: 13px; }
+  .room .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .room .amt { font-weight: 600; font-size: 13px; }
+  .pill { padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .room.paid { background: var(--mint); }
+  .room.paid .pill { background: #fff; color: var(--green); }
+  .room.slip { background: var(--sun-soft); }
+  .room.slip .pill { background: var(--sun); color: #5C3D00; }
+  .room.overdue { background: var(--coral-soft); border-color: #F6B3A8; }
+  .room.overdue .pill { background: var(--coral); color: #fff; }
+  .room.vacant { background: #fff; border: 2px dashed #BFD8CB; color: var(--muted); align-items: center; justify-content: center; text-align: center; }
+  .room.vacant .no { color: var(--ink); }
+  .room.repair { background: repeating-linear-gradient(135deg, var(--lilac-soft) 0 10px, #F6F3FF 10px 20px); }
+  .room.repair .pill { background: var(--lilac); color: #fff; }
+  .wrench { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: var(--coral); }
+  .wrench svg { width: 14px; height: 14px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; color: var(--muted); font-size: 13px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+
+  .side { display: flex; flex-direction: column; gap: 20px; }
+  .todo li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); align-items: flex-start; }
+  .todo li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .todo input { appearance: none; width: 22px; height: 22px; border-radius: 8px; border: 2px solid #BFD8CB; flex: none; margin-top: 1px; cursor: pointer; display: grid; place-items: center; }
+  .todo input:checked { background: var(--green); border-color: var(--green); }
+  .todo input:checked::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
+  .todo li.done label { text-decoration: line-through; color: var(--muted); }
+  .todo label { cursor: pointer; }
+  .todo small { display: block; color: var(--muted); font-size: 12px; }
+  .urgent { color: var(--coral); font-weight: 600; }
+
+  .pay li { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .pay .room-no { width: 46px; height: 46px; border-radius: 14px; background: var(--mint); color: var(--green-deep); display: grid; place-items: center; font-family: 'Mitr'; font-weight: 500; flex: none; }
+  .pay div { flex: 1; min-width: 0; }
+  .pay small { display: block; color: var(--muted); font-size: 12px; }
+  .pay b { font-family: 'Mitr'; font-weight: 500; }
+
+  @media (max-width: 1180px) {
+    .grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 760px) {
+    .container { padding: 0 16px; }
+    .hero { grid-template-columns: 1fr; padding: 24px; }
+    .art { display: none; }
+    .hero h1 { font-size: 26px; }
+    .room-grid { grid-template-columns: repeat(2, 1fr); }
+    .building-pill { display: none; }
+  }
+  @media (max-width: 460px) {
+    .stats { grid-template-columns: 1fr; }
+  }
+
+
+  /* §15.2.4 จอ ≤ 1180px: เมนูเป็นแถวที่สอง, มือถือ: bottom tab bar */
+  @media (max-width: 1180px) {
+    .nav { flex-wrap: wrap; height: auto; padding: 14px 0 6px; row-gap: 6px; }
+    .links { order: 3; width: 100%; margin-left: 0; overflow-x: auto; }
+    .links a { display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
+  }
+  @media (max-width: 767px) {
+    .links { display: none; }
+    .nav { height: 76px; padding: 0; }
+  }
+  /* §15.2.4 เมนูหลังบ้านจอ < 768px: bottom tab bar */
+  .bottom-nav { display: none; }
+  @media (max-width: 767px) {
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: #FFFFFF; border-top: 1px solid #E1ECE5; }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; border-radius: 12px; color: #5E7470; font-size: 11px; font-weight: 600; line-height: 1.2; }
+    .bottom-nav a.on { color: #1F9D6B; }
+    .bottom-nav svg { width: 22px; height: 22px; }
+    .bottom-nav .em { font-size: 20px; line-height: 1; }
+    body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  }
+  /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    :is(button, select, summary, a.btn, a.logo, [data-tap], input:not([type=checkbox], [type=radio], [type=hidden])):not(.phone *, .admin *) { min-height: 44px; }
+    :is(button, a.btn, [data-tap]):not(.phone *, .admin *) { min-width: 44px; }
+    a.logo { display: inline-flex; align-items: center; }
+    :is(a.link, a.text-link, a.more, a.hit) { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  }
+  @media (max-width: 639px) {
+    .hero-actions > *, .row-actions > * { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18M15 12h.01"/></symbol>
+  <symbol id="i-user-plus" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L22 14l-8 8-3-3 6.3-6.3a4 4 0 0 1-5-5L9 5 6 2 2 6l3 3 3.3-2.7a4 4 0 0 0 6.4 0z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7zM22 2 11 13"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6"/></symbol>
+</svg>
+
+<div class="container">
+  <header class="nav">
+    <div class="logo"><span class="logo-mark"><svg class="i"><use href="#i-home"/></svg></span>DormDee</div>
+    <span class="building-pill">🏡 บ้านสวนอพาร์ตเมนต์ ▾</span>
+    <nav class="links">
+      <a class="on" href="#">หน้าหลัก</a>
+      <a href="#">ห้องพัก</a>
+      <a href="#">ผู้เช่า</a>
+      <a href="#">บิล</a>
+      <a href="#">แจ้งซ่อม</a>
+      <a href="#">รายงาน</a>
+    </nav>
+    <div class="nav-right">
+      <button class="round" aria-label="การแจ้งเตือน"><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span></button>
+      <span class="me">มน</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="kicker">รอบบิลตุลาคม 2569 · ครบกำหนด 5 ต.ค.</p>
+      <h1>เก็บค่าเช่าได้แล้ว <b>84.6%</b></h1>
+      <div class="progress"><span style="width:84.6%"></span></div>
+      <p class="meta">฿264,310 จาก ฿312,480 · เหลืออีก 9 ห้อง</p>
+      <div class="hero-actions">
+        <button class="btn btn-white"><svg class="i"><use href="#i-send"/></svg>ส่งเตือนห้องค้าง (5)</button>
+        <button class="btn btn-ghost"><svg class="i"><use href="#i-receipt"/></svg>ตรวจสลิป (4)</button>
+      </div>
+    </div>
+    <div class="art" aria-hidden="true">
+      <span class="tree t1"></span>
+      <span class="roof"></span>
+      <div class="bldg">
+        <i class="lit"></i><i class="lit"></i><i></i><i class="lit"></i>
+        <i class="lit"></i><i></i><i class="lit"></i><i class="lit"></i>
+        <i class="lit"></i><i class="lit"></i><i class="lit"></i><i></i>
+        <i class="lit"></i><i class="door"></i><i class="lit"></i>
+      </div>
+      <span class="tree t2"></span>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><span class="stat-ic" style="background:var(--sky-soft);color:var(--sky)"><svg class="i"><use href="#i-door"/></svg></span><div><span class="num">4 ห้อง</span><small>ว่าง · พร้อมเข้าอยู่ 3</small></div></div>
+    <div class="stat"><span class="stat-ic" style="background:var(--mint);color:var(--green)"><svg class="i"><use href="#i-user-plus"/></svg></span><div><span class="num">2 คน</span><small>ผู้เช่าใหม่เดือนนี้</small></div></div>
+    <div class="stat"><span class="stat-ic" style="background:var(--coral-soft);color:var(--coral)"><svg class="i"><use href="#i-wrench"/></svg></span><div><span class="num">4 งาน</span><small>แจ้งซ่อมค้าง · ด่วน 1</small></div></div>
+    <div class="stat"><span class="stat-ic" style="background:var(--sun-soft);color:#B7791F"><svg class="i"><use href="#i-bolt"/></svg></span><div><span class="num">168 หน่วย</span><small>ค่าไฟเฉลี่ยต่อห้อง</small></div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-head">
+        <div><h2>ผังห้อง</h2><p id="floor-sum">ชั้น 3 · 16 ห้อง</p></div>
+        <div class="floor-tabs" id="tabs">
+          <button data-f="1">ชั้น 1</button><button data-f="2">ชั้น 2</button><button data-f="3" class="on">ชั้น 3</button><button data-f="4">ชั้น 4</button>
+        </div>
+      </div>
+      <div class="room-grid" id="rooms"></div>
+      <div class="legend">
+        <span><i style="background:var(--mint)"></i>ชำระแล้ว</span>
+        <span><i style="background:var(--sun)"></i>รอตรวจสลิป</span>
+        <span><i style="background:var(--coral)"></i>ค้างชำระ</span>
+        <span><i style="background:#fff;border:2px dashed #BFD8CB"></i>ว่าง</span>
+        <span><i style="background:var(--lilac)"></i>ปิดปรับปรุง</span>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="card">
+        <div class="card-head"><div><h2>ต้องทำวันนี้</h2><p>5 รายการ</p></div></div>
+        <ul class="todo">
+          <li><input type="checkbox" id="t1"><label for="t1">ตรวจสลิป 4 รายการ<small>ยอดรวม ฿20,720</small></label></li>
+          <li><input type="checkbox" id="t2"><label for="t2">ติดตามค้างชำระ 5 ห้อง<small>106, 202, 313, 405, 412</small></label></li>
+          <li><input type="checkbox" id="t3"><label for="t3">นัดช่างแอร์ ห้อง 304 <span class="urgent">· ด่วน</span><small>ผู้เช่าแจ้งเมื่อ 10:05</small></label></li>
+          <li><input type="checkbox" id="t4"><label for="t4">ทำสัญญาผู้เช่าใหม่ ห้อง 214<small>เข้าอยู่พรุ่งนี้ 16 ต.ค. · เงินประกัน ฿8,400</small></label></li>
+          <li class="done"><input type="checkbox" id="t5" checked><label for="t5">ส่งบิลรอบ ต.ค. ทาง LINE<small>ส่งครบ 58 ห้อง</small></label></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div><h2>รับชำระล่าสุด</h2><p>วันนี้ ฿19,920</p></div></div>
+        <ul class="pay">
+          <li><span class="room-no">410</span><div>ภูริ ส.<small>PromptPay · 18:31</small></div><b>฿5,250</b></li>
+          <li><span class="room-no">302</span><div>ชลธิชา ว.<small>โอนธนาคาร · 16:48</small></div><b>฿5,060</b></li>
+          <li><span class="room-no">115</span><div>ธีรวัฒน์ ก.<small>PromptPay · 14:05</small></div><b>฿4,720</b></li>
+          <li><span class="room-no">208</span><div>สุนิสา พ.<small>เงินสด · 11:30</small></div><b>฿4,890</b></li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<nav class="bottom-nav" aria-label="เมนูหลัก">
+  <a class="on" aria-current="page" href="#"><svg class="i"><use href="#i-home"/></svg>หน้าหลัก</a>
+  <a href="#"><svg class="i"><use href="#i-door"/></svg>ห้องพัก</a>
+  <a href="#"><svg class="i"><use href="#i-user-plus"/></svg>ผู้เช่า</a>
+  <a href="#"><svg class="i"><use href="#i-receipt"/></svg>บิล</a>
+  <a href="#"><svg class="i"><use href="#i-wrench"/></svg>แจ้งซ่อม</a>
+</nav>
+
+<script>
+  const special = {
+    vacant: [103, 214, 309, 416],
+    repair: [211, 408],
+    overdue: { 106: 5180, 202: 5620, 313: 5940, 405: 5310, 412: 5400 },
+    slip: { 105: 4450, 207: 6980, 301: 4610, 415: 4680 },
+  };
+  const repairTicket = [304, 210];
+  const names = ['ต้น', 'แบงค์', 'มิ้นท์', 'ฝน', 'บอล', 'เมย์', 'กอล์ฟ', 'แพรว', 'บีม', 'ปุ๊ก', 'โอ๊ต', 'น้ำ', 'ฟ้า', 'เจมส์', 'ตาล', 'ปอนด์', 'ขิม', 'ภูมิ'];
+  const fmt = n => '฿' + n.toLocaleString('th-TH');
+
+  function render(floor) {
+    let html = '', counts = { paid: 0, slip: 0, overdue: 0, vacant: 0, repair: 0 };
+    for (let r = 1; r <= 16; r++) {
+      const no = floor * 100 + r;
+      const nick = names[(no * 7) % names.length];
+      const base = floor <= 2 ? 3800 : 4200;
+      const amt = base + 600 + ((no * 137) % 1300);
+      let cls = 'paid', pill = 'จ่ายแล้ว', money = fmt(amt), who = 'คุณ' + nick;
+      if (special.vacant.includes(no)) { cls = 'vacant'; }
+      else if (special.repair.includes(no)) { cls = 'repair'; pill = 'ปรับปรุง'; money = 'ถึง 31 ต.ค.'; who = 'ปรับปรุงห้องน้ำ'; }
+      else if (special.overdue[no]) { cls = 'overdue'; pill = 'ค้าง 10 วัน'; money = fmt(special.overdue[no]); }
+      else if (special.slip[no]) { cls = 'slip'; pill = 'รอตรวจสลิป'; money = fmt(special.slip[no]); }
+      counts[cls]++;
+      if (cls === 'vacant') {
+        html += `<div class="room vacant"><span class="no">${no}</span><span class="who">ห้องว่าง · ${fmt(base)}/เดือน</span><span class="pill" style="background:var(--mint);color:var(--green);margin-top:6px">+ หาผู้เช่า</span></div>`;
+        continue;
+      }
+      const wrench = repairTicket.includes(no) ? '<span class="wrench" title="มีงานแจ้งซ่อม"><svg class="i"><use href="#i-wrench"/></svg></span>' : '';
+      html += `<div class="room ${cls}">${wrench}<span class="no">${no}</span><span class="who">${who}</span><div class="foot"><span class="amt">${money}</span><span class="pill">${pill}</span></div></div>`;
+    }
+    document.getElementById('rooms').innerHTML = html;
+    const occupied = 16 - counts.vacant - counts.repair;
+    document.getElementById('floor-sum').textContent = `ชั้น ${floor} · มีผู้เช่า ${occupied}/16 ห้อง · ค้างชำระ ${counts.overdue}`;
+  }
+  document.getElementById('tabs').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+    render(Number(b.dataset.f));
+  });
+  render(3);
+
+  document.querySelectorAll('.todo input').forEach(cb => cb.addEventListener('change', () => cb.closest('li').classList.toggle('done', cb.checked)));
+</script>
+</body>
+</html>

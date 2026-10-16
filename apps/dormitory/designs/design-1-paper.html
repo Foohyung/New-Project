@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DormDee · Design 1 — Paper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --side: #F7F6F3;
+    --hover: #EFEEEB;
+    --text: #37352F;
+    --muted: #787774;
+    --faint: #A5A29C;
+    --line: #E9E9E7;
+    --green-bg: #DBEDDB; --green: #1C3829;
+    --yellow-bg: #FDECC8; --yellow: #402C1B;
+    --red-bg: #FFE2DD; --red: #5D1715;
+    --purple-bg: #E8DEEE; --purple: #412454;
+    --gray-bg: #E3E2E0; --gray: #32302C;
+    --blue: #2383E2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans Thai', system-ui, sans-serif; color: var(--text); background: var(--bg); font-size: 14px; line-height: 1.65; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+  ul { list-style: none; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  .app { display: grid; grid-template-columns: 252px 1fr; min-height: 100dvh; }
+
+  /* Sidebar */
+  .side { background: var(--side); border-right: 1px solid var(--line); padding: 10px 8px; position: sticky; top: 0; height: 100dvh; overflow: auto; display: flex; flex-direction: column; }
+  .ws { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-weight: 600; }
+  .ws-icon { width: 22px; height: 22px; border-radius: 5px; background: #37352F; color: #fff; display: grid; place-items: center; font-size: 12px; }
+  .ws small { margin-left: auto; color: var(--faint); font-weight: 400; }
+  .side-item { display: flex; align-items: center; gap: 8px; padding: 3px 8px; border-radius: 6px; color: var(--muted); font-weight: 500; min-height: 30px; }
+  @media (hover: hover) { .side-item:hover { background: var(--hover); } }
+  .side-item.on { background: var(--hover); color: var(--text); }
+  .side-item .em { width: 20px; text-align: center; }
+  .side-item kbd { margin-left: auto; font-family: inherit; font-size: 11px; color: var(--faint); }
+  .side-item .n { margin-left: auto; font-size: 12px; color: var(--faint); }
+  .side-label { font-size: 12px; color: var(--faint); font-weight: 500; padding: 14px 8px 4px; }
+  .side-foot { margin-top: auto; padding-top: 12px; }
+
+  /* Page */
+  .topbar { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; position: sticky; top: 0; background: rgba(255, 255, 255, .92); backdrop-filter: blur(6px); z-index: 5; }
+  .crumbs { color: var(--muted); }
+  .crumbs b { color: var(--text); font-weight: 500; }
+  .top-actions { display: flex; gap: 4px; color: var(--muted); }
+  .top-actions button { padding: 2px 8px; border-radius: 4px; }
+  @media (hover: hover) { .top-actions button:hover { background: var(--hover); } }
+  .page { max-width: 1120px; margin: 0 auto; padding: 36px 64px 80px; }
+  .page-icon { font-size: 56px; line-height: 1; }
+  h1 { font-size: 38px; font-weight: 700; line-height: 1.25; margin: 10px 0 14px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 36px 0 10px; display: flex; align-items: center; gap: 10px; }
+  h2 .views { margin-left: auto; display: flex; gap: 2px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  h2 .views button { padding: 2px 8px; border-radius: 4px; }
+  h2 .views button.on { background: var(--hover); color: var(--text); }
+
+  .props { display: grid; grid-template-columns: 160px 1fr; row-gap: 4px; margin-bottom: 18px; }
+  .props dt { color: var(--muted); display: flex; align-items: center; gap: 8px; min-height: 32px; }
+  .props dd { display: flex; align-items: center; gap: 6px; min-height: 32px; flex-wrap: wrap; }
+  .tag { display: inline-flex; align-items: center; padding: 0 7px; border-radius: 4px; font-size: 13px; line-height: 21px; white-space: nowrap; }
+  .t-green { background: var(--green-bg); color: var(--green); }
+  .t-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .t-red { background: var(--red-bg); color: var(--red); }
+  .t-purple { background: var(--purple-bg); color: var(--purple); }
+  .t-gray { background: var(--gray-bg); color: var(--gray); }
+  .person { display: inline-flex; align-items: center; gap: 6px; }
+  .pfp { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 600; color: #fff; }
+
+  .callout { display: flex; gap: 12px; padding: 16px 16px 16px 12px; border-radius: 6px; background: #F1F1EF; }
+  .callout .em { font-size: 20px; line-height: 1.3; }
+  .callout a { text-decoration: underline; text-decoration-color: var(--faint); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 24px; }
+  .stat { padding: 16px 18px; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: 0; }
+  .stat .label { color: var(--muted); font-size: 13px; }
+  .stat .big { font-size: 28px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+  .stat .note { color: var(--muted); font-size: 12px; }
+  .thin { height: 4px; border-radius: 99px; background: var(--gray-bg); margin-top: 8px; overflow: hidden; }
+  .thin span { display: block; height: 100%; background: var(--text); }
+
+  /* Room map */
+  .floors { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .floor { display: grid; grid-template-columns: 70px 1fr; border-bottom: 1px solid var(--line); }
+  .floor:last-child { border-bottom: 0; }
+  .floor-label { padding: 10px 12px; color: var(--muted); font-size: 13px; background: #FBFBFA; border-right: 1px solid var(--line); display: flex; align-items: center; }
+  .rooms { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; padding: 8px; }
+  .room { height: 38px; border-radius: 4px; display: grid; place-items: center; font-size: 12px; font-family: 'IBM Plex Mono', monospace; cursor: pointer; transition: transform .1s; }
+  @media (hover: hover) { .room:hover { transform: scale(1.08); } }
+  .room.vacant { background: #fff; border: 1px dashed #C9C7C2; color: var(--muted); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+  /* Two cols */
+  .two { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; }
+  .db { width: 100%; border-collapse: collapse; }
+  .db th { text-align: left; font-weight: 400; color: var(--muted); font-size: 13px; padding: 6px 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .db td { padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .db th + th, .db td + td { border-left: 1px solid var(--line); }
+  @media (hover: hover) { .db tr:hover td { background: #FBFBFA; } }
+  .db .num { text-align: right; }
+  .db-foot { color: var(--muted); font-size: 13px; padding: 6px 8px; display: flex; justify-content: space-between; }
+  .btn-sm { padding: 1px 8px; border-radius: 4px; border: 1px solid var(--line); font-size: 12px; }
+  @media (hover: hover) { .btn-sm:hover { background: var(--hover); } }
+  .table-scroll { overflow-x: auto; }
+
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .lane-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; color: var(--muted); font-size: 13px; }
+  .ticket { padding: 8px 10px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px rgba(15, 15, 15, .08), 0 2px 4px rgba(15, 15, 15, .06); margin-bottom: 8px; }
+  .ticket b { font-weight: 500; display: block; line-height: 1.4; }
+  .ticket small { color: var(--muted); font-size: 12px; display: block; margin: 2px 0 4px; }
+  .lane-add { color: var(--faint); font-size: 13px; padding: 4px 6px; }
+
+  .activity li { display: flex; gap: 12px; padding: 6px 0; align-items: baseline; }
+  .activity time { color: var(--faint); font-size: 12px; width: 44px; flex: none; }
+  .activity span { color: var(--muted); }
+  .activity b { font-weight: 500; color: var(--text); }
+
+  @media (max-width: 1100px) {
+    .two { grid-template-columns: 1fr; }
+    .page { padding: 28px 32px 64px; }
+    .rooms { grid-template-columns: repeat(8, 1fr); }
+  }
+  @media (max-width: 767px) {
+    .app { grid-template-columns: 1fr; }
+    .side { display: none; }
+    .page { padding: 20px 16px 56px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: 0; }
+    .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+    .props { grid-template-columns: 120px 1fr; }
+    .board { grid-template-columns: 1fr; }
+    h1 { font-size: 30px; }
+  }
+  @media (max-width: 480px) {
+    .rooms { grid-template-columns: repeat(4, 1fr); }
+    .floor { grid-template-columns: 1fr; }
+    .floor-label { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+
+
+  .room { border: 0; padding: 0; }
+  .room-info { margin-top: 8px; color: var(--muted); font-size: 13px; }
+  /* §15.2.4 แท็บเล็ต: sidebar แบบไอคอน */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .app { grid-template-columns: 64px 1fr; }
+    .side { padding: 10px 8px; align-items: center; }
+    .ws { font-size: 0; gap: 0; padding: 6px; }
+    .side-label, .side-item kbd, .side-item .n { display: none; }
+    .side-item { font-size: 0; gap: 0; justify-content: center; width: 48px; min-height: 44px; padding: 0; }
+    .side-item .em { font-size: 18px; width: auto; }
+  }
+  /* §15.2.4 ตาราง: แท็บเล็ต scroll ในกล่อง + คอลัมน์แรก sticky, มือถือแสดงเฉพาะคอลัมน์สำคัญ */
+  table th:first-child, table td:first-child { position: sticky; left: 0; z-index: 1; background: #fff; }
+  table th:first-child { background: #fff; }
+  @media (max-width: 767px) { table { min-width: 0 !important; } .opt { display: none; } }
+  /* §15.2.4 เมนูหลังบ้านจอ < 768px: bottom tab bar */
+  .bottom-nav { display: none; }
+  @media (max-width: 767px) {
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: #F7F6F3; border-top: 1px solid #E9E9E7; }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; border-radius: 12px; color: #787774; font-size: 11px; font-weight: 600; line-height: 1.2; }
+    .bottom-nav a.on { color: #37352F; }
+    .bottom-nav svg { width: 22px; height: 22px; }
+    .bottom-nav .em { font-size: 20px; line-height: 1; }
+    body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  }
+  /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    :is(button, select, summary, a.btn, a.logo, [data-tap], input:not([type=checkbox], [type=radio], [type=hidden])):not(.phone *, .admin *) { min-height: 44px; }
+    :is(button, a.btn, [data-tap]):not(.phone *, .admin *) { min-width: 44px; }
+    a.logo { display: inline-flex; align-items: center; }
+    :is(a.link, a.text-link, a.more, a.hit) { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  }
+  @media (max-width: 639px) {
+    .hero-actions > *, .row-actions > * { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="ws"><span class="ws-icon">บ</span>บ้านสวนอพาร์ตเมนต์<small>⌄</small></div>
+    <a class="side-item" href="#"><span class="em">🔍</span>ค้นหา<kbd>⌘K</kbd></a>
+    <a class="side-item" href="#"><span class="em">🔔</span>การแจ้งเตือน<span class="n">3</span></a>
+    <p class="side-label">หอพัก</p>
+    <a class="side-item on" href="#"><span class="em">🏠</span>ภาพรวม</a>
+    <a class="side-item" href="#"><span class="em">🚪</span>ห้องพัก<span class="n">64</span></a>
+    <a class="side-item" href="#"><span class="em">👤</span>ผู้เช่า<span class="n">58</span></a>
+    <a class="side-item" href="#"><span class="em">🧾</span>บิล & การชำระ</a>
+    <a class="side-item" href="#"><span class="em">⚡</span>บันทึกมิเตอร์</a>
+    <a class="side-item" href="#"><span class="em">🛠️</span>แจ้งซ่อม<span class="n">4</span></a>
+    <a class="side-item" href="#"><span class="em">📄</span>สัญญาเช่า</a>
+    <a class="side-item" href="#"><span class="em">📊</span>รายงาน</a>
+    <p class="side-label">รายการโปรด</p>
+    <a class="side-item" href="#"><span class="em">📌</span>บิลค้างชำระ ต.ค.</a>
+    <a class="side-item" href="#"><span class="em">📌</span>ห้องว่างพร้อมเข้าอยู่</a>
+    <div class="side-foot">
+      <a class="side-item" href="#"><span class="em">⚙️</span>ตั้งค่าหอพัก</a>
+      <a class="side-item" href="#"><span class="em">🛡️</span>ผู้ใช้งาน & สิทธิ์</a>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div class="crumbs">บ้านสวนอพาร์ตเมนต์ / <b>ภาพรวม</b></div>
+      <div class="top-actions"><button>แก้ไขล่าสุด 18:42</button><button>แชร์</button><button>⋯</button></div>
+    </div>
+
+    <div class="page">
+      <div class="page-icon">🏠</div>
+      <h1>ภาพรวม · ตุลาคม 2569</h1>
+
+      <dl class="props">
+        <dt>🗓️ รอบบิล</dt><dd><span class="tag t-gray">ต.ค. 2569</span> ออกบิลเมื่อ 1 ต.ค.</dd>
+        <dt>⏰ ครบกำหนดชำระ</dt><dd>5 ต.ค. 2569 <span class="tag t-red">เลยกำหนด 10 วัน</span></dd>
+        <dt>⚡ บันทึกมิเตอร์</dt><dd><span class="tag t-green">ครบ 58/58 ห้อง</span></dd>
+        <dt>👥 ผู้ดูแล</dt><dd><span class="person"><span class="pfp" style="background:#2383E2">มน</span>มนัสนันท์</span><span class="person"><span class="pfp" style="background:#9065B0">อก</span>ช่างเอก</span></dd>
+      </dl>
+
+      <div class="callout">
+        <span class="em">💡</span>
+        <div>มี <b>5 ห้องค้างชำระ</b> รวม ฿27,450 และ <b>4 สลิปรอตรวจ</b> — ส่งเตือนผ่าน LINE ได้จากตารางด้านล่าง หรือ <a class="hit" href="#">ส่งเตือนทั้งหมด</a></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">อัตราการเข้าพัก</div><div class="big">90.6%</div><div class="note">58 จาก 64 ห้อง · ว่าง 4 · ปรับปรุง 2</div><div class="thin"><span style="width:90.6%"></span></div></div>
+        <div class="stat"><div class="label">เรียกเก็บเดือนนี้</div><div class="big">฿312,480</div><div class="note">58 ใบแจ้งหนี้</div></div>
+        <div class="stat"><div class="label">รับชำระแล้ว</div><div class="big">฿264,310</div><div class="note">49 ห้อง · 84.6%</div><div class="thin"><span style="width:84.6%"></span></div></div>
+        <div class="stat"><div class="label">แจ้งซ่อมค้าง</div><div class="big">4</div><div class="note">ด่วน 1 · เฉลี่ยปิดงาน 1.6 วัน</div></div>
+      </div>
+
+      <h2>🚪 ผังห้อง <span class="views"><button class="on">ผัง</button><button>ตาราง</button><button>ปฏิทิน</button></span></h2>
+      <div class="floors" id="floors"></div>
+      <div class="legend">
+        <span><span class="tag t-green">ชำระแล้ว</span> 49</span>
+        <span><span class="tag t-yellow">รอตรวจสลิป</span> 4</span>
+        <span><span class="tag t-red">ค้างชำระ</span> 5</span>
+        <span><span class="tag t-gray" style="background:#fff;border:1px dashed #C9C7C2">ว่าง</span> 4</span>
+        <span><span class="tag t-purple">ปิดปรับปรุง</span> 2</span>
+      </div>
+
+      <p class="room-info" id="room-info" aria-live="polite">แตะที่ห้องเพื่อดูสถานะ</p>
+
+      <div class="two">
+        <section>
+          <h2>🧾 ค้างชำระ</h2>
+          <div class="table-scroll">
+            <table class="db">
+              <thead><tr><th>ห้อง</th><th>ผู้เช่า</th><th class="num">ยอด</th><th>สถานะ</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="mono">106</td><td>สมศักดิ์ ป.</td><td class="num mono">5,180</td><td><span class="tag t-red">เลย 10 วัน</span></td><td><button class="btn-sm">ส่ง LINE</button></td></tr>
+                <tr><td class="mono">202</td><td>กาญจนา ส.</td><td class="num mono">5,620</td><td><span class="tag t-red">เลย 10 วัน</span></td><td><button class="btn-sm">ส่ง LINE</button></td></tr>
+                <tr><td class="mono">313</td><td>ปิยะพงษ์ ท.</td><td class="num mono">5,940</td><td><span class="tag t-red">เลย 10 วัน</span></td><td><button class="btn-sm">ส่ง LINE</button></td></tr>
+                <tr><td class="mono">405</td><td>นันทนา ก.</td><td class="num mono">5,310</td><td><span class="tag t-red">เลย 10 วัน</span></td><td><button class="btn-sm">ส่ง LINE</button></td></tr>
+                <tr><td class="mono">412</td><td>อดิศร ม.</td><td class="num mono">5,400</td><td><span class="tag t-red">เลย 10 วัน</span></td><td><button class="btn-sm">ส่ง LINE</button></td></tr>
+                <tr><td class="mono">207</td><td>วิภาวี จ.</td><td class="num mono">6,980</td><td><span class="tag t-yellow">รอตรวจสลิป</span></td><td><button class="btn-sm">ตรวจสลิป</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="db-foot"><span>COUNT 6</span><span>SUM <span class="mono">34,430</span></span></div>
+        </section>
+
+        <section>
+          <h2>🛠️ แจ้งซ่อม</h2>
+          <div class="board">
+            <div>
+              <div class="lane-head"><span class="tag t-red">รอรับเรื่อง</span>2</div>
+              <div class="ticket"><b>แอร์ไม่เย็น</b><small>ห้อง 304 · วันนี้ 10:05</small><span class="tag t-red">ด่วน</span></div>
+              <div class="ticket"><b>Wi-Fi ช้า</b><small>ชั้น 3 · เมื่อวาน</small><span class="tag t-gray">ปกติ</span></div>
+            </div>
+            <div>
+              <div class="lane-head"><span class="tag t-yellow">กำลังซ่อม</span>2</div>
+              <div class="ticket"><b>ก๊อกน้ำรั่ว</b><small>ห้อง 210 · ช่างเอก</small><span class="tag t-gray">ปกติ</span></div>
+              <div class="ticket"><b>หลอดไฟทางเดิน</b><small>ชั้น 4 · ช่างเอก</small><span class="tag t-gray">ปกติ</span></div>
+            </div>
+            <div>
+              <div class="lane-head"><span class="tag t-green">เสร็จแล้ว</span>1</div>
+              <div class="ticket"><b>ประตูห้องน้ำปิดไม่สนิท</b><small>ห้อง 115 · เมื่อวาน</small></div>
+              <div class="lane-add">+ เพิ่มงาน</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <h2>🕘 กิจกรรมล่าสุด</h2>
+      <ul class="activity">
+        <li><time>18:31</time><span><b>มนัสนันท์</b> ยืนยันสลิปห้อง 410 · ฿5,250</span></li>
+        <li><time>17:02</time><span><b>ระบบ</b> ส่งเตือนค้างชำระผ่าน LINE OA · 5 ห้อง</span></li>
+        <li><time>15:20</time><span><b>ช่างเอก</b> เปลี่ยนสถานะงานซ่อมห้อง 210 เป็น "กำลังซ่อม"</span></li>
+        <li><time>10:05</time><span><b>ผู้เช่าห้อง 304</b> แจ้งซ่อม "แอร์ไม่เย็น"</span></li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="เมนูหลัก">
+  <a class="on" aria-current="page" href="#"><span class="em">🏠</span>ภาพรวม</a>
+  <a href="#"><span class="em">🚪</span>ห้องพัก</a>
+  <a href="#"><span class="em">🧾</span>บิล</a>
+  <a href="#"><span class="em">🛠️</span>แจ้งซ่อม</a>
+  <a href="#"><span class="em">📊</span>รายงาน</a>
+</nav>
+
+<script>
+  const status = {
+    vacant: [103, 214, 309, 416],
+    repair: [211, 408],
+    overdue: [106, 202, 313, 405, 412],
+    slip: [105, 207, 301, 415],
+  };
+  const style = {
+    paid: 't-green', slip: 't-yellow', overdue: 't-red', repair: 't-purple', vacant: 'vacant',
+  };
+  const label = {
+    paid: 'ชำระแล้ว', slip: 'รอตรวจสลิป', overdue: 'ค้างชำระ', repair: 'ปิดปรับปรุง', vacant: 'ว่าง',
+  };
+  const floors = document.getElementById('floors');
+  for (let f = 4; f >= 1; f--) {
+    const row = document.createElement('div');
+    row.className = 'floor';
+    let html = `<div class="floor-label">ชั้น ${f}</div><div class="rooms">`;
+    for (let r = 1; r <= 16; r++) {
+      const no = f * 100 + r;
+      const key = Object.keys(status).find(k => status[k].includes(no)) || 'paid';
+      html += `<button class="room ${style[key]}" data-info="ห้อง ${no} · ${label[key]}" aria-label="ห้อง ${no} ${label[key]}">${no}</button>`;
+    }
+    row.innerHTML = html + '</div>';
+    floors.appendChild(row);
+  }
+
+  // แตะห้องเพื่อดูสถานะ (ไม่ต้องพึ่ง hover)
+  floors.addEventListener('click', e => {
+    const room = e.target.closest('.room');
+    if (room) document.getElementById('room-info').textContent = room.dataset.info;
+  });
+</script>
+</body>
+</html>

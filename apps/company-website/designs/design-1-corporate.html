@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SiteSabai · Design 1 — Corporate</title>
+<meta name="description" content="ตัวอย่างเว็บไซต์บริษัทแบบ Corporate: บริษัทสมมติ นภาวัสดุ ผู้จัดจำหน่ายวัสดุอุตสาหกรรม">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=K2D:wght@500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0E1B33;
+    --navy-2: #16284A;
+    --steel: #3D7BEA;
+    --steel-soft: #EAF1FF;
+    --ink: #0F172A;
+    --muted: #5B6476;
+    --line: #E3E8EF;
+    --bg: #F6F8FB;
+    --amber: #F5A524;
+    --line-green: #06C755;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Noto Sans Thai', system-ui, sans-serif; color: var(--ink); background: #fff; font-size: 15px; line-height: 1.7; }
+  h1, h2, h3, .k2d { font-family: 'K2D', 'Noto Sans Thai', sans-serif; line-height: 1.3; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  ul { list-style: none; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Top bar + header */
+  .topbar { background: var(--navy-2); color: #C9D4E8; font-size: 13px; }
+  .topbar .container { display: flex; justify-content: space-between; gap: 16px; height: 40px; align-items: center; }
+  .topbar .info { display: flex; gap: 22px; }
+  .topbar span { display: inline-flex; align-items: center; gap: 6px; }
+  .topbar svg { width: 14px; height: 14px; }
+  .lang b { color: #fff; }
+  .site-head { position: sticky; top: 0; z-index: 20; background: #fff; border-bottom: 1px solid var(--line); }
+  .site-head .container { display: flex; align-items: center; gap: 32px; height: 76px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-mark { width: 42px; height: 42px; border-radius: 10px; background: var(--navy); color: #fff; display: grid; place-items: center; font-family: 'K2D'; font-weight: 800; font-size: 20px; position: relative; overflow: hidden; }
+  .logo-mark::after { content: ''; position: absolute; right: -8px; bottom: -8px; width: 22px; height: 22px; background: var(--steel); transform: rotate(45deg); }
+  .logo b { display: block; font-family: 'K2D'; font-size: 20px; font-weight: 700; line-height: 1.1; }
+  .logo small { color: var(--muted); font-size: 11px; letter-spacing: .18em; }
+  .nav { display: flex; gap: 4px; margin-left: auto; }
+  .nav a { padding: 8px 12px; border-radius: 8px; font-weight: 500; color: var(--muted); }
+  .nav a.on { color: var(--navy); background: var(--bg); }
+  @media (hover: hover) { .nav a:hover { color: var(--navy); background: var(--bg); } }
+  .btn { height: 46px; padding: 0 20px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+  .btn-steel { background: var(--steel); color: #fff; }
+  @media (hover: hover) { .btn-steel:hover { background: #2D68D3; } }
+  .btn-ghost { border: 1.5px solid rgba(255, 255, 255, .35); color: #fff; }
+  @media (hover: hover) { .btn-ghost:hover { background: rgba(255, 255, 255, .08); } }
+  .btn-outline { border: 1.5px solid var(--line); }
+
+  /* Hero */
+  .hero { background: var(--navy); color: #fff; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px); background-size: 48px 48px; mask-image: linear-gradient(90deg, transparent, #000 60%); }
+  .hero .container { position: relative; display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: center; padding-top: 72px; padding-bottom: 120px; }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 6px; background: rgba(61, 123, 234, .2); color: #A9C6FF; font-weight: 600; font-size: 13px; letter-spacing: .04em; }
+  .hero h1 { font-size: 52px; font-weight: 800; margin: 18px 0 16px; }
+  .hero h1 span { color: #7FB0FF; }
+  .hero p { color: #B8C4DA; font-size: 17px; max-width: 520px; }
+  .hero-actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+  .hero-art { position: relative; height: 380px; }
+  .hero-art .card { position: absolute; border-radius: 18px; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+  .hero-art .card svg { display: block; width: 100%; height: 100%; }
+  .hero-art .a1 { left: 0; top: 0; width: 70%; height: 260px; }
+  .hero-art .a2 { right: 0; bottom: 0; width: 60%; height: 220px; border: 6px solid var(--navy); }
+  .hero-art .badge { position: absolute; left: 6%; bottom: 24px; background: #fff; color: var(--ink); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 16px 40px rgba(0, 0, 0, .25); }
+  .hero-art .badge i { width: 40px; height: 40px; border-radius: 10px; background: #E7F8EF; color: #067647; display: grid; place-items: center; font-style: normal; font-weight: 700; }
+  .hero-art .badge b { display: block; font-family: 'K2D'; font-size: 18px; line-height: 1.2; }
+  .hero-art .badge small { color: var(--muted); font-size: 12px; }
+
+  .stats { position: relative; margin-top: -64px; z-index: 2; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); background: #fff; border-radius: 16px; box-shadow: 0 20px 50px rgba(14, 27, 51, .12); }
+  .stat { padding: 26px 28px; border-right: 1px solid var(--line); }
+  .stat:last-child { border-right: 0; }
+  .stat b { display: block; font-family: 'K2D'; font-size: 34px; font-weight: 800; color: var(--navy); line-height: 1.2; }
+  .stat span { color: var(--muted); font-size: 14px; }
+
+  /* Sections */
+  section.block { padding: 88px 0; }
+  .sec-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 36px; }
+  .eyebrow { color: var(--steel); font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+  .sec-head h2 { font-size: 36px; font-weight: 700; margin-top: 4px; }
+  .sec-head p { color: var(--muted); max-width: 440px; }
+
+  .cats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+  .cat { padding: 18px 14px; border: 1px solid var(--line); border-radius: 14px; text-align: center; transition: border-color .15s, transform .15s; cursor: pointer; }
+  @media (hover: hover) { .cat:hover { border-color: var(--steel); transform: translateY(-3px); } }
+  .cat .ic { height: 74px; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+  .cat .ic svg { width: 100%; height: 100%; display: block; }
+  .cat b { display: block; font-weight: 600; font-size: 14px; line-height: 1.4; }
+  .cat small { color: var(--muted); font-size: 12px; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .filters button { padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-weight: 500; }
+  .filters button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .product { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; background: #fff; transition: box-shadow .15s; }
+  @media (hover: hover) { .product:hover { box-shadow: 0 14px 34px rgba(14, 27, 51, .1); } }
+  .product .img { height: 170px; }
+  .product .img svg { width: 100%; height: 100%; display: block; }
+  .product .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .product .cat-name { color: var(--steel); font-size: 12px; font-weight: 600; }
+  .product h3 { font-size: 17px; font-weight: 600; }
+  .product .spec { color: var(--muted); font-size: 13px; }
+  .product .actions { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; }
+  .product .actions .btn { height: 38px; padding: 0 12px; font-size: 13px; flex: 1; }
+
+  .about { background: var(--bg); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .about p { color: var(--muted); margin-bottom: 14px; }
+  .checks li { display: flex; gap: 10px; padding: 6px 0; }
+  .checks li::before { content: '✓'; width: 22px; height: 22px; border-radius: 50%; background: var(--steel-soft); color: var(--steel); display: grid; place-items: center; font-weight: 700; font-size: 12px; flex: none; margin-top: 2px; }
+  .timeline { border-left: 2px solid var(--line); padding-left: 28px; }
+  .tl { position: relative; padding-bottom: 26px; }
+  .tl:last-child { padding-bottom: 0; }
+  .tl::before { content: ''; position: absolute; left: -36px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid var(--steel); }
+  .tl b { font-family: 'K2D'; font-size: 20px; color: var(--navy); }
+  .tl p { margin: 2px 0 0; }
+
+  .clients { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 48px; }
+  .clients span { height: 64px; border-radius: 12px; border: 1px dashed #C8D0DC; display: grid; place-items: center; color: #A0A9B8; font-weight: 600; letter-spacing: .14em; font-size: 12px; background: #fff; }
+
+  .contact-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; }
+  .info-card { background: var(--navy); color: #fff; border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 18px; }
+  .info-card h3 { font-size: 24px; }
+  .info-row { display: flex; gap: 14px; color: #C9D4E8; }
+  .info-row svg { color: #7FB0FF; margin-top: 3px; }
+  .info-row b { display: block; color: #fff; font-weight: 600; }
+  .channels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .channels a { height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; }
+  .ch-line { background: var(--line-green); }
+  .ch-msg { background: linear-gradient(135deg, #00B2FF, #006AFF); }
+  .ch-tel { background: rgba(255, 255, 255, .12); }
+  .map { height: 170px; border-radius: 14px; overflow: hidden; }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .form { border: 1px solid var(--line); border-radius: 20px; padding: 32px; }
+  .form h3 { font-size: 24px; }
+  .form > p { color: var(--muted); margin-bottom: 20px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field span { font-size: 13px; font-weight: 600; }
+  .field input, .field select, .field textarea { border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px; outline: 0; background: #fff; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--steel); box-shadow: 0 0 0 3px var(--steel-soft); }
+  .consent { display: flex; gap: 10px; font-size: 13px; color: var(--muted); margin: 4px 0 18px; }
+  .consent input { margin-top: 4px; accent-color: var(--steel); }
+  .form .btn { width: 100%; }
+
+  footer { background: var(--navy); color: #9FB0CC; padding: 56px 0 28px; font-size: 14px; }
+  .foot-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; }
+  footer .logo b { color: #fff; }
+  footer .logo small { color: #7F92B3; }
+  footer h4 { color: #fff; margin-bottom: 10px; font-weight: 600; }
+  footer li { padding: 3px 0; }
+  .foot-bottom { margin-top: 40px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .1); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; }
+
+  .float { position: fixed; right: calc(20px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 30; display: flex; flex-direction: column; gap: 10px; }
+  .float a { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; box-shadow: 0 10px 24px rgba(14, 27, 51, .25); }
+
+  @media (max-width: 1080px) {
+    .hero .container { grid-template-columns: 1fr; padding-bottom: 110px; }
+    .hero-art { height: 320px; }
+    .cats { grid-template-columns: repeat(3, 1fr); }
+    .products { grid-template-columns: repeat(2, 1fr); }
+    .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 680px) {
+    .container { padding: 0 16px; }
+    .topbar .info span:not(:first-child), .lang { display: none; }
+    .hero h1 { font-size: 36px; }
+    .hero .container { padding-top: 48px; }
+    .hero-art { height: 260px; }
+    .hero-art .a1 { height: 190px; }
+    .hero-art .a2 { height: 160px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat { padding: 18px; border-bottom: 1px solid var(--line); }
+    .stat:nth-child(2) { border-right: 0; }
+    .stat:nth-child(n+3) { border-bottom: 0; }
+    .stat b { font-size: 26px; }
+    section.block { padding: 64px 0; }
+    .sec-head h2 { font-size: 28px; }
+    .cats { grid-template-columns: repeat(2, 1fr); }
+    .products { grid-template-columns: 1fr; }
+    .clients { grid-template-columns: repeat(3, 1fr); }
+    .row2, .channels { grid-template-columns: 1fr; }
+    .form, .info-card { padding: 24px 20px; }
+    .float a { width: 48px; height: 48px; }
+  }
+
+
+  @media (max-width: 1023px) { .nav, .site-head .btn-steel { display: none; } .burger { margin-left: auto; } }
+  /* §15.2.4 เมนูจอ < 1024px: hamburger → drawer */
+  .burger, .drawer { --drawer-bg: #FFFFFF; --drawer-ink: #0F172A; --drawer-line: #E3E8EF; --drawer-on: #EAF1FF; --drawer-cta-bg: #3D7BEA; --drawer-cta-ink: #FFFFFF; --drawer-radius: 12px; }
+  .burger { display: none; width: 44px; height: 44px; flex: none; place-items: center; border-radius: 12px; border: 1px solid var(--drawer-line); background: none; color: inherit; cursor: pointer; }
+  .drawer { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .45); }
+  .drawer[hidden] { display: none; }
+  .drawer-panel { position: absolute; top: 0; right: 0; width: min(340px, 88vw); height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: calc(12px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom)); background: var(--drawer-bg); color: var(--drawer-ink); box-shadow: -20px 0 50px rgba(0, 0, 0, .25); }
+  .drawer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 700; }
+  .drawer-close { width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: inherit; font-size: 28px; line-height: 1; cursor: pointer; }
+  .drawer-nav { display: flex; flex-direction: column; }
+  .drawer-nav a { display: flex; align-items: center; min-height: 48px; padding: 0 12px; border-radius: 10px; font-size: 17px; font-weight: 600; }
+  .drawer-nav a.on { background: var(--drawer-on); }
+  .drawer-cta { display: flex; align-items: center; justify-content: center; min-height: 52px; margin-top: 12px; border-radius: var(--drawer-radius); background: var(--drawer-cta-bg); color: var(--drawer-cta-ink); font-weight: 700; }
+  @media (max-width: 1023px) { .burger { display: grid; } }
+  /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    :is(button, select, summary, a.btn, a.logo, [data-tap], input:not([type=checkbox], [type=radio], [type=hidden])):not(.phone *, .admin *) { min-height: 44px; }
+    :is(button, a.btn, [data-tap]):not(.phone *, .admin *) { min-width: 44px; }
+    a.logo { display: inline-flex; align-items: center; }
+    :is(a.link, a.text-link, a.more, a.hit) { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  }
+  @media (max-width: 639px) {
+    .hero-actions > *, .row-actions > * { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<div class="topbar">
+  <div class="container">
+    <div class="info">
+      <span><svg class="i"><use href="#i-phone"/></svg>02-XXX-XXXX</span>
+      <span><svg class="i"><use href="#i-mail"/></svg>sales@napha.example</span>
+      <span><svg class="i"><use href="#i-chat"/></svg>LINE @napha-demo</span>
+      <span><svg class="i"><use href="#i-clock"/></svg>จันทร์–เสาร์ 08:00–17:00</span>
+    </div>
+    <div class="lang"><b>TH</b> | EN</div>
+  </div>
+</div>
+
+<header class="site-head">
+  <div class="container">
+    <a class="logo" href="#"><span class="logo-mark">N</span><div><b>นภาวัสดุ</b><small>NAPHA MATERIALS</small></div></a>
+    <nav class="nav">
+      <a class="on" href="#">หน้าแรก</a>
+      <a href="#about">เกี่ยวกับเรา</a>
+      <a href="#products">สินค้า</a>
+      <a href="#about">ผลงาน</a>
+      <a href="#">ข่าวสาร</a>
+      <a href="#contact">ติดต่อเรา</a>
+    </nav>
+    <a class="btn btn-steel" href="#contact"><svg class="i"><use href="#i-file"/></svg>ขอใบเสนอราคา</a>
+    <button class="burger" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="drawer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <div>
+      <span class="kicker">ผู้จัดจำหน่ายวัสดุอุตสาหกรรม ตั้งแต่ปี 2541</span>
+      <h1>วัสดุคุณภาพ<br><span>สำหรับงานที่ต้องการ<br>ความแม่นยำ</span></h1>
+      <p>ท่อ ข้อต่อ เหล็กโครงสร้าง วาล์ว และอุปกรณ์ไฟฟ้ากว่า 3,200 รายการ พร้อมทีมวิศวกรช่วยเลือกสเปกให้ตรงงาน</p>
+      <div class="hero-actions">
+        <a class="btn btn-steel" href="#products">ดูสินค้าทั้งหมด<svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost" href="#contact">ขอใบเสนอราคา</a>
+      </div>
+    </div>
+    <div class="hero-art">
+      <div class="card a1" data-prod="pipe" data-bg="#1F3561"></div>
+      <div class="card a2" data-prod="beam" data-bg="#E9EEF6"></div>
+      <div class="badge"><i>✓</i><div><b>พร้อมส่ง 3,200+ รายการ</b><small>ส่งทั่วประเทศภายใน 48 ชม.</small></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="container stats">
+  <div class="stats-grid">
+    <div class="stat"><b>25+ ปี</b><span>ประสบการณ์ในอุตสาหกรรม</span></div>
+    <div class="stat"><b>3,200+</b><span>รายการสินค้าในคลัง</span></div>
+    <div class="stat"><b>1,500+</b><span>ลูกค้าองค์กรที่ไว้วางใจ</span></div>
+    <div class="stat"><b>48 ชม.</b><span>จัดส่งทั่วประเทศ</span></div>
+  </div>
+</div>
+
+<section class="block" id="products">
+  <div class="container">
+    <div class="sec-head">
+      <div><span class="eyebrow">Products</span><h2>หมวดหมู่สินค้า</h2></div>
+      <p>ไม่เจอสินค้าที่ต้องการ? ส่งสเปกมาทาง LINE ทีมงานจัดหาให้ภายใน 1 วันทำการ</p>
+    </div>
+    <div class="cats" id="cats"></div>
+
+    <div class="sec-head" style="margin-top:56px">
+      <div><span class="eyebrow">Best sellers</span><h2>สินค้าแนะนำ</h2></div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="products" id="product-list"></div>
+  </div>
+</section>
+
+<section class="block about" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div>
+        <span class="eyebrow">About us</span>
+        <h2 style="font-size:36px;margin:4px 0 18px">พาร์ตเนอร์ด้านวัสดุ<br>ของงานอุตสาหกรรมไทย</h2>
+        <p>นภาวัสดุเริ่มจากร้านวัสดุก่อสร้างเล็ก ๆ ปัจจุบันเป็นผู้จัดจำหน่ายวัสดุอุตสาหกรรมให้โรงงาน ผู้รับเหมา และหน่วยงานทั่วประเทศ</p>
+        <ul class="checks">
+          <li>สินค้ามีใบรับรองคุณภาพจากผู้ผลิตทุกล็อต</li>
+          <li>ทีมวิศวกรให้คำปรึกษาสเปกฟรี</li>
+          <li>ออกใบเสนอราคาภายใน 2 ชั่วโมงในวันทำการ</li>
+          <li>มีเครดิตเทอมสำหรับลูกค้าองค์กร</li>
+        </ul>
+      </div>
+      <div class="timeline">
+        <div class="tl"><b>2541</b><p>ก่อตั้งร้านวัสดุก่อสร้าง ย่านบางนา</p></div>
+        <div class="tl"><b>2550</b><p>ขยายเป็นผู้จัดจำหน่ายวัสดุอุตสาหกรรม เปิดคลังสินค้าแห่งที่ 2</p></div>
+        <div class="tl"><b>2562</b><p>ได้รับการรับรองระบบบริหารงานคุณภาพ</p></div>
+        <div class="tl"><b>2568</b><p>เปิดศูนย์กระจายสินค้าภาคตะวันออก ส่งได้ภายใน 48 ชม.</p></div>
+      </div>
+    </div>
+    <div class="clients"><span>LOGO</span><span>LOGO</span><span>LOGO</span><span>LOGO</span><span>LOGO</span><span>LOGO</span></div>
+  </div>
+</section>
+
+<section class="block" id="contact">
+  <div class="container">
+    <div class="sec-head"><div><span class="eyebrow">Contact</span><h2>ติดต่อเรา</h2></div><p>เลือกช่องทางที่สะดวก หรือกรอกฟอร์มเพื่อขอใบเสนอราคา</p></div>
+    <div class="contact-grid">
+      <div class="info-card">
+        <h3>บริษัท นภาวัสดุ จำกัด</h3>
+        <div class="info-row"><svg class="i"><use href="#i-pin"/></svg><div><b>สำนักงานใหญ่</b>99 ถนนตัวอย่าง แขวงตัวอย่าง เขตตัวอย่าง กรุงเทพฯ</div></div>
+        <div class="info-row"><svg class="i"><use href="#i-clock"/></svg><div><b>เวลาทำการ</b>จันทร์–เสาร์ 08:00–17:00 น.</div></div>
+        <div class="channels">
+          <a class="ch-line" href="#">LINE</a>
+          <a class="ch-msg" href="#"><svg class="i"><use href="#i-chat"/></svg>Messenger</a>
+          <a class="ch-tel" href="#"><svg class="i"><use href="#i-phone"/></svg>โทร</a>
+        </div>
+        <div class="map" id="map"></div>
+      </div>
+      <form class="form" onsubmit="return false">
+        <h3>ขอใบเสนอราคา</h3>
+        <p>ทีมขายติดต่อกลับภายใน 2 ชั่วโมงในวันทำการ</p>
+        <div class="row2">
+          <label class="field"><span>ชื่อ-นามสกุล</span><input autocomplete="name" placeholder="ชื่อผู้ติดต่อ"></label>
+          <label class="field"><span>บริษัท</span><input autocomplete="organization" placeholder="ชื่อบริษัท (ถ้ามี)"></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span>เบอร์โทร</span><input type="tel" inputmode="tel" autocomplete="tel" placeholder="08X-XXX-XXXX"></label>
+          <label class="field"><span>อีเมล</span><input type="email" autocomplete="email" placeholder="name@company.com"></label>
+        </div>
+        <label class="field"><span>สินค้าที่สนใจ</span><select><option>ท่อและข้อต่อ</option><option>เหล็กโครงสร้าง</option><option>วาล์วและปั๊ม</option><option>อุปกรณ์ไฟฟ้า</option><option>อื่น ๆ</option></select></label>
+        <label class="field"><span>รายละเอียด / สเปก / จำนวน</span><textarea rows="4" placeholder="เช่น ท่อ SUS304 ขนาด 2 นิ้ว จำนวน 40 เส้น"></textarea></label>
+        <label class="consent"><input type="checkbox">ยินยอมให้บริษัทใช้ข้อมูลนี้เพื่อติดต่อกลับเรื่องใบเสนอราคา ตามนโยบายความเป็นส่วนตัว</label>
+        <button class="btn btn-steel">ส่งคำขอใบเสนอราคา</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div><a class="logo" href="#"><span class="logo-mark">N</span><div><b>นภาวัสดุ</b><small>NAPHA MATERIALS</small></div></a><p style="margin-top:14px;max-width:300px">ผู้จัดจำหน่ายวัสดุและอุปกรณ์อุตสาหกรรม สำหรับโรงงาน ผู้รับเหมา และหน่วยงาน</p></div>
+      <div><h4>สินค้า</h4><ul><li>ท่อและข้อต่อ</li><li>เหล็กโครงสร้าง</li><li>วาล์วและปั๊ม</li><li>อุปกรณ์ไฟฟ้า</li></ul></div>
+      <div><h4>บริษัท</h4><ul><li>เกี่ยวกับเรา</li><li>ผลงาน</li><li>ข่าวสาร</li><li>ร่วมงานกับเรา</li></ul></div>
+      <div><h4>ติดต่อ</h4><ul><li>02-XXX-XXXX</li><li>sales@napha.example</li><li>LINE @napha-demo</li></ul></div>
+    </div>
+    <div class="foot-bottom"><span>© 2026 บริษัท นภาวัสดุ จำกัด · บริษัทและข้อมูลในหน้านี้เป็นตัวอย่างสำหรับ design</span><span>นโยบายความเป็นส่วนตัว · เว็บไซต์โดย SiteSabai</span></div>
+  </div>
+</footer>
+
+<div class="float">
+  <a href="#" style="background:var(--line-green)" aria-label="แชท LINE">LINE</a>
+  <a href="#" style="background:linear-gradient(135deg,#00B2FF,#006AFF)" aria-label="Messenger"><svg class="i"><use href="#i-chat"/></svg></a>
+  <a href="#" style="background:var(--navy)" aria-label="โทร"><svg class="i"><use href="#i-phone"/></svg></a>
+</div>
+
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="เมนู">
+    <div class="drawer-head"><span>เมนู</span><button class="drawer-close" aria-label="ปิดเมนู">×</button></div>
+    <nav class="drawer-nav"><a class="on" href="#">หน้าแรก</a><a href="#about">เกี่ยวกับเรา</a><a href="#products">สินค้า</a><a href="#about">ผลงาน</a><a href="#">ข่าวสาร</a><a href="#contact">ติดต่อเรา</a></nav>
+    <a class="drawer-cta" href="#contact">ขอใบเสนอราคา</a>
+  </div>
+</div>
+
+<script>
+  // ภาพสินค้าแบบ SVG (placeholder แทนรูปจริง)
+  function prod(type, bg = '#EEF3FA') {
+    const steel = '#8EA3C2', dark = '#4B5F80', hi = '#C9D6EA';
+    let s = `<svg viewBox="0 0 320 220" preserveAspectRatio="xMidYMid slice"><rect width="320" height="220" fill="${bg}"/>`;
+    if (type === 'pipe') {
+      [[60, 70], [80, 110], [60, 150]].forEach(([x, y], i) => {
+        s += `<rect x="${x}" y="${y - 14}" width="190" height="28" fill="${i % 2 ? steel : hi}"/><ellipse cx="${x + 190}" cy="${y}" rx="9" ry="14" fill="${dark}"/><ellipse cx="${x + 190}" cy="${y}" rx="5" ry="9" fill="${bg}"/><ellipse cx="${x}" cy="${y}" rx="9" ry="14" fill="${steel}"/>`;
+      });
+    } else if (type === 'beam') {
+      s += `<polygon points="70,60 230,40 250,52 90,72" fill="${hi}"/><polygon points="90,72 250,52 250,64 90,84" fill="${steel}"/><rect x="150" y="62" width="14" height="80" fill="${dark}" transform="skewY(-7)"/><polygon points="70,150 230,130 250,142 90,162" fill="${hi}"/><polygon points="90,162 250,142 250,154 90,174" fill="${steel}"/>`;
+    } else if (type === 'valve') {
+      s += `<rect x="40" y="128" width="240" height="30" fill="${steel}"/><rect x="128" y="104" width="64" height="76" rx="10" fill="#C9A227"/><rect x="152" y="70" width="16" height="36" fill="${dark}"/><circle cx="160" cy="66" r="34" fill="none" stroke="#D9473A" stroke-width="8"/><path d="M126 66h68M160 32v68" stroke="#D9473A" stroke-width="6"/>`;
+    } else if (type === 'cable') {
+      for (let r = 70; r > 14; r -= 10) s += `<circle cx="160" cy="110" r="${r}" fill="none" stroke="${r % 20 ? '#1F2937' : '#374151'}" stroke-width="9"/>`;
+      s += `<path d="M230 110 q40 0 50 50" stroke="#1F2937" stroke-width="9" fill="none"/><circle cx="160" cy="110" r="10" fill="#E5A50A"/>`;
+    } else if (type === 'breaker') {
+      s += `<rect x="90" y="30" width="140" height="160" rx="10" fill="#D7DEE8" stroke="${steel}" stroke-width="4"/><rect x="108" y="50" width="104" height="54" rx="4" fill="#fff"/>`;
+      [0, 1, 2, 3].forEach(i => s += `<rect x="${114 + i * 25}" y="58" width="17" height="38" rx="3" fill="${i === 2 ? '#D9473A' : dark}"/>`);
+      s += `<circle cx="125" cy="138" r="10" fill="#22C55E"/><circle cx="160" cy="138" r="10" fill="#F59E0B"/><circle cx="195" cy="138" r="10" fill="#EF4444"/>`;
+    } else if (type === 'tool') {
+      s += `<path d="M80 170 L200 60" stroke="${steel}" stroke-width="22" stroke-linecap="round"/><circle cx="214" cy="48" r="30" fill="${steel}"/><circle cx="214" cy="48" r="14" fill="${bg}"/><rect x="200" y="20" width="28" height="22" fill="${bg}" transform="rotate(45 214 31)"/><path d="M120 180 L240 70" stroke="#D9473A" stroke-width="18" stroke-linecap="round" opacity=".9"/>`;
+    } else if (type === 'helmet') {
+      s += `<path d="M90 140 a70 70 0 0 1 140 0 z" fill="#F5A524"/><rect x="70" y="138" width="180" height="18" rx="9" fill="#E08E0B"/><rect x="150" y="70" width="20" height="70" rx="8" fill="#FBC15A"/>`;
+    }
+    return s + '</svg>';
+  }
+
+  const cats = [
+    ['pipe', 'ท่อและข้อต่อ', 820], ['beam', 'เหล็กโครงสร้าง', 410], ['valve', 'วาล์วและปั๊ม', 560],
+    ['cable', 'อุปกรณ์ไฟฟ้า', 740], ['tool', 'เครื่องมือช่าง', 390], ['helmet', 'อุปกรณ์ความปลอดภัย', 280],
+  ];
+  const products = [
+    { art: 'pipe', cat: 'ท่อและข้อต่อ', name: 'ท่อสแตนเลส SUS304', spec: 'Ø 1/2"–4" · ยาว 6 ม.' },
+    { art: 'beam', cat: 'เหล็กโครงสร้าง', name: 'เหล็ก H-Beam', spec: '100×100 – 300×300 มม.' },
+    { art: 'valve', cat: 'วาล์วและปั๊ม', name: 'บอลวาล์วทองเหลือง', spec: '1/2"–2" · แรงดัน 600 WOG' },
+    { art: 'cable', cat: 'อุปกรณ์ไฟฟ้า', name: 'สายไฟ THW 1×2.5', spec: 'ม้วน 100 ม. · 750V' },
+    { art: 'breaker', cat: 'อุปกรณ์ไฟฟ้า', name: 'ตู้ควบคุมไฟฟ้า', spec: 'IP65 · สั่งทำขนาดได้' },
+    { art: 'tool', cat: 'เครื่องมือช่าง', name: 'ชุดประแจ 12 ชิ้น', spec: 'Cr-V · 8–24 มม.' },
+    { art: 'helmet', cat: 'อุปกรณ์ความปลอดภัย', name: 'หมวกนิรภัยงานช่าง', spec: 'ABS · ปรับขนาดได้' },
+    { art: 'pipe', cat: 'ท่อและข้อต่อ', name: 'ท่อ PPR ทนความร้อน', spec: 'Ø 20–110 มม.' },
+  ];
+
+  document.getElementById('cats').innerHTML = cats.map(([art, name, n]) => `<a class="cat" href="#products"><div class="ic">${prod(art)}</div><b>${name}</b><small>${n} รายการ</small></a>`).join('');
+  document.getElementById('filters').innerHTML = ['ทั้งหมด', ...cats.map(c => c[1])].map((c, i) => `<button class="${i ? '' : 'on'}" data-cat="${i ? c : ''}">${c}</button>`).join('');
+  function renderProducts(cat) {
+    document.getElementById('product-list').innerHTML = products.filter(p => !cat || p.cat === cat).map(p => `
+      <article class="product">
+        <div class="img">${prod(p.art)}</div>
+        <div class="body"><span class="cat-name">${p.cat}</span><h3>${p.name}</h3><span class="spec">${p.spec}</span>
+          <div class="actions"><a class="btn btn-outline" href="#">รายละเอียด</a><a class="btn btn-steel" href="#contact">สอบถามราคา</a></div>
+        </div>
+      </article>`).join('');
+  }
+  document.getElementById('filters').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    document.querySelectorAll('#filters button').forEach(x => x.classList.toggle('on', x === b));
+    renderProducts(b.dataset.cat);
+  });
+  renderProducts('');
+  document.querySelectorAll('[data-prod]').forEach(el => el.innerHTML = prod(el.dataset.prod, el.dataset.bg));
+
+  // แผนที่ตัวอย่าง
+  let m = '<svg viewBox="0 0 400 170" preserveAspectRatio="xMidYMid slice"><rect width="400" height="170" fill="#22365C"/>';
+  for (let x = 10; x < 400; x += 70) for (let y = 10; y < 170; y += 54) m += `<rect x="${x}" y="${y}" width="58" height="42" rx="5" fill="#2A4170"/>`;
+  m += '<path d="M0 120 C120 100 240 140 400 110" stroke="#3B5A92" stroke-width="10" fill="none"/><line x1="0" x2="400" y1="62" y2="62" stroke="#4A6AA8" stroke-width="6"/>';
+  m += '<circle cx="230" cy="62" r="16" fill="#3D7BEA" opacity=".35"/><circle cx="230" cy="62" r="7" fill="#fff" stroke="#3D7BEA" stroke-width="4"/></svg>';
+  document.getElementById('map').innerHTML = m;
+
+  // เมนู drawer สำหรับจอ < 1024px (§15.2.4)
+  (() => {
+    const drawer = document.getElementById('drawer'), burger = document.querySelector('.burger');
+    const setMenu = open => {
+      drawer.hidden = !open;
+      burger.setAttribute('aria-expanded', String(open));
+      document.body.style.overflow = open ? 'hidden' : '';
+      (open ? drawer.querySelector('.drawer-close') : burger).focus();
+    };
+    burger.addEventListener('click', () => setMenu(true));
+    drawer.addEventListener('click', e => { if (e.target === drawer || e.target.closest('.drawer-close, a')) setMenu(false); });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !drawer.hidden) setMenu(false); });
+  })();
+</script>
+</body>
+</html>

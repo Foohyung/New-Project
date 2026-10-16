@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F4F2;
+    --surface: #FFFFFF;
+    --ink: #18181B;
+    --muted: #71717A;
+    --line: #E4E4E7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; font-size: 15px; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 48px 24px 80px; }
+  header h1 { font-size: 34px; font-weight: 700; line-height: 1.3; }
+  header p { color: var(--muted); max-width: 640px; margin-top: 6px; }
+  nav.jump { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  nav.jump a { padding: 6px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 500; }
+  nav.jump a:hover { border-color: var(--ink); }
+
+  section { margin-top: 56px; }
+  .proj-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .proj-head h2 { font-size: 24px; font-weight: 700; }
+  .proj-head span { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .2s, transform .2s; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(24, 24, 27, .1); }
+  .thumb { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #EDEDEA; border-bottom: 1px solid var(--line); }
+  .thumb iframe { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  .ph { position: absolute; inset: 0; display: grid; place-items: center; }
+  .ph span { padding: 6px 16px; border-radius: 999px; background: rgba(255, 255, 255, .92); font-weight: 600; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); }
+  .info { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .title { display: flex; align-items: center; gap: 8px; }
+  .num { width: 26px; height: 26px; border-radius: 8px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 600; display: grid; place-items: center; flex: none; }
+  .title b { font-size: 17px; }
+  .info p { color: var(--muted); font-size: 14px; }
+  .meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: auto; padding-top: 10px; }
+  .swatches { display: flex; }
+  .swatches i { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--surface); margin-left: -6px; }
+  .swatches i:first-child { margin-left: 0; }
+  .font { font-size: 12px; color: var(--muted); }
+  .open { font-weight: 600; font-size: 14px; }
+  .open::after { content: ' ↗'; }
+
+  .how { margin-top: 64px; padding: 24px; border-radius: 16px; background: var(--surface); border: 1px dashed #C4C4C8; }
+  .how b { display: block; margin-bottom: 4px; }
+  .how p { color: var(--muted); }
+
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .wrap { padding: 32px 16px 64px; } header h1 { font-size: 28px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Design Gallery</h1>
+    <p>Design ทั้งหมด 12 แบบ (4 โปรเจกต์ × 3 แบบ) เป็น HTML ธรรมดา คลิกการ์ดเพื่อเปิดแบบเต็มหน้าจอ ทุกแบบรองรับมือถือ ข้อมูลในหน้าเป็นข้อมูลตัวอย่าง</p>
+    <nav class="jump"><a href="#fitness">🏋️ Fitness</a><a href="#dormitory">🏢 หอพัก</a><a href="#real-estate">🏡 อสังหาฯ</a><a href="#company-website">💼 เว็บบริษัท</a></nav>
+  </header>
+  <div id="sections"></div>
+  <div class="how">
+    <b>เลือกแบบอย่างไร</b>
+    <p>บอกชื่อแบบที่ชอบของแต่ละโปรเจกต์ เช่น "Fitness: Pulse, หอพัก: Garden, อสังหาฯ: Hearth, เว็บบริษัท: Modern" ผสมกันได้ เช่น "ใช้ layout ของ Clarity แต่ใช้สีของ Pulse" แบบที่เลือกจะกลายเป็น design system ใน <code>packages/ui</code> ตอน scaffold Next.js</p>
+  </div>
+</div>
+
+<script>
+  const projects = [
+    {
+      id: 'fitness', name: 'FitFlow · ระบบจัดการฟิตเนส', path: '../apps/fitness/designs/',
+      designs: [
+        { file: 'design-1-pulse.html', name: 'Pulse', desc: 'Dark mode + เขียวนีออน ดูสปอร์ตและพลังงานสูง sidebar ด้านซ้าย เน้นกราฟเช็กอินรายชั่วโมงแบบเรียลไทม์', colors: ['#0B0D10', '#13161B', '#C6FF3D', '#3DDCFF'], font: 'Kanit + IBM Plex Sans Thai' },
+        { file: 'design-2-clarity.html', name: 'Clarity', desc: 'โทนสว่างแบบ SaaS สะอาดตา top navigation ตารางสมาชิกเต็มรูปแบบ เหมาะกับผู้จัดการที่ดูข้อมูลเยอะ', colors: ['#F5F7FB', '#FFFFFF', '#2563EB', '#7C3AED'], font: 'IBM Plex Sans Thai' },
+        { file: 'design-3-momentum.html', name: 'Momentum', desc: 'Gradient ส้ม-ชมพู การ์ดโค้งมน ออกแบบสำหรับหน้าเคาน์เตอร์เช็กอิน พร้อมตัวอย่างแอปสมาชิกที่มี QR หมุนเวียน', colors: ['#FFF6F0', '#FF6B35', '#F72585', '#7B2FF7'], font: 'Prompt' },
+      ],
+    },
+    {
+      id: 'dormitory', name: 'DormDee · ระบบจัดการหอพัก', path: '../apps/dormitory/designs/',
+      designs: [
+        { file: 'design-1-paper.html', name: 'Paper', desc: 'Minimal ขาว-ดำแบบ Notion เรียบ อ่านง่าย ใช้ tag สีอ่อนบอกสถานะ มี kanban งานซ่อมและ log กิจกรรม', colors: ['#FFFFFF', '#F7F6F3', '#37352F', '#DBEDDB'], font: 'Noto Sans Thai + IBM Plex Mono' },
+        { file: 'design-2-garden.html', name: 'Garden', desc: 'เขียวมิ้นต์ เป็นมิตร ใช้งานง่ายสำหรับเจ้าของหอ ผังห้องแบบการ์ดใหญ่แยกชั้น และ checklist งานประจำวัน', colors: ['#F2F7F3', '#1F9D6B', '#FFC857', '#E5604D'], font: 'Mitr + Noto Sans Thai Looped' },
+        { file: 'design-3-nightshift.html', name: 'Nightshift', desc: 'Navy + อำพัน ข้อมูลแน่นแบบศูนย์ควบคุม มีระบบตรวจจับความผิดปกติ และตัวอย่างบิลที่ผู้เช่าได้รับทาง LINE', colors: ['#0E1424', '#151C30', '#F5A524', '#2DD4BF'], font: 'Bai Jamjuree + JetBrains Mono' },
+      ],
+    },
+    {
+      id: 'real-estate', name: 'BaanHub · ระบบอสังหาริมทรัพย์', path: '../apps/real-estate/designs/',
+      designs: [
+        { file: 'design-1-prestige.html', name: 'Prestige', desc: 'Luxury ดำ-ครีม-ทอง ตัวอักษร serif ภาพเต็มจอ เหมาะกับทรัพย์ระดับพรีเมียมและบริการฝากขาย', colors: ['#0F0E0C', '#F4EFE6', '#C8A96A', '#2B2620'], font: 'Noto Serif Thai + Playfair Display' },
+        { file: 'design-2-marketplace.html', name: 'Marketplace', desc: 'แนว portal ขาว-น้ำเงิน ค้นหาแบบรายการคู่แผนที่ ตัวกรองครบ ชี้ประกาศแล้วหมุดบนแผนที่ไฮไลต์ตาม', colors: ['#FFFFFF', '#1A56DB', '#F97316', '#7CB342'], font: 'Anuphan' },
+        { file: 'design-3-hearth.html', name: 'Hearth', desc: 'โทนอบอุ่นดินเผา ค้นหาจากไลฟ์สไตล์ (กดกรองได้จริง) มีคะแนนย่านน่าอยู่และเครื่องคำนวณค่าผ่อน', colors: ['#F6EFE6', '#C65D3B', '#5E6B3A', '#2B211C'], font: 'Pridi + Sarabun' },
+      ],
+    },
+    {
+      id: 'company-website', name: 'SiteSabai · เว็บไซต์บริษัท', path: '../apps/company-website/designs/',
+      designs: [
+        { file: 'design-1-corporate.html', name: 'Corporate', desc: 'Navy + ฟ้า น่าเชื่อถือแบบ B2B (ตัวอย่าง: นภาวัสดุ) มีหมวดสินค้า กรองสินค้า และฟอร์มขอใบเสนอราคา', colors: ['#0E1B33', '#FFFFFF', '#3D7BEA', '#F6F8FB'], font: 'K2D + Noto Sans Thai' },
+        { file: 'design-2-showcase.html', name: 'Showcase', desc: 'โทนอบอุ่น เน้นภาพสินค้าใหญ่ (ตัวอย่าง: ไร่ใบเตย ฟู้ดส์) กดดูรายละเอียดสินค้าแล้วสอบถามทาง LINE ไม่มีตะกร้า', colors: ['#FFF8EC', '#3E7C3A', '#F2A33A', '#C8402A'], font: 'Chonburi + Niramit' },
+        { file: 'design-3-modern.html', name: 'Modern', desc: 'Minimal + bento grid (ตัวอย่าง: Lumen Lighting) มีตัวอย่างหน้าหลังบ้านที่ลองพิมพ์แก้สินค้าได้จริง', colors: ['#F5F5F3', '#111111', '#FF5A1F', '#FFE8A3'], font: 'Space Grotesk + Noto Sans Thai' },
+      ],
+    },
+  ];
+
+  document.getElementById('sections').innerHTML = projects.map(p => `
+    <section id="${p.id}">
+      <div class="proj-head"><h2>${p.name}</h2><span>apps/${p.id}/designs/</span></div>
+      <div class="grid">
+        ${p.designs.map((d, i) => `
+          <a class="card" href="${p.path + d.file}" target="_blank" rel="noopener">
+            <div class="thumb">
+              <div class="ph" style="background:linear-gradient(135deg, ${d.colors[0]} 0 45%, ${d.colors[1]} 45% 70%, ${d.colors[2]} 70% 88%, ${d.colors[3]} 88%)"><span>${d.name}</span></div>
+              <iframe src="${p.path + d.file}" loading="lazy" tabindex="-1" title="${d.name}"></iframe>
+            </div>
+            <div class="info">
+              <div class="title"><span class="num">${i + 1}</span><b>${d.name}</b></div>
+              <p>${d.desc}</p>
+              <div class="meta">
+                <div><div class="swatches">${d.colors.map(c => `<i style="background:${c}"></i>`).join('')}</div><div class="font">${d.font}</div></div>
+                <span class="open">เปิดดู</span>
+              </div>
+            </div>
+          </a>`).join('')}
+      </div>
+    </section>`).join('');
+
+  const fit = () => document.querySelectorAll('.thumb').forEach(t => {
+    t.querySelector('iframe').style.transform = `scale(${t.clientWidth / 1440})`;
+  });
+  addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DormDee · Design 3 — Nightshift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0E1424;
+    --surface: #151C30;
+    --surface-2: #1C2440;
+    --border: #252F4D;
+    --text: #E6E9F2;
+    --muted: #8C96B0;
+    --faint: #5C6685;
+    --amber: #F5A524;
+    --teal: #2DD4BF;
+    --red: #F87171;
+    --blue: #60A5FA;
+    --violet: #A78BFA;
+    --line-green: #06C755;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Bai Jamjuree', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+  ul { list-style: none; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-weight: 500; letter-spacing: -.02em; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  .shell { display: grid; grid-template-columns: 68px minmax(0, 1fr) 380px; min-height: 100dvh; }
+
+  /* Rail */
+  .rail { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 0; background: #0A0F1C; border-right: 1px solid var(--border); }
+  .rail .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--amber); color: #0E1424; display: grid; place-items: center; font-weight: 700; font-size: 18px; margin-bottom: 14px; }
+  .rail a { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: var(--faint); position: relative; }
+  @media (hover: hover) { .rail a:hover { background: var(--surface); color: var(--text); } }
+  .rail a.on { background: rgba(245, 165, 36, .12); color: var(--amber); }
+  .rail a.on::before { content: ''; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--amber); }
+  .rail .badge { position: absolute; top: 6px; right: 6px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--red); color: #fff; font-size: 10px; display: grid; place-items: center; font-weight: 700; }
+  .rail .me { margin-top: auto; width: 36px; height: 36px; border-radius: 50%; background: var(--blue); color: #0E1424; display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+
+  /* Main */
+  .main { padding: 22px 24px 40px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .head h1 { font-size: 22px; font-weight: 700; line-height: 1.3; }
+  .head p { color: var(--muted); font-size: 13px; }
+  .head-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .cmd { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--faint); min-width: 220px; }
+  .cmd kbd { margin-left: auto; font-family: 'JetBrains Mono'; font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border); }
+  .btn { height: 38px; padding: 0 14px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+  .btn-outline { border: 1px solid var(--border); background: var(--surface); }
+  .btn-amber { background: var(--amber); color: #0E1424; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; min-width: 0; }
+  .pad { padding: 16px 18px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .panel-head h2 { font-size: 15px; font-weight: 600; }
+  .panel-head p { color: var(--muted); font-size: 12px; }
+
+  /* KPI strip */
+  .strip { display: grid; grid-template-columns: repeat(6, 1fr); }
+  .strip > div { padding: 14px 18px; border-right: 1px solid var(--border); }
+  .strip > div:last-child { border-right: 0; }
+  .strip small { display: block; color: var(--muted); font-size: 12px; }
+  .strip .v { font-size: 22px; line-height: 1.4; }
+  .strip .s { font-size: 12px; color: var(--faint); }
+  .up { color: var(--teal); } .warn { color: var(--amber); } .bad { color: var(--red); }
+
+  .row-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 16px; }
+
+  /* Heatmap */
+  .heat { display: grid; grid-template-columns: 36px repeat(16, 1fr); gap: 4px; align-items: center; }
+  .heat .fl { color: var(--faint); font-size: 11px; }
+  .cell { aspect-ratio: 1; border-radius: 5px; display: grid; place-items: center; font-size: 9px; font-family: 'JetBrains Mono'; color: rgba(14, 20, 36, .7); cursor: pointer; transition: transform .1s; }
+  @media (hover: hover) { .cell:hover { transform: scale(1.25); z-index: 1; } }
+  .c-paid { background: #1F6F65; color: #9FF1E3; }
+  .c-slip { background: var(--amber); }
+  .c-overdue { background: var(--red); }
+  .c-vacant { background: transparent; border: 1px dashed #3A466B; color: var(--faint); }
+  .c-repair { background: var(--violet); }
+  .heat-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .heat-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* Chart */
+  .chart svg { width: 100%; height: auto; display: block; }
+  .chart text { font-family: 'Bai Jamjuree'; font-size: 10px; fill: var(--faint); }
+  .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* Table */
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filters button { padding: 3px 10px; border-radius: 8px; border: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+  .filters button.on { background: var(--surface-2); color: var(--text); border-color: #3A466B; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 760px; font-size: 13px; }
+  th { text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 1px solid rgba(37, 47, 77, .6); white-space: nowrap; }
+  td.r, th.r { text-align: right; }
+  @media (hover: hover) { tbody tr:hover td { background: rgba(28, 36, 64, .6); } }
+  .st { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+  .st::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* Anomalies */
+  .anom { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .anom:last-child { border-bottom: 0; padding-bottom: 0; }
+  .anom-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; font-size: 16px; }
+  .anom b { display: block; font-weight: 600; line-height: 1.4; }
+  .anom p { color: var(--muted); font-size: 12px; }
+  .anom button { margin-top: 6px; padding: 2px 10px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; color: var(--text); }
+
+  /* Tenant panel */
+  .tenant { background: #0A0F1C; border-left: 1px solid var(--border); padding: 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: sticky; top: 0; height: 100dvh; overflow: auto; }
+  .tenant h3 { font-size: 14px; font-weight: 600; align-self: flex-start; }
+  .tenant > p { color: var(--muted); font-size: 12px; align-self: flex-start; margin-top: -10px; }
+  .phone { width: 320px; flex: none; border-radius: 44px; background: #000; padding: 10px; box-shadow: 0 30px 60px rgba(0, 0, 0, .45); }
+  .screen { border-radius: 36px; overflow: hidden; background: #8CABD9; height: 640px; display: flex; flex-direction: column; color: #111; font-size: 13px; }
+  .chat-top { background: #273246; color: #fff; padding: 36px 16px 12px; display: flex; align-items: center; gap: 10px; }
+  .chat-top .oa { width: 34px; height: 34px; border-radius: 50%; background: var(--amber); color: #0E1424; display: grid; place-items: center; font-weight: 700; }
+  .chat-top b { display: block; font-size: 14px; line-height: 1.3; }
+  .chat-top small { opacity: .7; font-size: 11px; }
+  .chat { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .day { align-self: center; font-size: 11px; color: #fff; background: rgba(0, 0, 0, .18); padding: 1px 10px; border-radius: 99px; }
+  .msg { display: flex; gap: 6px; align-items: flex-end; }
+  .msg .oa-sm { width: 26px; height: 26px; border-radius: 50%; background: var(--amber); display: grid; place-items: center; font-weight: 700; font-size: 11px; color: #0E1424; flex: none; }
+  .msg time { font-size: 10px; color: rgba(255, 255, 255, .85); }
+  .bubble { background: #fff; border-radius: 16px; padding: 8px 12px; max-width: 220px; line-height: 1.5; }
+  .flex { background: #fff; border-radius: 16px; overflow: hidden; width: 230px; }
+  .flex-head { background: #0E1424; color: #fff; padding: 10px 14px; }
+  .flex-head small { color: var(--amber); font-weight: 600; font-size: 11px; }
+  .flex-head b { display: block; font-size: 14px; }
+  .flex-body { padding: 10px 14px; }
+  .flex-body .li { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; color: #444; }
+  .flex-body .li span:last-child { font-family: 'JetBrains Mono'; color: #111; }
+  .flex-body .total { border-top: 1px dashed #ccc; margin-top: 6px; padding-top: 6px; font-weight: 700; font-size: 14px; color: #111; }
+  .flex-actions { display: flex; flex-direction: column; gap: 6px; padding: 0 14px 12px; }
+  .flex-actions button { height: 34px; border-radius: 8px; font-weight: 600; font-size: 12px; }
+  .fa-pay { background: var(--line-green); color: #fff; }
+  .fa-alt { background: #F2F4F7; color: #111; }
+  .paid-tag { display: inline-block; background: #E7F8EF; color: #067647; font-weight: 700; font-size: 12px; padding: 1px 8px; border-radius: 6px; }
+  .menu { background: #fff; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #E4E7EC; }
+  .menu span { padding: 12px 4px 18px; text-align: center; font-size: 11px; font-weight: 600; color: #344054; border-right: 1px solid #E4E7EC; }
+  .menu span:last-child { border-right: 0; }
+
+  @media (max-width: 1440px) {
+    .shell { grid-template-columns: 68px minmax(0, 1fr); }
+    .tenant { grid-column: 2; position: static; height: auto; border-left: 0; border-top: 1px solid var(--border); }
+  }
+  @media (max-width: 1180px) {
+    .strip { grid-template-columns: repeat(3, 1fr); }
+    .strip > div:nth-child(3) { border-right: 0; }
+    .strip > div:nth-child(-n+3) { border-bottom: 1px solid var(--border); }
+    .row-2, .row-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 767px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .tenant { grid-column: 1; }
+    .main { padding: 16px; }
+    .strip { grid-template-columns: repeat(2, 1fr); }
+    .strip > div { border-right: 1px solid var(--border) !important; border-bottom: 1px solid var(--border); }
+    .strip > div:nth-child(even) { border-right: 0 !important; }
+    .cmd { min-width: 0; flex: 1; }
+  }
+  @media (max-width: 360px) {
+    .phone { width: 100%; }
+  }
+
+
+  .cell { border: 0; padding: 0; }
+  .heat-info { margin-top: 10px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    .heat { grid-template-columns: 44px repeat(16, 44px); overflow-x: auto; padding-bottom: 6px; }
+    .cell { font-size: 11px; }
+  }
+  /* rail มีป้ายชื่อใต้ไอคอน */
+  .rail { gap: 4px; }
+  .rail a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 58px; height: 54px; font-size: 10px; font-weight: 600; }
+  .rail a.on::before { left: -5px; }
+  /* §15.2.4 ตาราง: แท็บเล็ต scroll ในกล่อง + คอลัมน์แรก sticky, มือถือแสดงเฉพาะคอลัมน์สำคัญ */
+  table th:first-child, table td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+  table th:first-child { background: var(--surface); }
+  @media (max-width: 767px) { table { min-width: 0 !important; } .opt { display: none; } }
+  /* §15.2.4 กราฟบนมือถือ: เลื่อนซ้าย-ขวาได้ ตัวอักษรไม่เล็กเกินอ่าน */
+  .chart-scroll { min-width: 0; overflow-x: auto; }
+  @media (max-width: 767px) { #chart { min-width: 520px; } }
+  /* §15.2.4 เมนูหลังบ้านจอ < 768px: bottom tab bar */
+  .bottom-nav { display: none; }
+  @media (max-width: 767px) {
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: #0A0F1C; border-top: 1px solid #252F4D; }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; border-radius: 12px; color: #8C96B0; font-size: 11px; font-weight: 600; line-height: 1.2; }
+    .bottom-nav a.on { color: #F5A524; }
+    .bottom-nav svg { width: 22px; height: 22px; }
+    .bottom-nav .em { font-size: 20px; line-height: 1; }
+    body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  }
+  /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    :is(button, select, summary, a.btn, a.logo, [data-tap], input:not([type=checkbox], [type=radio], [type=hidden])):not(.phone *, .admin *) { min-height: 44px; }
+    :is(button, a.btn, [data-tap]):not(.phone *, .admin *) { min-width: 44px; }
+    a.logo { display: inline-flex; align-items: center; }
+    :is(a.link, a.text-link, a.more, a.hit) { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  }
+  @media (max-width: 639px) {
+    .hero-actions > *, .row-actions > * { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-door" viewBox="0 0 24 24"><path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18M15 12h.01"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-5-5.5"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L22 14l-8 8-3-3 6.3-6.3a4 4 0 0 1-5-5L9 5 6 2 2 6l3 3 3.3-2.7a4 4 0 0 0 6.4 0z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+</svg>
+
+<div class="shell">
+  <nav class="rail">
+    <span class="logo">D</span>
+    <a class="on" href="#" title="ศูนย์ควบคุม"><svg class="i"><use href="#i-grid"/></svg><span>ภาพรวม</span></a>
+    <a href="#" title="ห้องพัก"><svg class="i"><use href="#i-door"/></svg><span>ห้องพัก</span></a>
+    <a href="#" title="ผู้เช่า"><svg class="i"><use href="#i-users"/></svg><span>ผู้เช่า</span></a>
+    <a href="#" title="บิล"><svg class="i"><use href="#i-receipt"/></svg><span>บิล</span><span class="badge">9</span></a>
+    <a href="#" title="มิเตอร์"><svg class="i"><use href="#i-bolt"/></svg><span>มิเตอร์</span></a>
+    <a href="#" title="แจ้งซ่อม"><svg class="i"><use href="#i-wrench"/></svg><span>แจ้งซ่อม</span><span class="badge">4</span></a>
+    <a href="#" title="รายงาน"><svg class="i"><use href="#i-chart"/></svg><span>รายงาน</span></a>
+    <a href="#" title="Audit log"><svg class="i"><use href="#i-shield"/></svg><span>Audit</span></a>
+    <span class="me">มน</span>
+  </nav>
+
+  <main class="main">
+    <header class="head">
+      <div>
+        <h1>ศูนย์ควบคุม · บ้านสวนอพาร์ตเมนต์</h1>
+        <p>รอบบิล ต.ค. 2569 · ครบกำหนด 5 ต.ค. · อัปเดต 18:42 น.</p>
+      </div>
+      <div class="head-tools">
+        <label class="cmd"><svg class="i"><use href="#i-search"/></svg>ค้นห้อง ผู้เช่า เลขบิล<kbd>⌘K</kbd></label>
+        <button class="btn btn-outline"><svg class="i"><use href="#i-cal"/></svg>ต.ค. 2569</button>
+        <button class="btn btn-amber"><svg class="i"><use href="#i-plus"/></svg>ออกบิลพิเศษ</button>
+      </div>
+    </header>
+
+    <section class="panel strip">
+      <div><small>อัตราเข้าพัก</small><div class="v mono">90.6%</div><div class="s">58 / 64 ห้อง</div></div>
+      <div><small>เรียกเก็บ</small><div class="v mono">312,480</div><div class="s up">▲ 0.5% MoM</div></div>
+      <div><small>รับชำระแล้ว</small><div class="v mono up">264,310</div><div class="s">49 ห้อง · 84.6%</div></div>
+      <div><small>ค้างชำระ</small><div class="v mono bad">27,450</div><div class="s">5 ห้อง · เลย 10 วัน</div></div>
+      <div><small>รอตรวจสลิป</small><div class="v mono warn">20,720</div><div class="s">4 รายการ</div></div>
+      <div><small>แจ้งซ่อมค้าง</small><div class="v mono">4</div><div class="s bad">ด่วน 1 · SLA 24 ชม.</div></div>
+    </section>
+
+    <section class="row-2">
+      <div class="panel pad">
+        <div class="panel-head"><div><h2>สถานะห้องทั้งหมด</h2><p>แตะหรือชี้ที่ช่องเพื่อดูรายละเอียด</p></div></div>
+        <div class="heat" id="heat"></div>
+        <p class="heat-info" id="heat-info" aria-live="polite">เลือกห้องเพื่อดูสถานะ</p>
+        <div class="heat-legend">
+          <span><i style="background:#1F6F65"></i>ชำระแล้ว 49</span>
+          <span><i style="background:var(--amber)"></i>รอตรวจสลิป 4</span>
+          <span><i style="background:var(--red)"></i>ค้างชำระ 5</span>
+          <span><i style="border:1px dashed #3A466B"></i>ว่าง 4</span>
+          <span><i style="background:var(--violet)"></i>ปรับปรุง 2</span>
+        </div>
+      </div>
+      <div class="panel pad chart">
+        <div class="panel-head">
+          <div><h2>เรียกเก็บ vs รับชำระ · 12 เดือน</h2><p>หน่วย: พันบาท</p></div>
+          <div class="legend"><span><i style="background:#3A466B"></i>เรียกเก็บ</span><span><i style="background:var(--teal)"></i>รับชำระ</span></div>
+        </div>
+        <div class="chart-scroll"><svg id="chart" viewBox="0 0 560 210"></svg></div>
+      </div>
+    </section>
+
+    <section class="row-3">
+      <div class="panel pad">
+        <div class="panel-head">
+          <div><h2>ใบแจ้งหนี้ ต.ค. 2569</h2><p>แสดง 8 จาก 58 รายการ · ค่าไฟ ฿8/หน่วย · ค่าน้ำ ฿18/หน่วย · ส่วนกลาง ฿300</p></div>
+          <div class="filters"><button class="on">ทั้งหมด 58</button><button>ชำระแล้ว 49</button><button>รอตรวจ 4</button><button>ค้าง 5</button></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>ห้อง</th><th class="opt">เลขที่</th><th>ผู้เช่า</th><th class="r opt">ค่าเช่า</th><th class="r opt">ไฟ (หน่วย)</th><th class="r opt">น้ำ (หน่วย)</th><th class="r">รวม</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">106</td><td class="mono opt">INV-6910-0106</td><td>สมศักดิ์ ป.</td><td class="r mono opt">3,800</td><td class="r mono opt">126</td><td class="r mono opt">4</td><td class="r mono">5,180</td><td><span class="st bad">ค้าง 10 วัน</span></td></tr>
+              <tr><td class="mono">202</td><td class="mono opt">INV-6910-0202</td><td>กาญจนา ส.</td><td class="r mono opt">3,800</td><td class="r mono opt">181</td><td class="r mono opt">4</td><td class="r mono">5,620</td><td><span class="st bad">ค้าง 10 วัน</span></td></tr>
+              <tr><td class="mono">207</td><td class="mono opt">INV-6910-0207</td><td>วิภาวี จ.</td><td class="r mono opt">3,800</td><td class="r mono opt warn">342</td><td class="r mono opt">8</td><td class="r mono">6,980</td><td><span class="st warn">รอตรวจสลิป</span></td></tr>
+              <tr><td class="mono">304</td><td class="mono opt">INV-6910-0304</td><td>ธนพร ล.</td><td class="r mono opt">4,200</td><td class="r mono opt">182</td><td class="r mono opt">6</td><td class="r mono">6,064</td><td><span class="st up">ชำระ 3 ต.ค.</span></td></tr>
+              <tr><td class="mono">313</td><td class="mono opt">INV-6910-0313</td><td>ปิยะพงษ์ ท.</td><td class="r mono opt">4,200</td><td class="r mono opt">171</td><td class="r mono opt">4</td><td class="r mono">5,940</td><td><span class="st bad">ค้าง 10 วัน</span></td></tr>
+              <tr><td class="mono">405</td><td class="mono opt">INV-6910-0405</td><td>นันทนา ก.</td><td class="r mono opt">4,200</td><td class="r mono opt">90</td><td class="r mono opt">5</td><td class="r mono">5,310</td><td><span class="st bad">ค้าง 10 วัน</span></td></tr>
+              <tr><td class="mono">410</td><td class="mono opt">INV-6910-0410</td><td>ภูริ ส.</td><td class="r mono opt">4,200</td><td class="r mono opt">87</td><td class="r mono opt">3</td><td class="r mono">5,250</td><td><span class="st up">ชำระ 15 ต.ค.</span></td></tr>
+              <tr><td class="mono">412</td><td class="mono opt">INV-6910-0412</td><td>อดิศร ม.</td><td class="r mono opt">4,200</td><td class="r mono opt">99</td><td class="r mono opt">6</td><td class="r mono">5,400</td><td><span class="st bad">ค้าง 10 วัน</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel pad">
+        <div class="panel-head"><div><h2>ความผิดปกติที่ระบบตรวจพบ</h2><p>ตรวจอัตโนมัติหลังบันทึกมิเตอร์และรับสลิป</p></div></div>
+        <div class="anom">
+          <span class="anom-ic" style="background:rgba(245,165,36,.14)">⚡</span>
+          <div><b>ห้อง 207 ใช้ไฟ 342 หน่วย</b><p>สูงกว่าค่าเฉลี่ยของหอ (168) ประมาณ 2 เท่า</p><button>ตรวจมิเตอร์</button></div>
+        </div>
+        <div class="anom">
+          <span class="anom-ic" style="background:rgba(96,165,250,.14)">💧</span>
+          <div><b>ห้อง 115 ใช้น้ำ 0 หน่วย 2 เดือนติด</b><p>มิเตอร์น้ำอาจเสีย</p><button>สร้างงานซ่อม</button></div>
+        </div>
+        <div class="anom">
+          <span class="anom-ic" style="background:rgba(248,113,113,.14)">🧾</span>
+          <div><b>สลิปห้อง 301 มีเลขอ้างอิงซ้ำ</b><p>ตรงกับสลิปที่เคยใช้ใน ก.ย. · ระงับไว้รอตรวจ</p><button>ตรวจสอบ</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="tenant">
+    <h3>มุมมองผู้เช่า · LINE OA</h3>
+    <p>ผู้เช่าห้อง 304 รับบิล ชำระ และแจ้งซ่อมผ่าน LINE</p>
+    <div class="phone">
+      <div class="screen">
+        <div class="chat-top"><span class="oa">D</span><div><b>DormDee · บ้านสวน</b><small>LINE Official Account</small></div></div>
+        <div class="chat">
+          <span class="day">1 ต.ค.</span>
+          <div class="msg">
+            <span class="oa-sm">D</span>
+            <div class="flex">
+              <div class="flex-head"><small>ใบแจ้งหนี้ · ห้อง 304</small><b>ค่าเช่า ต.ค. 2569</b></div>
+              <div class="flex-body">
+                <div class="li"><span>ค่าเช่าห้อง</span><span>4,200</span></div>
+                <div class="li"><span>ค่าไฟ 182 หน่วย</span><span>1,456</span></div>
+                <div class="li"><span>ค่าน้ำ 6 หน่วย</span><span>108</span></div>
+                <div class="li"><span>ค่าส่วนกลาง</span><span>300</span></div>
+                <div class="li total"><span>รวม · ภายใน 5 ต.ค.</span><span>฿6,064</span></div>
+              </div>
+              <div class="flex-actions"><button class="fa-pay">ชำระด้วย PromptPay</button><button class="fa-alt">แนบสลิป</button></div>
+            </div>
+          </div>
+          <span class="day">3 ต.ค.</span>
+          <div class="msg"><span class="oa-sm">D</span><div class="bubble"><span class="paid-tag">ชำระแล้ว ✓</span><br>ได้รับ ฿6,064 แล้ว ขอบคุณที่ชำระตรงเวลา 🙏 <u>ดูใบเสร็จ</u></div><time>14:12</time></div>
+          <span class="day">วันนี้</span>
+          <div class="msg"><span class="oa-sm">D</span><div class="bubble">รับเรื่องแจ้งซ่อม <b>"แอร์ไม่เย็น"</b> แล้ว เลขที่ MT-1027 · ช่างจะติดต่อกลับภายใน 24 ชม.</div><time>10:05</time></div>
+        </div>
+        <div class="menu"><span>🧾<br>บิลของฉัน</span><span>🛠️<br>แจ้งซ่อม</span><span>📄<br>สัญญา</span></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<nav class="bottom-nav" aria-label="เมนูหลัก">
+  <a class="on" aria-current="page" href="#"><svg class="i"><use href="#i-grid"/></svg>ภาพรวม</a>
+  <a href="#"><svg class="i"><use href="#i-door"/></svg>ห้อง</a>
+  <a href="#"><svg class="i"><use href="#i-receipt"/></svg>บิล</a>
+  <a href="#"><svg class="i"><use href="#i-wrench"/></svg>แจ้งซ่อม</a>
+  <a href="#"><svg class="i"><use href="#i-chart"/></svg>รายงาน</a>
+</nav>
+
+<script>
+  // Heatmap
+  const S = {
+    vacant: [103, 214, 309, 416], repair: [211, 408],
+    overdue: [106, 202, 313, 405, 412], slip: [105, 207, 301, 415],
+  };
+  const TH = { paid: 'ชำระแล้ว', slip: 'รอตรวจสลิป', overdue: 'ค้างชำระ', vacant: 'ว่าง', repair: 'ปรับปรุง' };
+  let h = '';
+  for (let f = 4; f >= 1; f--) {
+    h += `<span class="fl">ชั้น ${f}</span>`;
+    for (let r = 1; r <= 16; r++) {
+      const no = f * 100 + r;
+      const k = Object.keys(S).find(key => S[key].includes(no)) || 'paid';
+      h += `<button class="cell c-${k}" data-info="ห้อง ${no} · ${TH[k]}" aria-label="ห้อง ${no} ${TH[k]}">${String(r).padStart(2, '0')}</button>`;
+    }
+  }
+  document.getElementById('heat').innerHTML = h;
+
+  // Billed vs collected
+  const m = ['พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.'];
+  const billed = [298, 301, 296, 305, 309, 303, 300, 306, 310, 308, 311, 312.5];
+  const got = [296, 299, 290, 303, 305, 301, 297, 304, 307, 305, 309, 264.3];
+  const W = 560, H = 210, L = 34, B = 24, T = 10, lo = 200, hi = 320;
+  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  const step = (W - L) / m.length, bw = 12;
+  let s = '';
+  for (let g = lo; g <= hi; g += 40) {
+    s += `<line x1="${L}" x2="${W}" y1="${y(g)}" y2="${y(g)}" stroke="#252F4D" stroke-dasharray="2 4"/>`;
+    s += `<text x="${L - 6}" y="${y(g) + 3}" text-anchor="end">${g}</text>`;
+  }
+  m.forEach((name, i) => {
+    const cx = L + step * i + step / 2;
+    s += `<rect x="${cx - bw - 1}" y="${y(billed[i])}" width="${bw}" height="${y(lo) - y(billed[i])}" rx="3" fill="#3A466B"/>`;
+    const last = i === m.length - 1;
+    s += `<rect x="${cx + 1}" y="${y(got[i])}" width="${bw}" height="${y(lo) - y(got[i])}" rx="3" fill="${last ? '#F5A524' : '#2DD4BF'}"/>`;
+    s += `<text x="${cx}" y="${H - 6}" text-anchor="middle">${name}</text>`;
+  });
+  s += `<text x="${W - 4}" y="${y(got[11]) - 6}" text-anchor="end" style="fill:#F5A524">กำลังเก็บ</text>`;
+  document.getElementById('chart').innerHTML = s;
+
+  // แตะช่องห้องเพื่อดูสถานะ (ไม่ต้องพึ่ง hover)
+  document.getElementById('heat').addEventListener('click', e => {
+    const cell = e.target.closest('.cell');
+    if (cell) document.getElementById('heat-info').textContent = cell.dataset.info;
+  });
+</script>
+</body>
+</html>

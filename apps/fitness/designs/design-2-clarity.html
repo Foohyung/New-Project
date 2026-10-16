@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitFlow · Design 2 — Clarity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F7FB;
+    --surface: #FFFFFF;
+    --border: #E5E9F0;
+    --text: #0F172A;
+    --muted: #64748B;
+    --faint: #94A3B8;
+    --primary: #2563EB;
+    --primary-soft: #EEF3FF;
+    --green: #16A34A;
+    --green-soft: #EAF7EF;
+    --amber: #C2410C;
+    --amber-soft: #FFF3E8;
+    --red: #DC2626;
+    --red-soft: #FDECEC;
+    --violet: #7C3AED;
+    --violet-soft: #F3EEFF;
+    --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 16px rgba(15, 23, 42, .04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+  a { color: inherit; text-decoration: none; }
+  button, input { font: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  ul { list-style: none; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .container { max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+
+  /* Top nav */
+  .topnav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .nav-inner { height: 64px; display: flex; align-items: center; gap: 32px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .brand-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .branch { margin-left: 4px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .links { display: flex; gap: 4px; height: 100%; }
+  .links a { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; }
+  @media (hover: hover) { .links a:hover { color: var(--text); } }
+  .links a.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: var(--muted); position: relative; }
+  @media (hover: hover) { .icon-btn:hover { background: var(--bg); color: var(--text); } }
+  .icon-btn .dot { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--red); border: 2px solid var(--surface); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 12px; flex: none; }
+
+  /* Page head */
+  .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; padding: 28px 0 20px; }
+  .page-head h1 { font-size: 26px; font-weight: 700; line-height: 1.3; }
+  .page-head p { color: var(--muted); }
+  .head-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .segmented { display: inline-flex; padding: 3px; background: #E9EDF3; border-radius: 10px; }
+  .segmented button { padding: 6px 14px; border-radius: 8px; color: var(--muted); font-weight: 500; }
+  .segmented button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .btn { height: 40px; padding: 0 16px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+  .btn-outline { border: 1px solid var(--border); background: var(--surface); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  @media (hover: hover) { .btn-primary:hover { background: #1D4ED8; } }
+
+  /* KPI */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+  .kpi-top { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 500; }
+  .kpi-icon { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+  .kpi-body { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px; gap: 8px; }
+  .kpi-num { font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; }
+  .delta { font-size: 13px; font-weight: 600; color: var(--green); }
+  .delta span { color: var(--faint); font-weight: 400; }
+  .spark { width: 96px; height: 40px; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; margin: 16px 0 48px; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
+  .card-pad { padding: 20px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+  .card-head h2 { font-size: 16px; font-weight: 600; }
+  .card-head p { color: var(--muted); font-size: 13px; }
+  .text-link { color: var(--primary); font-weight: 500; font-size: 13px; white-space: nowrap; }
+
+  /* Revenue chart */
+  .rev-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 24px; align-items: center; }
+  .rev-chart { width: 100%; height: auto; display: block; }
+  .rev-chart text { font-family: 'IBM Plex Sans Thai'; font-size: 11px; fill: var(--faint); }
+  .breakdown li { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .breakdown li:last-child { border-bottom: 0; }
+  .breakdown .row { display: flex; justify-content: space-between; font-size: 13px; }
+  .breakdown .row span { color: var(--muted); }
+  .breakdown .row b { font-weight: 600; }
+  .bar-track { height: 6px; border-radius: 99px; background: var(--bg); margin-top: 6px; }
+  .bar-track span { display: block; height: 100%; border-radius: 99px; }
+
+  /* Table */
+  .table-tools { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0 20px; border-bottom: 1px solid var(--border); }
+  .tabs { display: flex; gap: 20px; }
+  .tabs button { padding: 12px 0; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; }
+  .tabs button.on { color: var(--text); border-bottom-color: var(--text); }
+  .tabs .n { margin-left: 6px; padding: 0 7px; border-radius: 99px; background: var(--bg); font-size: 12px; color: var(--muted); }
+  .mini-search { display: flex; align-items: center; gap: 8px; margin: 8px 0; padding: 0 12px; height: 36px; border: 1px solid var(--border); border-radius: 9px; color: var(--faint); }
+  .mini-search input { border: 0; outline: 0; width: 200px; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); background: #FAFBFD; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 20px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: 0; }
+  @media (hover: hover) { tbody tr:hover { background: #FAFBFD; } }
+  .person { display: flex; align-items: center; gap: 10px; }
+  .person small { display: block; color: var(--muted); font-size: 12px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .b-green { background: var(--green-soft); color: var(--green); }
+  .b-amber { background: var(--amber-soft); color: var(--amber); }
+  .b-red { background: var(--red-soft); color: var(--red); }
+  .b-violet { background: var(--violet-soft); color: var(--violet); }
+  .muted { color: var(--muted); }
+  .table-foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+  .pager { display: flex; gap: 4px; }
+  .pager button { min-width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); color: var(--muted); }
+  .pager button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  /* Timeline */
+  .timeline { position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 47px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+  .t-item { display: grid; grid-template-columns: 40px 16px 1fr; gap: 0 8px; padding: 8px 0; align-items: start; }
+  .t-time { font-size: 12px; color: var(--muted); font-weight: 500; padding-top: 1px; }
+  .t-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--faint); background: var(--surface); margin: 4px 0 0 1px; position: relative; z-index: 1; }
+  .t-item.done { opacity: .55; }
+  .t-item.done .t-dot { background: var(--faint); }
+  .t-item.now .t-dot { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+  .t-body { padding: 8px 12px; border-radius: 10px; }
+  .t-item.now .t-body { background: var(--primary-soft); }
+  .t-body b { font-weight: 600; }
+  .t-body small { display: block; color: var(--muted); font-size: 12px; }
+  .cap { float: right; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .cap.full { color: var(--red); }
+
+  /* Trainers */
+  .trainer { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .trainer:last-child { border-bottom: 0; padding-bottom: 0; }
+  .trainer div { flex: 1; min-width: 0; }
+  .trainer small { display: block; color: var(--muted); font-size: 12px; }
+
+  .alert { display: flex; gap: 12px; padding: 16px; border-radius: 14px; background: var(--amber-soft); border: 1px solid #FCD9B6; }
+  .alert b { display: block; }
+  .alert p { color: #9A3412; font-size: 13px; margin-bottom: 10px; }
+  .alert .btn { height: 34px; padding: 0 12px; background: var(--amber); color: #fff; font-size: 13px; }
+
+  @media (max-width: 1180px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .layout { grid-template-columns: 1fr; }
+    .branch { display: none; }
+  }
+  @media (max-width: 720px) {
+    .container { padding: 0 16px; }
+    .rev-wrap { grid-template-columns: 1fr; }
+    .branch { display: none; }
+  }
+  @media (max-width: 520px) {
+    .kpis { grid-template-columns: 1fr; }
+    .mini-search input { width: 120px; }
+  }
+
+
+  /* §15.2.4 แท็บเล็ต: เมนูย่อเป็นแถวที่สอง, มือถือ: bottom tab bar */
+  @media (max-width: 1023px) {
+    .nav-inner { flex-wrap: wrap; height: auto; padding-top: 10px; row-gap: 0; column-gap: 16px; }
+    .links { order: 3; width: 100%; height: 48px; overflow-x: auto; }
+    .links a { white-space: nowrap; }
+  }
+  @media (max-width: 767px) {
+    .links { display: none; }
+    .nav-inner { height: 64px; padding-top: 0; }
+  }
+  /* §15.2.4 ตาราง: แท็บเล็ต scroll ในกล่อง + คอลัมน์แรก sticky, มือถือแสดงเฉพาะคอลัมน์สำคัญ */
+  table th:first-child, table td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+  table th:first-child { background: #FAFBFD; }
+  @media (max-width: 767px) { table { min-width: 0 !important; } .opt { display: none; } }
+  /* §15.2.4 กราฟบนมือถือ: เลื่อนซ้าย-ขวาได้ ตัวอักษรไม่เล็กเกินอ่าน */
+  .chart-scroll { min-width: 0; overflow-x: auto; }
+  @media (max-width: 767px) { .rev-chart { min-width: 520px; } }
+  /* §15.2.4 เมนูหลังบ้านจอ < 768px: bottom tab bar */
+  .bottom-nav { display: none; }
+  @media (max-width: 767px) {
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: #FFFFFF; border-top: 1px solid #E5E9F0; }
+    .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; border-radius: 12px; color: #64748B; font-size: 11px; font-weight: 600; line-height: 1.2; }
+    .bottom-nav a.on { color: #2563EB; }
+    .bottom-nav svg { width: 22px; height: 22px; }
+    .bottom-nav .em { font-size: 20px; line-height: 1; }
+    body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  }
+  /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    :is(button, select, summary, a.btn, a.logo, [data-tap], input:not([type=checkbox], [type=radio], [type=hidden])):not(.phone *, .admin *) { min-height: 44px; }
+    :is(button, a.btn, [data-tap]):not(.phone *, .admin *) { min-width: 44px; }
+    a.logo { display: inline-flex; align-items: center; }
+    :is(a.link, a.text-link, a.more, a.hit) { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  }
+  @media (max-width: 639px) {
+    .hero-actions > *, .row-actions > * { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-5-5.5"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V3h4M17 3h4v4M21 17v4h-4M7 21H3v-4M7 12h10"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3zM12 10v4M12 18h.01"/></symbol>
+</svg>
+
+<header class="topnav">
+  <div class="container nav-inner">
+    <div class="brand"><span class="brand-mark">F</span>FitFlow<span class="branch">สาขาอารีย์ ▾</span></div>
+    <nav class="links">
+      <a class="active" href="#">ภาพรวม</a>
+      <a href="#">สมาชิก</a>
+      <a href="#">เช็กอิน</a>
+      <a href="#">คลาส</a>
+      <a href="#">เทรนเนอร์</a>
+      <a href="#">การเงิน</a>
+      <a href="#">รายงาน</a>
+    </nav>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="ค้นหา"><svg class="i"><use href="#i-search"/></svg></button>
+      <button class="icon-btn" aria-label="การแจ้งเตือน"><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span></button>
+      <span class="avatar" style="background:#DBE6FF;color:#1E40AF">มน</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="page-head">
+    <div>
+      <h1>ภาพรวม</h1>
+      <p>ข้อมูล ณ วันพฤหัสบดีที่ 15 ต.ค. 2569 เวลา 18:42 น.</p>
+    </div>
+    <div class="head-actions">
+      <div class="segmented"><button>วันนี้</button><button class="on">เดือนนี้</button><button>ปีนี้</button></div>
+      <button class="btn btn-outline"><svg class="i"><use href="#i-download"/></svg>ส่งออก</button>
+      <button class="btn btn-primary"><svg class="i"><use href="#i-plus"/></svg>เพิ่มสมาชิก</button>
+    </div>
+  </div>
+
+  <section class="kpis">
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon" style="background:var(--primary-soft);color:var(--primary)"><svg class="i"><use href="#i-users"/></svg></span>สมาชิกที่ใช้งาน</div>
+      <div class="kpi-body"><div><div class="kpi-num">1,248</div><div class="delta">+32 <span>สมาชิกใหม่เดือนนี้</span></div></div><svg class="spark" data-values="1150,1168,1181,1179,1196,1210,1216,1248" data-color="#2563EB"></svg></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon" style="background:var(--green-soft);color:var(--green)"><svg class="i"><use href="#i-scan"/></svg></span>เช็กอินวันนี้</div>
+      <div class="kpi-body"><div><div class="kpi-num">186</div><div class="delta">+12% <span>จากสัปดาห์ก่อน</span></div></div><svg class="spark" data-values="142,168,155,171,160,149,166,186" data-color="#16A34A"></svg></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon" style="background:var(--violet-soft);color:var(--violet)"><svg class="i"><use href="#i-wallet"/></svg></span>รายได้เดือนนี้</div>
+      <div class="kpi-body"><div><div class="kpi-num">฿412,350</div><div class="delta">+8.6% <span>เทียบช่วงเดียวกัน</span></div></div><svg class="spark" data-values="22,48,96,141,198,262,330,412" data-color="#7C3AED"></svg></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="kpi-icon" style="background:var(--amber-soft);color:var(--amber)"><svg class="i"><use href="#i-repeat"/></svg></span>อัตราต่ออายุ</div>
+      <div class="kpi-body"><div><div class="kpi-num">78.4%</div><div class="delta">+2.1 <span>จุดจากเดือนก่อน</span></div></div><svg class="spark" data-values="71,73,72,74,75,76,76.3,78.4" data-color="#C2410C"></svg></div>
+    </div>
+  </section>
+
+  <section class="layout">
+    <div class="col">
+      <div class="card card-pad">
+        <div class="card-head">
+          <div><h2>รายได้ 6 เดือนล่าสุด</h2><p>ต.ค. แสดงยอดคาดการณ์ทั้งเดือน (เส้นประ)</p></div>
+          <a class="text-link" href="#">ดูรายงานการเงิน</a>
+        </div>
+        <div class="rev-wrap">
+          <div class="chart-scroll"><svg class="rev-chart" id="rev" viewBox="0 0 640 240"></svg></div>
+          <ul class="breakdown">
+            <li><div class="row"><span>ค่าสมาชิก</span><b>฿280,400</b></div><div class="bar-track"><span style="width:68%;background:var(--primary)"></span></div></li>
+            <li><div class="row"><span>Personal Training</span><b>฿90,700</b></div><div class="bar-track"><span style="width:22%;background:var(--violet)"></span></div></li>
+            <li><div class="row"><span>คลาส & อื่น ๆ</span><b>฿41,250</b></div><div class="bar-track"><span style="width:10%;background:var(--green)"></span></div></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-tools">
+          <div class="tabs">
+            <button class="on">ทั้งหมด<span class="n">1,412</span></button>
+            <button>ใช้งาน<span class="n">1,248</span></button>
+            <button>ใกล้หมดอายุ<span class="n">23</span></button>
+            <button>พักสมาชิก<span class="n">41</span></button>
+          </div>
+          <label class="mini-search"><svg class="i"><use href="#i-search"/></svg><input type="search" placeholder="ค้นหาชื่อ / เบอร์โทร"></label>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>สมาชิก</th><th class="opt">แพ็กเกจ</th><th>หมดอายุ</th><th class="opt">เช็กอินล่าสุด</th><th>สถานะ</th></tr></thead>
+            <tbody>
+              <tr><td><div class="person"><span class="avatar" style="background:#DBE6FF;color:#1E40AF">ณพ</span><div>ณัฐพล ศรีสุข<small>081-234-5678</small></div></div></td><td class="opt">Gold 12 เดือน</td><td>12 ส.ค. 2570</td><td class="muted opt">วันนี้ 18:42</td><td><span class="badge b-green">ใช้งาน</span></td></tr>
+              <tr><td><div class="person"><span class="avatar" style="background:#FFE9D6;color:#9A3412">พช</span><div>พิมพ์ชนก วงศ์ดี<small>089-765-4321</small></div></div></td><td class="opt">รายเดือน</td><td>18 ต.ค. 2569</td><td class="muted opt">เมื่อวาน 19:10</td><td><span class="badge b-amber">ใกล้หมดอายุ</span></td></tr>
+              <tr><td><div class="person"><span class="avatar" style="background:#EDE4FF;color:#5B21B6">ธก</span><div>ธนกร แก้วมณี<small>062-118-9034</small></div></div></td><td class="opt">PT 10 ครั้ง <span class="muted">(เหลือ 3)</span></td><td>30 พ.ย. 2569</td><td class="muted opt">วันนี้ 18:36</td><td><span class="badge b-green">ใช้งาน</span></td></tr>
+              <tr><td><div class="person"><span class="avatar" style="background:#E0F2E9;color:#166534">กช</span><div>กมลชนก อินทร์แก้ว<small>095-442-1870</small></div></div></td><td class="opt">6 เดือน</td><td>2 ม.ค. 2570</td><td class="muted opt">3 วันก่อน</td><td><span class="badge b-violet">พักสมาชิก</span></td></tr>
+              <tr><td><div class="person"><span class="avatar" style="background:#FDE2E2;color:#991B1B">วม</span><div>วรเมธ พูลผล<small>086-301-5529</small></div></div></td><td class="opt">รายเดือน</td><td>9 ต.ค. 2569</td><td class="muted opt">วันนี้ 18:39 (ถูกปฏิเสธ)</td><td><span class="badge b-red">หมดอายุ</span></td></tr>
+              <tr><td><div class="person"><span class="avatar" style="background:#DBE6FF;color:#1E40AF">ศพ</span><div>ศิริพร ทองคำ<small>091-876-2245</small></div></div></td><td class="opt">Gold 12 เดือน</td><td>21 มี.ค. 2570</td><td class="muted opt">วันนี้ 06:48</td><td><span class="badge b-green">ใช้งาน</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-foot">
+          <span>แสดง 1–6 จาก 1,412 รายการ</span>
+          <div class="pager"><button>‹</button><button class="on">1</button><button>2</button><button>3</button><button>›</button></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="col">
+      <div class="alert">
+        <svg class="i" style="color:var(--amber);margin-top:2px"><use href="#i-alert"/></svg>
+        <div>
+          <b>รอตรวจสลิป 5 รายการ</b>
+          <p>ยอดรวม ฿14,770 · เก่าสุดรอ 2 ชั่วโมง</p>
+          <button class="btn">ตรวจสลิป</button>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="card-head"><div><h2>คลาสวันนี้</h2><p>5 คลาส · ผู้จอง 88 คน</p></div><a class="text-link" href="#">จัดตาราง</a></div>
+        <div class="timeline">
+          <div class="t-item done"><span class="t-time">07:00</span><span class="t-dot"></span><div class="t-body"><b>Morning Yoga</b><span class="cap">14/20</span><small>ครูแพร · ห้อง B</small></div></div>
+          <div class="t-item done"><span class="t-time">12:15</span><span class="t-dot"></span><div class="t-body"><b>Lunch HIIT</b><span class="cap">18/20</span><small>โค้ชบอส · ห้อง A</small></div></div>
+          <div class="t-item now"><span class="t-time">18:00</span><span class="t-dot"></span><div class="t-body"><b>HIIT Burn</b><span class="cap">24/25</span><small>โค้ชบอส · ห้อง A · กำลังเรียน</small></div></div>
+          <div class="t-item"><span class="t-time">19:00</span><span class="t-dot"></span><div class="t-body"><b>Yoga Flow</b><span class="cap">12/20</span><small>ครูแพร · ห้อง B</small></div></div>
+          <div class="t-item"><span class="t-time">20:00</span><span class="t-dot"></span><div class="t-body"><b>Spin Power</b><span class="cap full">เต็ม 20/20</span><small>โค้ชเจ · ห้อง Spin · รอคิว 4</small></div></div>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="card-head"><div><h2>เทรนเนอร์วันนี้</h2><p>4 คนเข้ากะ</p></div></div>
+        <div class="trainer"><span class="avatar" style="background:#DBE6FF;color:#1E40AF">บส</span><div><b>โค้ชบอส</b><small>HIIT · Strength</small></div><span class="badge b-violet">สอนคลาส</span></div>
+        <div class="trainer"><span class="avatar" style="background:#E0F2E9;color:#166534">พร</span><div><b>ครูแพร</b><small>Yoga · Pilates</small></div><span class="badge b-green">ว่าง 18:00</span></div>
+        <div class="trainer"><span class="avatar" style="background:#FFE9D6;color:#9A3412">จจ</span><div><b>โค้ชเจ</b><small>Spin · Cardio</small></div><span class="badge b-green">ว่าง 19:00</span></div>
+        <div class="trainer"><span class="avatar" style="background:#FDE2E2;color:#991B1B">นน</span><div><b>โค้ชนนท์</b><small>Personal Training</small></div><span class="badge b-amber">PT 3 นัด</span></div>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<nav class="bottom-nav" aria-label="เมนูหลัก">
+  <a class="on" aria-current="page" href="#"><svg class="i"><use href="#i-home"/></svg>ภาพรวม</a>
+  <a href="#"><svg class="i"><use href="#i-users"/></svg>สมาชิก</a>
+  <a href="#"><svg class="i"><use href="#i-scan"/></svg>เช็กอิน</a>
+  <a href="#"><svg class="i"><use href="#i-cal"/></svg>คลาส</a>
+  <a href="#"><svg class="i"><use href="#i-wallet"/></svg>การเงิน</a>
+</nav>
+
+<script>
+  // Sparklines
+  document.querySelectorAll('.spark').forEach(svg => {
+    const v = svg.dataset.values.split(',').map(Number);
+    const min = Math.min(...v), max = Math.max(...v);
+    const pts = v.map((y, i) => [i / (v.length - 1) * 96, 36 - (y - min) / (max - min || 1) * 30]);
+    const line = pts.map(p => p.join(',')).join(' ');
+    svg.setAttribute('viewBox', '0 0 96 40');
+    svg.innerHTML = `
+      <polygon points="0,40 ${line} 96,40" fill="${svg.dataset.color}" opacity=".08"/>
+      <polyline points="${line}" fill="none" stroke="${svg.dataset.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${pts.at(-1)[0] - 2}" cy="${pts.at(-1)[1]}" r="3" fill="${svg.dataset.color}"/>`;
+  });
+
+  // Revenue chart (พันบาท)
+  const months = ['พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.'];
+  const rev = [768, 742, 801, 815, 836, 852];
+  const W = 640, H = 240, L = 44, R = 12, T = 16, B = 30, lo = 600, hi = 900;
+  const x = i => L + i * (W - L - R) / (rev.length - 1);
+  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  let s = '';
+  for (let g = lo; g <= hi; g += 100) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}" stroke="#EEF1F5"/>`;
+    s += `<text x="${L - 8}" y="${y(g) + 4}" text-anchor="end">${g}k</text>`;
+  }
+  const solid = rev.slice(0, 5).map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  s += `<defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2563EB" stop-opacity=".18"/><stop offset="1" stop-color="#2563EB" stop-opacity="0"/></linearGradient></defs>`;
+  s += `<polygon points="${x(0)},${H - B} ${solid} ${x(4)},${H - B}" fill="url(#g)"/>`;
+  s += `<polyline points="${solid}" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s += `<line x1="${x(4)}" y1="${y(rev[4])}" x2="${x(5)}" y2="${y(rev[5])}" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+  rev.forEach((v, i) => {
+    s += `<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${i === 5 ? '#fff' : '#2563EB'}" stroke="#2563EB" stroke-width="2"/>`;
+    s += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${months[i]}</text>`;
+  });
+  s += `<rect x="${x(4) - 34}" y="${y(rev[4]) - 34}" width="68" height="22" rx="6" fill="#0F172A"/>`;
+  s += `<text x="${x(4)}" y="${y(rev[4]) - 19}" text-anchor="middle" style="fill:#fff;font-weight:600">฿836k</text>`;
+  document.getElementById('rev').innerHTML = s;
+</script>
+</body>
+</html>

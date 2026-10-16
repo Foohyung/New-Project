@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitFlow · Design 4 — Ignite</title>
+<meta name="description" content="Design 4 ของ FitFlow: รวมแดชบอร์ดโทนมืดของ Pulse เข้ากับหน้าเคาน์เตอร์เช็กอินของ Momentum เขียนแบบ mobile-first">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Design 4 = Pulse (โทนมืด, ข้อมูลแน่น, กราฟรายชั่วโมง) + Momentum (สแกนเช็กอิน, การ์ดโค้งมน, gradient พลังงาน)
+     เขียนแบบ mobile-first: base = มือถือ แล้วเพิ่มด้วย min-width 640 / 768 / 1024 / 1280 (breakpoint ของ Tailwind) */
+  :root {
+    --bg: #0B0D10;
+    --surface: #13161B;
+    --surface-2: #1A1E25;
+    --border: #252A33;
+    --text: #ECEFF3;
+    --muted: #8B94A3;
+    --faint: #5D6573;
+    --lime: #C6FF3D;
+    --cyan: #3DDCFF;
+    --violet: #A78BFA;
+    --danger: #FF5C7A;
+    --warn: #FFB547;
+    --grad: linear-gradient(135deg, #FF6B35 0%, #F72585 100%);
+    --radius: 22px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; }
+  h1, h2, h3, .num { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.3; }
+  a { color: inherit; text-decoration: none; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  ul { list-style: none; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  .app { min-height: 100dvh; }
+
+  /* ---------- Sidebar (ซ่อนบนมือถือ, ไอคอนบนแท็บเล็ต, เต็มบนเดสก์ท็อป) ---------- */
+  .sidebar { display: none; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: 'Kanit'; font-weight: 700; font-size: 20px; letter-spacing: .08em; }
+  .logo-mark { width: 40px; height: 40px; border-radius: 12px; background: var(--grad); color: #fff; display: grid; place-items: center; flex: none; }
+  .nav { display: flex; flex-direction: column; gap: 4px; }
+  .nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 14px; color: var(--muted); font-weight: 500; }
+  .nav a.on { background: rgba(198, 255, 61, .1); color: var(--lime); }
+  .nav .count { margin-left: auto; padding: 0 8px; border-radius: 99px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 600; }
+  .me { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 16px; background: var(--surface-2); }
+  .me small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 600; font-size: 13px; color: var(--bg); }
+
+  /* ---------- Main ---------- */
+  .main { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px 16px calc(100px + env(safe-area-inset-bottom)); }
+  .topbar { display: flex; flex-direction: column; gap: 14px; }
+  .eyebrow { color: var(--muted); font-size: 13px; }
+  .topbar h1 { font-size: 24px; }
+  .actions { display: flex; gap: 10px; }
+  .search { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+  .search input { flex: 1; min-width: 0; min-height: 44px; background: none; border: 0; outline: 0; color: var(--text); font-size: 16px; }
+  .icon-btn { position: relative; flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); }
+  .icon-btn .dot { position: absolute; top: 11px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid var(--surface); }
+  .btn { min-height: 48px; padding: 0 18px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+  .btn-lime { background: var(--lime); color: var(--bg); }
+  .btn-soft { background: var(--surface-2); color: var(--text); }
+  .actions .btn-lime .txt { display: none; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-flow: dense; gap: 16px; }
+  .card { min-width: 0; padding: 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .card-head h2 { font-size: 18px; }
+  .card-head p { color: var(--muted); font-size: 13px; }
+  .link { display: inline-flex; align-items: center; min-height: 44px; margin: -12px 0; color: var(--lime); font-size: 13px; font-weight: 600; white-space: nowrap; }
+
+  /* สแกนเช็กอิน (จาก Momentum) */
+  .scan { position: relative; overflow: hidden; border: 0; background: var(--grad); color: #fff; }
+  .scan::after { content: ''; position: absolute; width: 280px; height: 280px; right: -110px; top: -120px; border-radius: 50%; background: rgba(255, 255, 255, .12); }
+  .scan h2 { font-size: 26px; }
+  .scan > p { opacity: .9; }
+  .scan-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+  .finder { position: relative; width: 150px; height: 150px; margin: 0 auto; border-radius: 20px; background: rgba(0, 0, 0, .16); overflow: hidden; flex: none; }
+  .finder i { position: absolute; width: 32px; height: 32px; border: 4px solid #fff; }
+  .finder i:nth-child(1) { top: 12px; left: 12px; border-right: 0; border-bottom: 0; border-radius: 10px 0 0 0; }
+  .finder i:nth-child(2) { top: 12px; right: 12px; border-left: 0; border-bottom: 0; border-radius: 0 10px 0 0; }
+  .finder i:nth-child(3) { bottom: 12px; left: 12px; border-right: 0; border-top: 0; border-radius: 0 0 0 10px; }
+  .finder i:nth-child(4) { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-radius: 0 0 10px 0; }
+  .finder .beam { position: absolute; left: 18px; right: 18px; height: 3px; border-radius: 3px; background: #fff; box-shadow: 0 0 16px 4px rgba(255, 255, 255, .7); animation: sweep 2.2s ease-in-out infinite alternate; }
+  @keyframes sweep { from { top: 22px; } to { top: 124px; } }
+  .scan-side { flex: 1; min-width: 0; }
+  .scan-side .hint { font-size: 13px; opacity: .9; margin-bottom: 8px; }
+  .field { display: flex; gap: 6px; padding: 5px; border-radius: 999px; background: rgba(255, 255, 255, .22); }
+  .field input { flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; background: none; border: 0; outline: 0; color: #fff; font-size: 16px; }
+  .field input::placeholder { color: rgba(255, 255, 255, .85); }
+  .field button { min-height: 44px; padding: 0 18px; border-radius: 999px; background: #fff; color: #C2185B; font-weight: 700; }
+  .scan-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .scan-stats span { padding: 5px 12px; border-radius: 999px; background: rgba(255, 255, 255, .18); font-size: 13px; }
+
+  /* ผลการเช็กอินล่าสุด (จาก Momentum) */
+  .ok-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: rgba(198, 255, 61, .12); color: var(--lime); font-weight: 600; font-size: 13px; }
+  .member { display: flex; align-items: center; gap: 14px; margin: 16px 0; }
+  .m-avatar { width: 64px; height: 64px; border-radius: 20px; background: var(--grad); color: #fff; display: grid; place-items: center; font-size: 22px; font-weight: 600; flex: none; }
+  .member h3 { font-size: 20px; }
+  .member p { color: var(--muted); font-size: 13px; }
+  .ring { position: relative; width: 76px; height: 76px; margin-left: auto; flex: none; }
+  .ring .lbl { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
+  .ring .lbl b { font-family: 'Kanit'; font-size: 18px; }
+  .ring .lbl small { color: var(--muted); font-size: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips span { padding: 6px 12px; border-radius: 12px; background: var(--surface-2); font-size: 13px; }
+  .row-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .row-actions .btn { flex: 1; }
+
+  /* KPI + วงแหวนคนในยิม */
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .kpi { display: flex; flex-direction: column; gap: 2px; padding: 16px; border-radius: 18px; background: var(--surface-2); min-width: 0; }
+  .kpi .label { color: var(--muted); font-size: 13px; }
+  .kpi .num { font-size: 26px; }
+  .kpi .sub { color: var(--muted); font-size: 12px; }
+  .up { color: var(--lime); font-weight: 600; }
+  .kpi.occ { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; background: rgba(198, 255, 61, .08); border: 1px solid rgba(198, 255, 61, .25); }
+  .occ-ring { position: relative; width: 96px; height: 96px; flex: none; }
+  .occ-ring .lbl { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.1; }
+  .occ-ring .lbl b { font-family: 'Kanit'; font-size: 26px; }
+  .occ-ring .lbl small { color: var(--muted); font-size: 11px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; color: var(--lime); font-weight: 600; }
+  .live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: blink 1.4s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .zones { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .zones b { color: var(--text); }
+
+  /* กราฟรายชั่วโมง (จาก Pulse) */
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 190px; padding-top: 30px; border-bottom: 1px dashed var(--border); }
+  .bar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+  .bar { position: relative; width: 100%; max-width: 30px; border-radius: 6px 6px 2px 2px; }
+  .bar.past { background: linear-gradient(180deg, #3B4350, #262C35); }
+  .bar.future { background: repeating-linear-gradient(135deg, #1D2229 0 6px, #262C35 6px 12px); }
+  .bar.now { background: repeating-linear-gradient(135deg, rgba(247, 37, 133, .1) 0 6px, rgba(247, 37, 133, .2) 6px 12px); outline: 1px dashed rgba(247, 37, 133, .6); }
+  .bar.now .fill { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px 6px 2px 2px; background: var(--grad); box-shadow: 0 0 22px rgba(247, 37, 133, .45); }
+  .bar .tip { position: absolute; top: -28px; left: 50%; transform: translateX(-50%); padding: 1px 7px; border-radius: 6px; background: #fff; color: var(--bg); font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .hours { display: flex; gap: 3px; margin-top: 8px; }
+  .hours span { flex: 1; text-align: center; font-size: 11px; color: var(--faint); }
+  .hours span:nth-child(even) { visibility: hidden; }
+  .hours span.now { color: #FF7AB8; font-weight: 600; visibility: visible; }
+  .chart-note { margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+  /* ฟีดเช็กอิน (จาก Pulse) */
+  .feed li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .feed li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .feed .who { flex: 1; min-width: 0; }
+  .feed .who b { display: block; font-weight: 500; }
+  .feed .who small { color: var(--muted); font-size: 12px; }
+  .feed time { color: var(--faint); font-size: 12px; }
+  .status { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .status.ok { background: rgba(198, 255, 61, .12); color: var(--lime); }
+  .status.no { background: rgba(255, 92, 122, .14); color: var(--danger); }
+
+  /* คลาสถัดไป (จาก Momentum) */
+  .klass { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--surface-2); margin-bottom: 10px; }
+  .klass:last-child { margin-bottom: 0; }
+  .k-time { width: 52px; text-align: center; line-height: 1.2; flex: none; }
+  .k-time b { display: block; font-family: 'Kanit'; font-size: 17px; }
+  .k-time small { color: var(--muted); font-size: 11px; }
+  .k-body { flex: 1; min-width: 0; }
+  .k-body small { display: block; color: var(--muted); font-size: 12px; }
+  .meter { height: 6px; border-radius: 99px; background: var(--bg); margin-top: 6px; overflow: hidden; }
+  .meter span { display: block; height: 100%; border-radius: 99px; background: var(--cyan); }
+  .meter.full span { background: var(--danger); }
+  .k-tag { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+  /* ขายด่วน (จาก Momentum) */
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { min-height: 76px; padding: 12px 14px; border-radius: 16px; background: var(--surface-2); border: 2px solid transparent; text-align: left; }
+  .tile small { display: block; color: var(--muted); font-size: 12px; }
+  .tile b { font-family: 'Kanit'; font-size: 20px; }
+  .sell-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); color: var(--muted); font-size: 13px; }
+  .sell-foot b { color: var(--text); }
+
+  /* ใกล้หมดอายุ: แบบรายการการ์ดบนทุกขนาดจอ (ไม่ใช้ตาราง) */
+  .expiring li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .expiring li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .expiring .who { flex: 1; min-width: 0; }
+  .expiring .who small { display: block; color: var(--muted); font-size: 12px; }
+  .days { font-family: 'Kanit'; font-weight: 600; color: var(--warn); white-space: nowrap; }
+  .btn-line { min-height: 44px; padding: 0 14px; border-radius: 12px; background: #06C755; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+  /* Bottom tab bar บนมือถือ (§15.2.4) */
+  .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: rgba(19, 22, 27, .96); backdrop-filter: blur(10px); border-top: 1px solid var(--border); }
+  .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 54px; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .bottom-nav a.on { color: var(--lime); }
+  .bottom-nav .scan-tab span { width: 52px; height: 52px; margin-top: -22px; border-radius: 18px; display: grid; place-items: center; background: var(--grad); color: #fff; box-shadow: 0 10px 24px rgba(247, 37, 133, .45); }
+
+  /* ---------- ≥ 640px ---------- */
+  @media (min-width: 640px) {
+    .actions .btn-lime .txt { display: inline; }
+    .hours span:nth-child(even) { visibility: visible; }
+    .chart, .hours { gap: 6px; }
+    .kpis { grid-template-columns: repeat(3, 1fr); }
+    .kpi.occ { grid-column: 1 / -1; }
+  }
+
+  /* จำนวนคอลัมน์ของปุ่มขายด่วนขึ้นกับความกว้างการ์ด ไม่ใช่ความกว้างจอ (§15.2.3 container queries) */
+  .card { container-type: inline-size; }
+  @container (min-width: 520px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ---------- ≥ 768px: แท็บเล็ต — sidebar ไอคอน, 2 คอลัมน์ ---------- */
+  @media (min-width: 768px) {
+    .app { display: grid; grid-template-columns: 80px minmax(0, 1fr); }
+    .sidebar { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 20px 12px; background: var(--surface); border-right: 1px solid var(--border); }
+    .logo .t, .nav .t, .me div { display: none; }
+    .nav a { justify-content: center; width: 52px; padding: 0; }
+    .nav .count { position: absolute; top: 4px; right: 0; margin: 0; font-size: 10px; }
+    .me { padding: 4px; background: none; }
+    .bottom-nav { display: none; }
+    .main { padding: 24px 24px 40px; gap: 20px; }
+    .topbar { flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; }
+    .topbar h1 { font-size: 28px; }
+    .actions { flex: 1 1 380px; max-width: 560px; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .wide, .full, .md-full { grid-column: 1 / -1; }
+    .scan-body { flex-direction: row; align-items: center; gap: 24px; }
+    .finder { margin: 0; }
+    .card { padding: 22px; }
+  }
+
+  /* ---------- ≥ 1024px: เดสก์ท็อป — sidebar เต็ม ---------- */
+  @media (min-width: 1024px) {
+    .app { grid-template-columns: 248px minmax(0, 1fr); }
+    .sidebar { align-items: stretch; padding: 24px 16px; }
+    .logo { padding: 0 8px; }
+    .logo .t, .nav .t, .me div { display: block; }
+    .nav a { justify-content: flex-start; width: auto; padding: 0 14px; }
+    .nav .count { position: static; margin-left: auto; font-size: 11px; }
+    .me { padding: 10px; background: var(--surface-2); }
+    .main { padding: 28px 32px 48px; }
+    .kpis { grid-template-columns: 1.4fr repeat(3, 1fr); }
+    .kpi.occ { grid-column: auto; }
+    .chart { height: 220px; }
+  }
+
+  /* ---------- ≥ 1280px: 3 คอลัมน์ ---------- */
+  @media (min-width: 1280px) {
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .wide { grid-column: span 2; }
+    .md-full { grid-column: auto; }
+  }
+
+  @media (hover: hover) {
+    .nav a:not(.on):hover { background: var(--surface-2); color: var(--text); }
+    .tile:hover { border-color: var(--lime); }
+    .btn-lime:hover { filter: brightness(1.08); }
+  }
+
+  /* ===== §15.2 Responsive baseline (ชุดเดียวกันทุก design) ===== */
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+  @media (max-width: 1023px), (pointer: coarse) {
+    :is(button, select, summary, a.btn, a.logo, [data-tap], input:not([type=checkbox], [type=radio], [type=hidden])):not(.phone *, .admin *) { min-height: 44px; }
+    :is(button, a.btn, [data-tap]):not(.phone *, .admin *) { min-width: 44px; }
+    a.logo { display: inline-flex; align-items: center; }
+    :is(a.link, a.text-link, a.more, a.hit) { display: inline-block; padding-block: 12px; margin-block: -12px; }
+  }
+  @media (max-width: 639px) {
+    .hero-actions > *, .row-actions > * { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-5-5.5"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V3h4M17 3h4v4M21 17v4h-4M7 21H3v-4M7 12h10"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M6 7v10M18 7v10M3 9v6M21 9v6M6 12h12"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10.5l2-8H6.5M9 20h.01M17 20h.01"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-mark"><svg class="i"><use href="#i-bolt"/></svg></span><span class="t">FITFLOW</span></div>
+    <nav class="nav" aria-label="เมนูหลัก">
+      <a class="on" href="#" aria-current="page" aria-label="แดชบอร์ด"><svg class="i"><use href="#i-home"/></svg><span class="t">แดชบอร์ด</span></a>
+      <a href="#" aria-label="เคาน์เตอร์เช็กอิน"><svg class="i"><use href="#i-scan"/></svg><span class="t">เคาน์เตอร์เช็กอิน</span></a>
+      <a href="#" aria-label="สมาชิก"><svg class="i"><use href="#i-users"/></svg><span class="t">สมาชิก</span></a>
+      <a href="#" aria-label="ตารางคลาส"><svg class="i"><use href="#i-cal"/></svg><span class="t">ตารางคลาส</span></a>
+      <a href="#" aria-label="เทรนเนอร์"><svg class="i"><use href="#i-dumbbell"/></svg><span class="t">เทรนเนอร์</span></a>
+      <a href="#" aria-label="การเงิน มีรายการรอตรวจ 5"><svg class="i"><use href="#i-wallet"/></svg><span class="t">การเงิน</span><span class="count">5</span></a>
+      <a href="#" aria-label="รายงาน"><svg class="i"><use href="#i-chart"/></svg><span class="t">รายงาน</span></a>
+      <a href="#" aria-label="ตั้งค่า"><svg class="i"><use href="#i-gear"/></svg><span class="t">ตั้งค่า</span></a>
+    </nav>
+    <div class="me"><span class="avatar" style="background:#C6FF3D">มน</span><div><b>มนัสนันท์ ร.</b><small>ผู้จัดการ · สาขาอารีย์</small></div></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">พฤหัสบดี 15 ตุลาคม 2569 · 18:42 น. · สาขาอารีย์</p>
+        <h1>สวัสดีตอนเย็น, คุณมน</h1>
+      </div>
+      <div class="actions">
+        <label class="search"><svg class="i"><use href="#i-search"/></svg><input type="search" placeholder="ค้นหาสมาชิก เบอร์โทร หรือรหัส" aria-label="ค้นหาสมาชิก"></label>
+        <button class="icon-btn" aria-label="การแจ้งเตือน"><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span></button>
+        <button class="btn btn-lime" aria-label="ขายแพ็กเกจ"><svg class="i"><use href="#i-cart"/></svg><span class="txt">ขายแพ็กเกจ</span></button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card scan wide" aria-label="สแกนเช็กอิน">
+        <h2>สแกนเพื่อเช็กอิน</h2>
+        <p>ให้สมาชิกเปิด QR จากแอป (เปลี่ยนทุก 30 วินาที) แล้วยื่นที่กล้อง</p>
+        <div class="scan-body">
+          <div class="finder" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="beam"></span></div>
+          <div class="scan-side">
+            <p class="hint">หรือค้นหาด้วยเบอร์โทร / รหัสสมาชิก</p>
+            <div class="field"><input type="tel" inputmode="tel" placeholder="เช่น 081-234-5678" aria-label="เบอร์โทรหรือรหัสสมาชิก"><button>ค้นหา</button></div>
+            <div class="scan-stats"><span>วันนี้ 186 คน</span><span>ปฏิเสธ 4 ครั้ง</span><span>Day pass 11</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="ผลการเช็กอินล่าสุด">
+        <span class="ok-pill"><svg class="i" style="width:16px;height:16px"><use href="#i-check"/></svg>เช็กอินสำเร็จ · 18:42</span>
+        <div class="member">
+          <span class="m-avatar">ณพ</span>
+          <div><h3>ณัฐพล ศรีสุข</h3><p>Gold 12 เดือน</p><p>รหัส FF-002318 · ถึง 12 ส.ค. 70</p></div>
+          <div class="ring">
+            <svg viewBox="0 0 76 76" width="76" height="76" aria-hidden="true">
+              <defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#FF6B35"/><stop offset="1" stop-color="#F72585"/></linearGradient></defs>
+              <circle cx="38" cy="38" r="31" fill="none" stroke="#252A33" stroke-width="7"/>
+              <circle cx="38" cy="38" r="31" fill="none" stroke="url(#rg)" stroke-width="7" stroke-linecap="round" stroke-dasharray="160.6 194.8" transform="rotate(-90 38 38)"/>
+            </svg>
+            <div class="lbl"><b>301</b><small>วันคงเหลือ</small></div>
+          </div>
+        </div>
+        <div class="chips"><span>เดือนนี้ 14 ครั้ง</span><span>ต่อเนื่อง 5 วัน</span><span>จอง Yoga 19:00</span></div>
+        <div class="row-actions"><button class="btn btn-lime">ต่ออายุ</button><button class="btn btn-soft">ดูประวัติ</button></div>
+      </section>
+
+      <section class="card full" aria-label="ภาพรวมวันนี้">
+        <div class="kpis">
+          <div class="kpi occ">
+            <div class="occ-ring">
+              <svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
+                <circle cx="48" cy="48" r="40" fill="none" stroke="#252A33" stroke-width="10"/>
+                <circle cx="48" cy="48" r="40" fill="none" stroke="#C6FF3D" stroke-width="10" stroke-linecap="round" stroke-dasharray="98.4 251.3" transform="rotate(-90 48 48)"/>
+              </svg>
+              <div class="lbl"><b>47</b><small>/ 120 คน</small></div>
+            </div>
+            <div><span class="live">กำลังอยู่ในยิม</span><div class="zones"><span>เวท <b>21</b></span><span>คาร์ดิโอ <b>14</b></span><span>ห้องคลาส <b>12</b></span></div></div>
+          </div>
+          <div class="kpi"><span class="label">เช็กอินวันนี้</span><span class="num">186</span><span class="sub"><span class="up">▲ 12%</span> จากสัปดาห์ก่อน</span></div>
+          <div class="kpi"><span class="label">สมาชิกที่ใช้งาน</span><span class="num">1,248</span><span class="sub"><span class="up">+32</span> เดือนนี้</span></div>
+          <div class="kpi"><span class="label">รายได้เดือนนี้</span><span class="num">฿412,350</span><span class="sub"><span class="up">▲ 8.6%</span> ถึง 15 ต.ค.</span></div>
+        </div>
+      </section>
+
+      <section class="card wide" aria-label="เช็กอินรายชั่วโมง">
+        <div class="card-head"><div><h2>เช็กอินรายชั่วโมง</h2><p>ชั่วโมงที่เหลือเป็นค่าคาดการณ์จาก 4 สัปดาห์ล่าสุด</p></div></div>
+        <div class="chart" id="chart" aria-hidden="true"></div>
+        <div class="hours" id="hours" aria-hidden="true"></div>
+        <p class="chart-note">ช่วงพีควันนี้ 18:00–19:00 · คาดการณ์ ~41 คน/ชม. · เช็กอินแล้วทั้งวัน 186 คน</p>
+      </section>
+
+      <section class="card" aria-label="เช็กอินล่าสุด">
+        <div class="card-head"><div><h2>เช็กอินล่าสุด</h2><p>อัปเดตแบบเรียลไทม์</p></div><a class="link" href="#">ดูทั้งหมด</a></div>
+        <ul class="feed">
+          <li><span class="avatar" style="background:#3DDCFF">ณพ</span><div class="who"><b>ณัฐพล ศรีสุข</b><small>Gold 12 เดือน</small></div><time>18:42</time><span class="status ok">ผ่าน</span></li>
+          <li><span class="avatar" style="background:#FFB547">อว</span><div class="who"><b>อรวรรณ มีสุข</b><small>รายเดือน</small></div><time>18:40</time><span class="status ok">ผ่าน</span></li>
+          <li><span class="avatar" style="background:#FF5C7A">วม</span><div class="who"><b>วรเมธ พูลผล</b><small>หมดอายุ 9 ต.ค.</small></div><time>18:39</time><span class="status no">ปฏิเสธ</span></li>
+          <li><span class="avatar" style="background:#A78BFA">ธก</span><div class="who"><b>ธนกร แก้วมณี</b><small>PT เหลือ 3 ครั้ง</small></div><time>18:36</time><span class="status ok">ผ่าน</span></li>
+          <li><span class="avatar" style="background:#C6FF3D">ปว</span><div class="who"><b>ปวีณา ชัยมงคล</b><small>6 เดือน</small></div><time>18:33</time><span class="status ok">ผ่าน</span></li>
+        </ul>
+      </section>
+
+      <section class="card" aria-label="คลาสถัดไป">
+        <div class="card-head"><div><h2>คลาสถัดไป</h2><p>แตะเพื่อจองให้สมาชิก</p></div><a class="link" href="#">ตารางเต็ม</a></div>
+        <div class="klass"><div class="k-time"><b>18:00</b><small>45 นาที</small></div><div class="k-body"><b>HIIT Burn</b><small>โค้ชบอส · ห้อง A</small><div class="meter"><span style="width:96%"></span></div></div><span class="k-tag" style="background:rgba(198,255,61,.12);color:var(--lime)">กำลังเรียน</span></div>
+        <div class="klass"><div class="k-time"><b>19:00</b><small>60 นาที</small></div><div class="k-body"><b>Yoga Flow</b><small>ครูแพร · ห้อง B</small><div class="meter"><span style="width:60%"></span></div></div><span class="k-tag" style="background:rgba(167,139,250,.15);color:var(--violet)">เหลือ 8 ที่</span></div>
+        <div class="klass"><div class="k-time"><b>20:00</b><small>45 นาที</small></div><div class="k-body"><b>Spin Power</b><small>โค้ชเจ · ห้อง Spin</small><div class="meter full"><span style="width:100%"></span></div></div><span class="k-tag" style="background:rgba(255,92,122,.14);color:var(--danger)">เต็ม · คิว 4</span></div>
+      </section>
+
+      <section class="card" aria-label="ขายด่วน">
+        <div class="card-head"><div><h2>ขายด่วน</h2><p>ออกใบเสร็จ + รับชำระ PromptPay</p></div></div>
+        <div class="tiles">
+          <button class="tile"><small>Day pass</small><b>฿150</b></button>
+          <button class="tile"><small>รายเดือน</small><b>฿1,290</b></button>
+          <button class="tile"><small>3 เดือน</small><b>฿3,490</b></button>
+          <button class="tile"><small>PT 10 ครั้ง</small><b>฿8,900</b></button>
+        </div>
+        <div class="sell-foot"><span>ยอดเคาน์เตอร์วันนี้</span><b>฿18,640 · 9 รายการ</b></div>
+      </section>
+
+      <section class="card md-full" aria-label="ใกล้หมดอายุ">
+        <div class="card-head"><div><h2>ใกล้หมดอายุใน 7 วัน</h2><p>23 คน · เตือนผ่าน LINE OA</p></div><a class="link" href="#">ส่งทั้งหมด</a></div>
+        <ul class="expiring">
+          <li><div class="who"><b>พิมพ์ชนก วงศ์ดี</b><small>รายเดือน · 18 ต.ค. 69</small></div><span class="days">อีก 3 วัน</span><button class="btn-line">ส่ง LINE</button></li>
+          <li><div class="who"><b>สุรเชษฐ์ นาคสวัสดิ์</b><small>3 เดือน · 19 ต.ค. 69</small></div><span class="days">อีก 4 วัน</span><button class="btn-line">ส่ง LINE</button></li>
+          <li><div class="who"><b>จิราภรณ์ แสงทอง</b><small>รายเดือน · 20 ต.ค. 69</small></div><span class="days">อีก 5 วัน</span><button class="btn-line">ส่ง LINE</button></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="เมนูหลัก">
+  <a class="on" href="#" aria-current="page"><svg class="i"><use href="#i-home"/></svg>แดชบอร์ด</a>
+  <a href="#"><svg class="i"><use href="#i-users"/></svg>สมาชิก</a>
+  <a class="scan-tab" href="#" aria-label="สแกนเช็กอิน"><span><svg class="i"><use href="#i-scan"/></svg></span>เช็กอิน</a>
+  <a href="#"><svg class="i"><use href="#i-cal"/></svg>คลาส</a>
+  <a href="#"><svg class="i"><use href="#i-cart"/></svg>ขาย</a>
+</nav>
+
+<script>
+  // ชั่วโมง 06–22: past = เช็กอินจริง, now = ชั่วโมงปัจจุบัน (เช็กอินแล้ว / คาดการณ์), future = คาดการณ์
+  const data = [
+    [6, 9], [7, 24], [8, 19], [9, 11], [10, 8], [11, 7], [12, 15], [13, 10], [14, 7],
+    [15, 9], [16, 17], [17, 33], [18, 17, 41], [19, 38], [20, 27], [21, 15], [22, 6],
+  ];
+  const NOW = 18, MAX = 45;
+  const chart = document.getElementById('chart'), hours = document.getElementById('hours');
+  for (const [h, v, forecast] of data) {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    const bar = document.createElement('div');
+    if (h === NOW) {
+      bar.className = 'bar now';
+      bar.style.height = (forecast / MAX * 100) + '%';
+      bar.innerHTML = `<span class="fill" style="height:${v / forecast * 100}%"></span><span class="tip">${v} / ~${forecast}</span>`;
+    } else {
+      bar.className = 'bar ' + (h < NOW ? 'past' : 'future');
+      bar.style.height = (v / MAX * 100) + '%';
+    }
+    col.appendChild(bar);
+    chart.appendChild(col);
+    const label = document.createElement('span');
+    label.textContent = String(h).padStart(2, '0');
+    if (h === NOW) label.className = 'now';
+    hours.appendChild(label);
+  }
+</script>
+</body>
+</html>
