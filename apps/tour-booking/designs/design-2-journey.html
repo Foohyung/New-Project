@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaiTiew · Design 2 — Journey</title>
+<meta name="description" content="Design 2 ของ PaiTiew ระบบจองทัวร์: แนวนิตยสาร เล่าเส้นทางรายวันพร้อมแผนที่ ตารางรอบเดินทาง และขั้นตอนจอง 3 ขั้น (ตัวอย่าง: เดินดง ทริป)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Design 2 — Journey: ทริปธรรมชาติ/วัฒนธรรมกลุ่มเล็ก เล่าเส้นทางรายวัน → เลือกรอบ → จอง 3 ขั้น
+     เขียนแบบ mobile-first: base = มือถือ แล้วเพิ่มด้วย min-width 640 / 768 / 1024 / 1280 (§15.2.1) */
+  :root {
+    --paper: #F6F1E7;
+    --paper-2: #EDE4D2;
+    --white: #FFFDF8;
+    --forest: #22473A;
+    --forest-deep: #173328;
+    --moss: #6E8B3D;
+    --moss-soft: #E3E9D2;
+    --clay: #B4532A;
+    --clay-soft: #F5DDCF;
+    --ink: #1E2722;
+    --muted: #5C675F;
+    --line: #DCD1BD;
+    --warn: #9A5B00;
+    --err: #B42318;
+    --head-h: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--head-h) + 12px); }
+  body { font-family: 'IBM Plex Sans Thai Looped', system-ui, sans-serif; background: var(--paper); color: var(--ink); font-size: 16px; line-height: 1.7; }
+  h1, h2, h3, .serif { font-family: 'Noto Serif Thai', serif; font-weight: 600; line-height: 1.35; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  :focus-visible { outline: 3px solid var(--clay); outline-offset: 2px; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+  .btn-forest { background: var(--forest); color: var(--white); }
+  .btn-clay { background: var(--clay); color: var(--white); }
+  .btn-line { border: 1.5px solid var(--forest); color: var(--forest); }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--clay); }
+
+  /* ---------- Header ---------- */
+  .head { position: sticky; top: 0; z-index: 40; background: rgba(246, 241, 231, .95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+  .head .wrap { display: flex; align-items: center; gap: 12px; height: var(--head-h); }
+  .logo { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-family: 'Noto Serif Thai'; font-size: 22px; font-weight: 700; color: var(--forest); }
+  .logo svg { width: 34px; height: 34px; }
+  .nav { display: none; }
+  .head-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .head-right .btn { display: none; }
+  .burger { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line); }
+  .drawer { position: fixed; inset: 0; z-index: 60; background: rgba(23, 51, 40, .5); }
+  .drawer[hidden] { display: none; }
+  .drawer-panel { position: absolute; inset: 0 0 0 auto; width: min(340px, 88vw); height: 100dvh; overflow-y: auto; padding: calc(12px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom)); background: var(--paper); display: flex; flex-direction: column; gap: 2px; }
+  .drawer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-family: 'Noto Serif Thai'; font-size: 18px; }
+  .drawer a.m { display: flex; align-items: center; min-height: 52px; border-bottom: 1px solid var(--line); font-family: 'Noto Serif Thai'; font-size: 19px; }
+  .drawer .btn { margin-top: 16px; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 28px 0 8px; }
+  .hero-grid { display: grid; gap: 22px; }
+  .hero h1 { font-size: clamp(40px, 12vw, 76px); line-height: 1.15; color: var(--forest-deep); margin-top: 6px; }
+  .hero h1 em { font-style: normal; color: var(--clay); }
+  .hero .lead { font-size: 18px; color: var(--muted); max-width: 34ch; margin-top: 10px; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .facts dt { font-size: 13px; color: var(--muted); }
+  .facts dd { font-weight: 600; }
+  .dots { letter-spacing: 2px; color: var(--moss); }
+  .hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 22px; }
+  .from { line-height: 1.3; }
+  .from small { display: block; color: var(--muted); font-size: 13px; }
+  .from b { font-family: 'Noto Serif Thai'; font-size: 28px; color: var(--forest); }
+  .hero-art { border-radius: 28px; overflow: hidden; aspect-ratio: 4 / 3.2; background: var(--paper-2); }
+  .hero-art svg { width: 100%; height: 100%; display: block; }
+
+  /* ---------- เส้นทางรายวัน ---------- */
+  section.block { padding: 44px 0; }
+  .sec-title { margin-bottom: 18px; }
+  .sec-title h2 { font-size: clamp(26px, 6vw, 38px); color: var(--forest-deep); }
+  .sec-title p { color: var(--muted); max-width: 60ch; }
+  .route { display: grid; gap: 22px; }
+  .map { border-radius: 24px; background: var(--white); border: 1px solid var(--line); padding: 12px; }
+  .map svg { width: 100%; height: auto; display: block; }
+  .map text { font-family: 'IBM Plex Sans Thai Looped', sans-serif; }
+  .map .stop { cursor: pointer; }
+  .map .stop circle.dot { fill: var(--white); stroke: var(--forest); stroke-width: 3; transition: fill .2s; }
+  .map .stop.on circle.dot { fill: var(--clay); stroke: var(--clay); }
+  .map-note { font-size: 13px; color: var(--muted); padding: 6px 4px 0; }
+  .days { display: grid; gap: 0; }
+  .day { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 0 14px; padding: 18px 0; border-top: 1px solid var(--line); }
+  .day:last-child { border-bottom: 1px solid var(--line); }
+  .day .num { font-family: 'Noto Serif Thai'; font-size: 40px; font-weight: 700; line-height: 1; color: var(--line); transition: color .2s; }
+  .day.on .num { color: var(--clay); }
+  .day h3 { font-size: 21px; }
+  .day .where { color: var(--muted); font-size: 14px; }
+  .day ul { list-style: none; display: grid; gap: 6px; margin: 10px 0; }
+  .day li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; }
+  .day li time { color: var(--clay); font-weight: 600; font-size: 14px; padding-top: 1px; }
+  .day-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .day-meta span { padding: 2px 10px; border-radius: 999px; background: var(--moss-soft); color: var(--forest); font-size: 13px; font-weight: 500; }
+
+  /* ---------- รอบเดินทาง ---------- */
+  .deps-wrap { background: var(--white); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .dtable { display: grid; gap: 10px; }
+  .drow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--paper); }
+  .drow.head-row { display: none; }
+  .drow .when b { font-family: 'Noto Serif Thai'; font-size: 18px; display: block; }
+  .drow .when small, .drow .guide { color: var(--muted); font-size: 14px; }
+  .drow .guide { grid-column: 1; }
+  .drow .price { grid-column: 2; grid-row: 1; text-align: right; font-weight: 600; font-family: 'Noto Serif Thai'; font-size: 18px; }
+  .drow .seats { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 14px; }
+  .drow .seats .status { white-space: nowrap; }
+  .seat-dots { display: flex; gap: 3px; }
+  .seat-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--forest); }
+  .seat-dots i.free { background: transparent; border: 1.5px solid var(--forest); }
+  .status { font-weight: 600; }
+  .status.low { color: var(--warn); }
+  .status.full { color: var(--err); }
+  .drow .act { grid-column: 2; grid-row: 2 / span 2; align-self: end; }
+  .drow .act .btn { min-height: 44px; padding: 0 16px; }
+  .drow.on { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); background: var(--moss-soft); }
+
+  /* ---------- จอง 3 ขั้น ---------- */
+  .booking { border-radius: 28px; background: var(--forest-deep); color: #EDF2EA; padding: 22px 18px; }
+  .booking h2 { color: var(--white); font-size: 28px; }
+  .progress { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 16px 0 20px; counter-reset: s; }
+  .progress li { counter-increment: s; padding-top: 10px; border-top: 3px solid rgba(255, 255, 255, .2); font-size: 13px; color: #A9BCB1; }
+  .progress li::before { content: counter(s) '. '; font-weight: 600; }
+  .progress li.done, .progress li.now { border-top-color: #E9B77F; color: var(--white); }
+  .panel { display: grid; gap: 14px; }
+  .panel[hidden] { display: none; }
+  .picked { padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, .08); }
+  .picked small { color: #A9BCB1; display: block; font-size: 13px; }
+  .picked b { font-family: 'Noto Serif Thai'; font-size: 19px; }
+  .row-q { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .row-q small { display: block; color: #A9BCB1; font-size: 13px; }
+  .step { display: inline-flex; align-items: center; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, .3); }
+  .step button { width: 44px; height: 44px; font-size: 22px; color: var(--white); }
+  .step button:disabled { opacity: .35; cursor: not-allowed; }
+  .step output { min-width: 30px; text-align: center; font-weight: 600; }
+  fieldset { border: 0; display: grid; gap: 8px; }
+  legend { font-weight: 600; margin-bottom: 6px; }
+  .opt { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; border-radius: 14px; border: 1.5px solid rgba(255, 255, 255, .22); cursor: pointer; }
+  .opt input { width: 20px; height: 20px; accent-color: #E9B77F; flex: none; }
+  .opt span { flex: 1; }
+  .opt small { color: #A9BCB1; display: block; font-size: 13px; }
+  .opt:has(input:checked) { border-color: #E9B77F; background: rgba(233, 183, 127, .1); }
+  .f { display: grid; gap: 4px; }
+  .f label { font-weight: 600; font-size: 15px; }
+  .f label small { font-weight: 400; color: #A9BCB1; }
+  .f input, .f select, .f textarea { width: 100%; min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .06); color: var(--white); font-size: 16px; }
+  .f select option { color: var(--ink); }
+  .f textarea { min-height: 88px; resize: vertical; }
+  .f input[aria-invalid="true"] { border-color: #FF9C8A; }
+  .f .err { color: #FFB4A3; font-size: 14px; }
+  .f .err:empty { display: none; }
+  .f .help { color: #A9BCB1; font-size: 13px; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; font-size: 14px; color: #D2DED6; }
+  .consent input { width: 20px; height: 20px; margin-top: 3px; accent-color: #E9B77F; flex: none; font-size: 16px; }
+  .sum { display: grid; gap: 4px; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, .08); }
+  .sum div { display: flex; justify-content: space-between; gap: 12px; }
+  .sum .total { font-family: 'Noto Serif Thai'; font-size: 20px; padding-top: 6px; margin-top: 4px; border-top: 1px dashed rgba(255, 255, 255, .25); }
+  .qr { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 16px; background: var(--white); color: var(--ink); }
+  .qr svg { width: 96px; height: 96px; flex: none; }
+  .qr small { display: block; color: var(--muted); font-size: 13px; }
+  .qr b { font-family: 'Noto Serif Thai'; font-size: 22px; color: var(--forest); }
+  .nav-btns { display: flex; gap: 10px; }
+  .nav-btns .btn { flex: 1; }
+  .btn-ghost-l { border: 1.5px solid rgba(255, 255, 255, .35); color: var(--white); }
+  .btn-sand { background: #E9B77F; color: var(--forest-deep); }
+  .done-msg { padding: 14px 16px; border-radius: 16px; background: #E3E9D2; color: var(--forest-deep); font-weight: 600; }
+  .done-msg[hidden] { display: none; }
+
+  /* ---------- ไกด์ + ทริปอื่น ---------- */
+  .guide-card { display: grid; gap: 16px; padding: 22px; border-radius: 26px; background: var(--paper-2); }
+  .guide-card .pfp { width: 64px; height: 64px; border-radius: 50%; background: var(--forest); color: var(--white); display: grid; place-items: center; font-family: 'Noto Serif Thai'; font-size: 22px; }
+  .guide-card blockquote { font-family: 'Noto Serif Thai'; font-size: 20px; line-height: 1.6; color: var(--forest-deep); }
+  .guide-card cite { font-style: normal; color: var(--muted); font-size: 14px; }
+  .others { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-top: 18px; }
+  .trip { flex: 0 0 78%; scroll-snap-align: start; border-radius: 22px; overflow: hidden; background: var(--white); border: 1px solid var(--line); }
+  .trip .pic { aspect-ratio: 4 / 3; }
+  .trip .pic svg { width: 100%; height: 100%; display: block; }
+  .trip div.t { padding: 12px 16px 16px; }
+  .trip h3 { font-size: 18px; }
+  .trip p { color: var(--muted); font-size: 14px; }
+
+  /* ---------- หลังบ้าน: รายชื่อผู้เดินทาง ---------- */
+  .admin { background: var(--paper-2); }
+  .admin-box { border-radius: 24px; background: var(--white); border: 1px solid var(--line); padding: 16px; }
+  .admin-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .admin-top b { font-family: 'Noto Serif Thai'; font-size: 19px; }
+  .admin-top small { display: block; color: var(--muted); font-size: 14px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .pill.ok { background: var(--moss-soft); color: var(--forest); }
+  .pill.dep { background: #FBEBC9; color: var(--warn); }
+  .pill.due { background: #FBDCD6; color: var(--err); }
+  .pill.diet { background: var(--clay-soft); color: var(--clay); }
+  .mrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .mrow.mhead { display: none; }
+  .mrow .nm b { display: block; }
+  .mrow .nm small { color: var(--muted); font-size: 13px; }
+  .mrow .room, .mrow .food { font-size: 14px; color: var(--muted); }
+  .mrow .pay { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; }
+  .mrow .food { justify-self: end; }
+  .admin-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+  .sticky-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--paper); border-top: 1px solid var(--line); }
+  .sticky-cta div { flex: 1; line-height: 1.3; }
+  .sticky-cta small { display: block; color: var(--muted); font-size: 13px; }
+  .sticky-cta b { font-family: 'Noto Serif Thai'; font-size: 20px; color: var(--forest); }
+
+  footer { padding: 34px 0 calc(110px + env(safe-area-inset-bottom)); background: var(--forest-deep); color: #C8D6CD; font-size: 14px; }
+  footer .cols { display: grid; gap: 18px; }
+  footer b { color: var(--white); font-family: 'Noto Serif Thai'; font-size: 17px; }
+  footer ul { list-style: none; display: grid; gap: 4px; margin-top: 6px; }
+  footer .demo { margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .15); opacity: .8; }
+
+  @media (hover: hover) {
+    .btn-forest:hover { background: var(--forest-deep); }
+    .btn-clay:hover { filter: brightness(.92); }
+    .nav a:hover { color: var(--clay); }
+    .drow:not(.head-row):hover { border-color: var(--forest); }
+    .opt:hover { border-color: rgba(255, 255, 255, .5); }
+  }
+
+  @media (min-width: 640px) {
+    .wrap { padding: 0 24px; }
+    .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .trip { flex-basis: 46%; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .booking { padding: 28px; }
+    footer .cols { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 768px) {
+    .drow { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, .8fr) auto; padding: 12px 18px; border-radius: 14px; }
+    .drow.head-row { display: grid; background: none; border: 0; padding-top: 0; padding-bottom: 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+    .drow .guide, .drow .price, .drow .seats, .drow .act { grid-column: auto; grid-row: auto; }
+    .drow .price { text-align: left; }
+    .drow .act { align-self: center; }
+    .mrow { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.4fr) auto; align-items: center; }
+    .mrow.mhead { display: grid; font-size: 13px; color: var(--muted); font-weight: 600; padding-top: 0; border-top: 0; }
+    .mrow .pay { grid-column: auto; grid-row: auto; align-self: center; }
+    .mrow .food { justify-self: start; }
+    .guide-card { grid-template-columns: auto 1fr; align-items: start; padding: 28px; }
+  }
+  @media (min-width: 1024px) {
+    .nav { display: flex; gap: 4px; margin-left: 28px; }
+    .nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font-weight: 500; }
+    .head-right .btn { display: inline-flex; }
+    .burger { display: none; }
+    .hero { padding-top: 48px; }
+    .hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+    .route { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 40px; align-items: start; }
+    .map { position: sticky; top: calc(var(--head-h) + 20px); }
+    .book-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+    .booking { position: sticky; top: calc(var(--head-h) + 20px); }
+    .trip { flex-basis: 31.5%; }
+    .sticky-cta { display: none; }
+    footer { padding-bottom: 34px; }
+  }
+  @media (max-width: 1023px) {
+    .book-grid > * + * { margin-top: 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="เดินดง ทริป หน้าแรก"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#22473A"/><path d="M6 29 15 16l5 7 5-9 9 15Z" fill="#E9B77F"/><circle cx="28" cy="12" r="3" fill="#FFFDF8"/></svg>เดินดง</a>
+    <nav class="nav" aria-label="เมนูหลัก"><a href="#route">เส้นทาง</a><a href="#departures">รอบเดินทาง</a><a href="#guide">ไกด์ของเรา</a><a href="#others">ทริปอื่น</a></nav>
+    <div class="head-right">
+      <a class="btn btn-forest" href="#departures">จองทริปนี้</a>
+      <button class="burger" type="button" id="burger" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="drawer"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="เมนู">
+    <div class="drawer-top">เมนู<button class="burger" type="button" id="drawer-close" aria-label="ปิดเมนู"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <a class="m" href="#route">เส้นทาง</a><a class="m" href="#departures">รอบเดินทาง</a><a class="m" href="#guide">ไกด์ของเรา</a><a class="m" href="#others">ทริปอื่น</a>
+    <a class="btn btn-forest" href="#departures">จองทริปนี้</a>
+  </div>
+</div>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">ทริปกลุ่มเล็ก · ไม่เกิน 12 คน</p>
+        <h1>น่าน <em>ช้า ๆ</em><br>4 วัน 3 คืน</h1>
+        <p class="lead">เดินป่าดอยภูคา ปั่นจักรยานในทุ่งนาปัว นอนโฮมสเตย์บ่อเกลือ และกินข้าวเย็นกับชาวบ้านสะปัน</p>
+        <dl class="facts">
+          <div><dt>ระดับความยาก</dt><dd><span class="dots" aria-hidden="true">●●○○○</span> ง่าย–ปานกลาง</dd></div>
+          <div><dt>ขนาดกลุ่ม</dt><dd>6–12 คน</dd></div>
+          <div><dt>ที่พัก</dt><dd>บูทีค + โฮมสเตย์</dd></div>
+          <div><dt>อาหาร</dt><dd>9 มื้อ</dd></div>
+        </dl>
+        <div class="hero-cta">
+          <div class="from"><small>เริ่มต้น / คน</small><b>฿11,900</b></div>
+          <a class="btn btn-clay" href="#departures">ดูรอบเดินทาง</a>
+          <a class="btn btn-line" href="#route">อ่านเส้นทาง</a>
+        </div>
+      </div>
+      <div class="hero-art" id="hero-art"></div>
+    </div>
+  </section>
+
+  <section class="block" id="route">
+    <div class="wrap">
+      <div class="sec-title"><p class="eyebrow">เส้นทาง</p><h2>ทุกวันมีเรื่องเล่า</h2><p>แตะวันในแผนที่หรือในรายการเพื่อดูว่าวันนั้นเราไปที่ไหน ระยะทางรวมประมาณ 420 กม. นั่งรถไม่เกินวันละ 3 ชั่วโมง</p></div>
+      <div class="route">
+        <div class="map">
+          <svg viewBox="0 0 360 300" role="img" aria-label="แผนที่เส้นทาง เมืองน่าน ปัว บ่อเกลือ สะปัน">
+            <rect width="360" height="300" rx="16" fill="#EDE4D2"/>
+            <path d="M0 210 Q60 170 110 200 T220 180 T360 150 V300 H0Z" fill="#E3E9D2"/>
+            <path d="M20 120 l30 -40 l25 30 l30 -50 l40 60" fill="none" stroke="#C9BFA9" stroke-width="2"/>
+            <path d="M190 80 l28 -36 l24 26 l30 -42 l40 52" fill="none" stroke="#C9BFA9" stroke-width="2"/>
+            <path d="M60 250 C110 230 120 170 160 150 S240 90 260 120 S290 200 300 70" fill="none" stroke="#22473A" stroke-width="3" stroke-dasharray="7 6"/>
+            <path d="M330 20 v40 M330 20 l-6 10 M330 20 l6 10" stroke="#5C675F" stroke-width="2" fill="none"/>
+            <text x="324" y="76" font-size="12" fill="#5C675F">N</text>
+          </svg>
+          <p class="map-note">ภาพแผนที่ประกอบ ไม่ได้ย่อตามสัดส่วนจริง</p>
+        </div>
+        <div class="days" id="days"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block deps-wrap" id="departures">
+    <div class="wrap book-grid">
+      <div>
+        <div class="sec-title"><p class="eyebrow">รอบเดินทาง</p><h2>เลือกวันที่ใช่</h2><p>ราคาต่อคน พักห้องคู่ ออกเดินทางจากสนามบินน่าน (ไม่รวมตั๋วเครื่องบิน) ถ้ารอบไหนเต็ม ลงชื่อรอได้ เราจะแจ้งทันทีเมื่อมีที่ว่าง</p></div>
+        <div class="dtable" id="dtable">
+          <div class="drow head-row" aria-hidden="true"><span>วันเดินทาง</span><span>ราคา</span><span>ที่นั่ง</span><span>ไกด์</span><span></span></div>
+        </div>
+      </div>
+
+      <div class="booking" id="booking" aria-labelledby="booking-title">
+        <h2 id="booking-title">จองทริป</h2>
+        <ol class="progress" id="progress"><li class="now">รอบและห้องพัก</li><li>ผู้ติดต่อ</li><li>ชำระเงิน</li></ol>
+
+        <div class="panel" id="p1">
+          <div class="picked"><small>รอบที่เลือก</small><b id="picked-date"></b></div>
+          <div class="row-q"><div>จำนวนผู้เดินทาง<small id="seat-hint"></small></div><div class="step"><button type="button" id="minus" aria-label="ลดจำนวนผู้เดินทาง">−</button><output id="pax" aria-live="polite">2</output><button type="button" id="plus" aria-label="เพิ่มจำนวนผู้เดินทาง">+</button></div></div>
+          <fieldset>
+            <legend>ห้องพัก</legend>
+            <label class="opt"><input type="radio" name="room" value="twin" checked><span>ห้องคู่<small>พักห้องละ 2 คน</small></span></label>
+            <label class="opt"><input type="radio" name="room" value="single"><span>ห้องเดี่ยว<small>เพิ่ม ฿2,500 ต่อคน</small></span></label>
+          </fieldset>
+          <div class="nav-btns"><button class="btn btn-sand" type="button" data-go="2">ถัดไป: ข้อมูลผู้ติดต่อ</button></div>
+        </div>
+
+        <div class="panel" id="p2" hidden>
+          <div class="two">
+            <div class="f"><label for="name">ชื่อ-นามสกุล</label><input id="name" autocomplete="name" aria-describedby="name-err"><span class="err" id="name-err"></span></div>
+            <div class="f"><label for="tel">เบอร์มือถือ</label><input id="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="08X-XXX-XXXX" aria-describedby="tel-err"><span class="err" id="tel-err"></span></div>
+          </div>
+          <div class="two">
+            <div class="f"><label for="email">อีเมล <small>(รับใบยืนยัน)</small></label><input id="email" type="email" autocomplete="email"></div>
+            <div class="f"><label for="diet">อาหาร</label><select id="diet"><option>ทานได้ทุกอย่าง</option><option>มังสวิรัติ</option><option>ฮาลาล</option><option>แพ้อาหาร (ระบุด้านล่าง)</option></select></div>
+          </div>
+          <div class="f"><label for="allergy">อาหารที่แพ้ / โรคประจำตัว <small>(ถ้ามี)</small></label><textarea id="allergy" aria-describedby="allergy-help"></textarea><span class="help" id="allergy-help">ใช้เพื่อเตรียมอาหารและดูแลระหว่างทริปเท่านั้น ลบให้หลังจบทริป 30 วัน</span></div>
+          <label class="consent"><input type="checkbox" id="consent">ยินยอมให้เดินดง ทริป ใช้ข้อมูลข้างต้นเพื่อการจองและดูแลระหว่างเดินทาง ตามนโยบายความเป็นส่วนตัว</label>
+          <span class="err" id="consent-err" style="color:#FFB4A3;font-size:14px"></span>
+          <div class="nav-btns"><button class="btn btn-ghost-l" type="button" data-go="1">ย้อนกลับ</button><button class="btn btn-sand" type="button" data-go="3">ถัดไป: ชำระเงิน</button></div>
+        </div>
+
+        <div class="panel" id="p3" hidden>
+          <div class="sum" id="sum"></div>
+          <fieldset>
+            <legend>ชำระวันนี้</legend>
+            <label class="opt"><input type="radio" name="pay" value="deposit" checked><span>มัดจำ 30%<small id="dep-note"></small></span></label>
+            <label class="opt"><input type="radio" name="pay" value="full"><span>ชำระเต็มจำนวน<small>ไม่ต้องจำวันครบกำหนด</small></span></label>
+          </fieldset>
+          <div class="qr"><svg viewBox="0 0 29 29" aria-hidden="true" id="qr"></svg><div><small>สแกนจ่ายด้วย PromptPay</small><b id="pay-now"></b><small>QR หมดอายุใน 15:00 นาที · ที่นั่งถูกล็อกไว้ให้แล้ว</small></div></div>
+          <div class="nav-btns"><button class="btn btn-ghost-l" type="button" data-go="2">ย้อนกลับ</button><button class="btn btn-sand" type="button" id="confirm">ฉันชำระแล้ว</button></div>
+          <p class="done-msg" id="done" role="status" hidden></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="guide">
+    <div class="wrap">
+      <div class="guide-card">
+        <div class="pfp" aria-hidden="true">ตม</div>
+        <div>
+          <blockquote>“ผมอยากให้คนมาน่านแล้วได้ช้าลงจริง ๆ ไม่ต้องรีบเช็กอินทุกจุด แต่ได้นั่งคุยกับคนที่นี่”</blockquote>
+          <cite>พี่ต้อม · ไกด์ท้องถิ่นน่าน 12 ปี · บัตรมัคคุเทศก์ถูกต้อง</cite>
+        </div>
+      </div>
+      <div id="others">
+        <div class="sec-title" style="margin-top:36px"><p class="eyebrow">ทริปอื่น</p><h2>ไปต่อที่ไหนดี</h2></div>
+        <div class="others" id="other-trips"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block admin" aria-labelledby="admin-title">
+    <div class="wrap">
+      <div class="sec-title"><p class="eyebrow">หลังบ้านบริษัททัวร์</p><h2 id="admin-title">รายชื่อผู้เดินทาง</h2><p>ตัวอย่างหน้าที่ไกด์และทีมงานใช้เตรียมทริป เห็นห้องพัก อาหาร และสถานะการชำระของทุกคน</p></div>
+      <div class="admin-box">
+        <div class="admin-top"><div><b>น่าน ช้า ๆ · 3 ธ.ค. 2569</b><small>จองแล้ว 8 / 12 คน · ไกด์ พี่ต้อม</small></div><div class="pills"><span class="pill ok">ชำระครบ 4</span><span class="pill dep">มัดจำแล้ว 3</span><span class="pill due">ค้างชำระ 1</span></div></div>
+        <div class="mrow mhead" aria-hidden="true"><span>ผู้เดินทาง</span><span>ห้องพัก</span><span>อาหาร</span><span>การชำระ</span></div>
+        <div id="manifest"></div>
+        <div class="admin-actions"><button class="btn btn-forest" type="button">ส่งข้อมูลเตรียมตัวทาง LINE</button><button class="btn btn-line" type="button">พิมพ์รายชื่อ (A4)</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="sticky-cta"><div><small>น่าน ช้า ๆ · 4 วัน 3 คืน</small><b>เริ่ม ฿11,900</b></div><a class="btn btn-clay" href="#departures">เลือกรอบ</a></div>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div><b>เดินดง ทริป</b><p>ทริปธรรมชาติและวัฒนธรรมกลุ่มเล็ก ร่วมกับชุมชนท้องถิ่น</p></div>
+      <div><b>ติดต่อ</b><ul><li>LINE @derndong-demo</li><li>โทร 08X-XXX-XXXX</li></ul></div>
+      <div><b>ข้อมูล</b><ul><li>ใบอนุญาตนำเที่ยว 11/0XXXX</li><li>เงื่อนไขการยกเลิก</li><li>นโยบายความเป็นส่วนตัว</li></ul></div>
+    </div>
+    <p class="demo">Design 2 — Journey · ระบบ PaiTiew · ชื่อบริษัท ไกด์ ราคา และรายชื่อในหน้านี้เป็นข้อมูลตัวอย่าง</p>
+  </div>
+</footer>
+
+<script>
+  const baht = n => '฿' + n.toLocaleString('en-US');
+  const fmt = (iso, opt) => new Intl.DateTimeFormat('th-TH', { ...opt, timeZone: 'Asia/Bangkok' }).format(new Date(iso + 'T00:00:00+07:00'));
+  const addDays = (iso, n) => { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+  const rangeFmt = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Bangkok' });
+  const longDate = iso => fmt(iso, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+  /* ภาพภูเขาซ้อนชั้นแบบสร้างด้วยโค้ด */
+  function hills(id, tones = ['#C9D3B5', '#9DB083', '#6E8B3D', '#22473A'], sky = ['#F3D9B8', '#EDE4D2'], sun = '#E9B77F') {
+    return `<svg viewBox="0 0 400 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="s${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
+      <rect width="400" height="320" fill="url(#s${id})"/><circle cx="270" cy="110" r="40" fill="${sun}"/>
+      <path d="M0 170 Q70 110 140 150 T280 130 T400 140 V320 H0Z" fill="${tones[0]}"/>
+      <path d="M0 210 Q90 150 170 195 T330 175 T400 190 V320 H0Z" fill="${tones[1]}"/>
+      <path d="M0 250 Q110 205 210 240 T400 230 V320 H0Z" fill="${tones[2]}"/>
+      <path d="M0 290 Q130 260 260 285 T400 280 V320 H0Z" fill="${tones[3]}"/>
+      <path d="M60 300 q30 -12 60 0 M150 304 q30 -12 60 0 M240 300 q30 -12 60 0" stroke="#E3E9D2" stroke-width="2" fill="none" opacity=".6"/></svg>`;
+  }
+  document.getElementById('hero-art').innerHTML = hills('hero');
+
+  /* ---------- เส้นทางรายวัน + แผนที่ ---------- */
+  const days = [
+    { t: 'เมืองน่าน', where: 'สนามบินน่าน → วัดภูมินทร์ → ถนนคนเดิน', x: 60, y: 250, items: [['10:30', 'รับที่สนามบินน่าน ทานข้าวซอยน้ำหน้อย'], ['14:00', 'ปั่นจักรยานชมวัดภูมินทร์และกำแพงเมืองเก่า'], ['18:00', 'ถนนคนเดินกาดข่วงเมืองน่าน']], meals: 'กลางวัน · เย็น', stay: 'บูทีคโฮเทลในเมือง' },
+    { t: 'ปัว', where: 'ทุ่งนาปัว → ดอยภูคา', x: 160, y: 150, items: [['08:30', 'ปั่นจักรยานเลียบทุ่งนาขั้นบันได'], ['13:00', 'เดินป่าศึกษาธรรมชาติ ชมต้นชมพูภูคา 2 ชั่วโมง'], ['18:30', 'ดินเนอร์อาหารเมืองที่บ้านไม้ริมนา']], meals: 'เช้า · กลางวัน · เย็น', stay: 'รีสอร์ตริมนา' },
+    { t: 'บ่อเกลือ', where: 'บ่อเกลือสินเธาว์ → จุดชมวิว 1715', x: 260, y: 120, items: [['09:00', 'เรียนรู้การต้มเกลือภูเขาโบราณกับชาวบ้าน'], ['15:00', 'ชมพระอาทิตย์ตกที่จุดชมวิว 1715'], ['19:00', 'ล้อมวงกินข้าวกับเจ้าของโฮมสเตย์']], meals: 'เช้า · กลางวัน · เย็น', stay: 'โฮมสเตย์บ่อเกลือ' },
+    { t: 'สะปัน', where: 'หมู่บ้านสะปัน → สนามบินน่าน', x: 300, y: 70, items: [['08:00', 'เดินเล่นริมลำธารหมู่บ้านสะปัน กาแฟดอยท้องถิ่น'], ['11:30', 'ทานข้าวกลางวันแล้วเดินทางกลับ'], ['16:00', 'ส่งที่สนามบินน่าน']], meals: 'เช้า · กลางวัน', stay: '—' },
+  ];
+  document.getElementById('days').innerHTML = days.map((d, i) => `
+    <article class="day${i === 0 ? ' on' : ''}" data-day="${i}" tabindex="0" aria-label="วันที่ ${i + 1} ${d.t}">
+      <span class="num">0${i + 1}</span>
+      <div><h3>${d.t}</h3><p class="where">${d.where}</p>
+        <ul>${d.items.map(([tm, x]) => `<li><time>${tm}</time><span>${x}</span></li>`).join('')}</ul>
+        <div class="day-meta"><span>🍚 ${d.meals}</span>${d.stay !== '—' ? `<span>🛏️ ${d.stay}</span>` : ''}</div></div>
+    </article>`).join('');
+  const svg = document.querySelector('.map svg');
+  const LABEL = [[16, -14, 'start'], [18, 30, 'start'], [-18, 32, 'end'], [-18, -12, 'end']]; // วางชื่อไม่ให้ทับเส้นทาง
+  svg.insertAdjacentHTML('beforeend', days.map((d, i) => `<g class="stop${i === 0 ? ' on' : ''}" data-day="${i}" tabindex="0" role="button" aria-label="วันที่ ${i + 1} ${d.t}"><circle cx="${d.x}" cy="${d.y}" r="31" fill="transparent"/><circle class="dot" cx="${d.x}" cy="${d.y}" r="11"/><text x="${d.x}" y="${d.y + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#173328">${i + 1}</text><text x="${d.x + LABEL[i][0]}" y="${d.y + LABEL[i][1]}" text-anchor="${LABEL[i][2]}" font-size="13" font-weight="600" fill="#173328">${d.t}</text></g>`).join(''));
+  const setDay = i => document.querySelectorAll('[data-day]').forEach(el => el.classList.toggle('on', +el.dataset.day === +i));
+  document.querySelectorAll('[data-day]').forEach(el => {
+    el.addEventListener('click', () => setDay(el.dataset.day));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDay(el.dataset.day); } });
+  });
+
+  /* ---------- รอบเดินทาง ---------- */
+  const CAP = 12, SINGLE = 2500, DEPOSIT_RATE = .3, BALANCE_DAYS = 21;
+  const deps = [
+    { date: '2026-11-19', price: 12900, left: 4, guide: 'พี่ต้อม' },
+    { date: '2026-12-03', price: 12900, left: 4, guide: 'พี่ต้อม' },
+    { date: '2026-12-17', price: 12900, left: 0, guide: 'พี่จันทร์' },
+    { date: '2026-12-31', price: 15900, left: 6, guide: 'พี่ต้อม', note: 'ปีใหม่' },
+    { date: '2027-01-14', price: 12900, left: 12, guide: 'พี่จันทร์' },
+    { date: '2027-02-11', price: 11900, left: 10, guide: 'พี่จันทร์' },
+  ];
+  const state = { dep: 1, pax: 2, step: 1 };
+  const table = document.getElementById('dtable');
+  table.insertAdjacentHTML('beforeend', deps.map((d, i) => {
+    const booked = CAP - d.left;
+    const status = d.left === 0 ? ['full', 'เต็ม'] : d.left <= 4 ? ['low', `เหลือ ${d.left} ที่`] : ['', `ว่าง ${d.left} ที่`];
+    return `<div class="drow" data-i="${i}">
+      <div class="when"><b>${rangeFmt.formatRange(new Date(d.date + 'T00:00:00+07:00'), new Date(addDays(d.date, 3) + 'T00:00:00+07:00'))}</b><small>${fmt(d.date, { weekday: 'long' })}${d.note ? ' · ' + d.note : ''}</small></div>
+      <div class="price">${baht(d.price)}</div>
+      <div class="seats"><span class="seat-dots" aria-hidden="true">${Array.from({ length: CAP }, (_, k) => `<i class="${k < booked ? '' : 'free'}"></i>`).join('')}</span><span class="status ${status[0]}">${status[1]}</span></div>
+      <div class="guide">ไกด์ ${d.guide}</div>
+      <div class="act">${d.left === 0 ? `<button class="btn btn-line" type="button" data-wait="${i}">ลงชื่อรอ</button>` : `<button class="btn btn-forest" type="button" data-pick="${i}">เลือกรอบนี้</button>`}</div>
+    </div>`;
+  }).join(''));
+  table.addEventListener('click', e => {
+    const pick = e.target.closest('[data-pick]'), wait = e.target.closest('[data-wait]');
+    if (wait) { wait.textContent = 'ลงชื่อแล้ว ✓'; wait.disabled = true; return; }
+    if (!pick) return;
+    state.dep = +pick.dataset.pick;
+    go(1);
+    render();
+    document.getElementById('booking').scrollIntoView({ block: 'start' });
+  });
+
+  /* ---------- จอง 3 ขั้น ---------- */
+  const room = () => document.querySelector('[name=room]:checked').value;
+  function totals() {
+    const d = deps[state.dep];
+    const base = d.price * state.pax, single = room() === 'single' ? SINGLE * state.pax : 0;
+    const total = base + single, deposit = Math.round(total * DEPOSIT_RATE / 100) * 100;
+    const due = addDays(d.date, -BALANCE_DAYS);
+    return { d, base, single, total, deposit, due };
+  }
+  function render() {
+    const { d, base, single, total, deposit, due } = totals();
+    state.pax = Math.max(1, Math.min(state.pax, d.left));
+    document.querySelectorAll('.drow[data-i]').forEach(r => r.classList.toggle('on', +r.dataset.i === state.dep));
+    document.getElementById('picked-date').textContent = longDate(d.date) + ' · ' + baht(d.price) + ' / คน';
+    document.getElementById('pax').textContent = state.pax;
+    document.getElementById('seat-hint').textContent = `รอบนี้เหลือ ${d.left} ที่`;
+    document.getElementById('minus').disabled = state.pax <= 1;
+    document.getElementById('plus').disabled = state.pax >= d.left;
+    document.getElementById('sum').innerHTML = `<div><span>${baht(d.price)} × ${state.pax} คน</span><span>${baht(base)}</span></div>${single ? `<div><span>ห้องเดี่ยว × ${state.pax}</span><span>${baht(single)}</span></div>` : ''}<div class="total"><span>รวม</span><span>${baht(total)}</span></div>`;
+    document.getElementById('dep-note').textContent = `${baht(deposit)} วันนี้ · ที่เหลือ ${baht(total - deposit)} ภายใน ${fmt(due, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    const pay = document.querySelector('[name=pay]:checked').value;
+    document.getElementById('pay-now').textContent = baht(pay === 'full' ? total : deposit);
+  }
+  document.getElementById('minus').addEventListener('click', () => { state.pax--; render(); });
+  document.getElementById('plus').addEventListener('click', () => { state.pax++; render(); });
+  document.querySelectorAll('[name=room], [name=pay]').forEach(r => r.addEventListener('change', render));
+
+  const isMobile = v => /^0[689]\d{8}$/.test(v.replace(/\D/g, ''));
+  function validate() {
+    const name = document.getElementById('name'), tel = document.getElementById('tel'), consent = document.getElementById('consent');
+    const errs = {
+      name: name.value.trim().length < 4 ? 'กรอกชื่อและนามสกุลตามบัตรประชาชน' : '',
+      tel: !isMobile(tel.value) ? 'กรอกเบอร์มือถือ 10 หลัก ขึ้นต้นด้วย 06, 08 หรือ 09' : '',
+      consent: !consent.checked ? 'กรุณาติ๊กยินยอมเพื่อดำเนินการจองต่อ' : '',
+    };
+    name.setAttribute('aria-invalid', String(!!errs.name));
+    tel.setAttribute('aria-invalid', String(!!errs.tel));
+    document.getElementById('name-err').textContent = errs.name;
+    document.getElementById('tel-err').textContent = errs.tel;
+    document.getElementById('consent-err').textContent = errs.consent;
+    const first = errs.name ? name : errs.tel ? tel : errs.consent ? consent : null;
+    first?.focus();
+    return !first;
+  }
+  function go(step) {
+    if (step === 3 && state.step === 2 && !validate()) return;
+    state.step = step;
+    [1, 2, 3].forEach(n => { document.getElementById('p' + n).hidden = n !== step; });
+    document.querySelectorAll('#progress li').forEach((li, i) => { li.className = i + 1 < step ? 'done' : i + 1 === step ? 'now' : ''; });
+    document.getElementById('done').hidden = true;
+  }
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go(+b.dataset.go)));
+  document.getElementById('confirm').addEventListener('click', () => {
+    const msg = document.getElementById('done');
+    msg.textContent = 'ได้รับการแจ้งชำระแล้ว ระบบกำลังตรวจยอดกับธนาคาร ใบยืนยันการจองจะส่งไปทาง LINE และอีเมลภายใน 5 นาที (ตัวอย่าง)';
+    msg.hidden = false;
+  });
+
+  /* QR ตัวอย่าง (ลวดลายสุ่ม ไม่ใช่ QR จริง) */
+  (() => {
+    let seed = 7, cells = '';
+    const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    const finder = (x, y) => `<rect x="${x}" y="${y}" width="7" height="7" fill="#1E2722"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3" fill="#1E2722"/>`;
+    for (let y = 0; y < 29; y++) for (let x = 0; x < 29; x++) {
+      const inFinder = (x < 8 && y < 8) || (x > 20 && y < 8) || (x < 8 && y > 20);
+      if (!inFinder && rnd() > .55) cells += `<rect x="${x}" y="${y}" width="1" height="1" fill="#1E2722"/>`;
+    }
+    document.getElementById('qr').innerHTML = `<rect width="29" height="29" fill="#fff"/>${cells}${finder(0, 0)}${finder(22, 0)}${finder(0, 22)}`;
+  })();
+  render();
+
+  /* ---------- ทริปอื่น ---------- */
+  const others = [
+    ['เชียงดาว ดาวเต็มฟ้า', '3 วัน 2 คืน · ฿8,900', ['#B9C7DA', '#8EA2BD', '#5D7393', '#2C3E5C'], ['#2C3E5C', '#8EA2BD'], '#F5E6B8'],
+    ['แม่กำปอง กาแฟและน้ำตก', '2 วัน 1 คืน · ฿5,900', ['#CFE0C3', '#A6C48A', '#6E8B3D', '#3B5A2A'], ['#F6E7C8', '#EDE4D2'], '#F2C67A'],
+    ['อุ้มผาง ล่องแก่ง', '4 วัน 3 คืน · ฿13,900', ['#D9CDB4', '#B4A27D', '#7E6B48', '#4A3F2A'], ['#F3D2B0', '#EDE4D2'], '#E9A16F'],
+  ];
+  document.getElementById('other-trips').innerHTML = others.map(([n, s, tones, sky, sun], i) => `<a class="trip" href="#top"><div class="pic">${hills('o' + i, tones, sky, sun)}</div><div class="t"><h3>${n}</h3><p>${s}</p></div></a>`).join('');
+
+  /* ---------- หลังบ้าน: รายชื่อผู้เดินทาง ---------- */
+  const people = [
+    ['คุณกานต์ ส.', '081-XXX-4521', 'ห้องคู่ #1', 'ทานได้ทุกอย่าง', ['ok', 'ชำระครบ']],
+    ['คุณมุก ส.', '089-XXX-1180', 'ห้องคู่ #1', 'มังสวิรัติ', ['ok', 'ชำระครบ']],
+    ['คุณเอก ว.', '062-XXX-7710', 'ห้องเดี่ยว #2', 'แพ้กุ้ง', ['dep', 'มัดจำแล้ว']],
+    ['คุณปุ๊ก ท.', '095-XXX-3326', 'ห้องคู่ #3', 'ทานได้ทุกอย่าง', ['dep', 'มัดจำแล้ว']],
+    ['คุณนัท พ.', '086-XXX-9054', 'ห้องคู่ #3', 'ฮาลาล', ['due', 'ค้าง ฿9,000']],
+  ];
+  document.getElementById('manifest').innerHTML = people.map(([n, tel, r, f, [c, s]]) => `<div class="mrow"><div class="nm"><b>${n}</b><small>${tel}</small></div><div class="room">${r}</div><div class="food">${f !== 'ทานได้ทุกอย่าง' ? `<span class="pill diet">${f}</span>` : f}</div><span class="pill pay ${c}">${s}</span></div>`).join('');
+
+  /* ---------- drawer ---------- */
+  const drawer = document.getElementById('drawer'), burger = document.getElementById('burger');
+  const setDrawer = open => { drawer.hidden = !open; burger.setAttribute('aria-expanded', String(open)); document.body.style.overflow = open ? 'hidden' : ''; (open ? document.getElementById('drawer-close') : burger).focus(); };
+  burger.addEventListener('click', () => setDrawer(true));
+  document.getElementById('drawer-close').addEventListener('click', () => setDrawer(false));
+  drawer.addEventListener('click', e => { if (e.target === drawer || e.target.closest('a')) setDrawer(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !drawer.hidden) setDrawer(false); });
+</script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaiTiew · Design 1 — Horizon</title>
+<meta name="description" content="Design 1 ของ PaiTiew ระบบจองทัวร์: โทนทะเลสดใส ค้นหาทัวร์ เลือกวันเดินทางพร้อมที่นั่งคงเหลือ คำนวณราคาและมัดจำทันที (ตัวอย่าง: ทะเลใส ทราเวล)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Design 1 — Horizon: ทัวร์ทะเล/ในประเทศ เน้นค้นหา → เลือกรอบ → จองมัดจำ
+     เขียนแบบ mobile-first: base = มือถือ แล้วเพิ่มด้วย min-width 640 / 768 / 1024 / 1280 (§15.2.1) */
+  :root {
+    --sea: #0E7C86;
+    --sea-deep: #0A5960;
+    --sky: #E3F4F5;
+    --coral: #FF6B4A;
+    --coral-deep: #D9472A;
+    --sand: #FFF7EE;
+    --white: #FFFFFF;
+    --ink: #0F2A33;
+    --muted: #55707A;
+    --line: #D9E7EA;
+    --ok: #13795B;
+    --warn: #B45309;
+    --line-green: #06C755;
+    --head-h: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--head-h) + 12px); }
+  body { font-family: 'Sarabun', system-ui, sans-serif; background: var(--sand); color: var(--ink); font-size: 16px; line-height: 1.6; }
+  h1, h2, h3, .k { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.3; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  :focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 14px; font-weight: 700; white-space: nowrap; }
+  .btn-coral { background: var(--coral); color: var(--white); }
+  .btn-sea { background: var(--sea); color: var(--white); }
+  .btn-ghost { border: 1.5px solid var(--line); background: var(--white); }
+  .btn-line { background: var(--line-green); color: var(--white); }
+  .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+
+  /* ---------- Header + drawer ---------- */
+  .head { position: sticky; top: 0; z-index: 40; background: rgba(255, 247, 238, .94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .head .wrap { display: flex; align-items: center; gap: 12px; height: var(--head-h); }
+  .logo { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-family: 'Kanit'; font-size: 22px; font-weight: 700; color: var(--sea-deep); }
+  .logo-mark { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(160deg, var(--coral) 0 45%, var(--sea) 45%); display: grid; place-items: center; color: var(--white); font-size: 18px; }
+  .nav { display: none; }
+  .head-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .head-right .btn { display: none; }
+  .burger { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; border: 1.5px solid var(--line); background: var(--white); }
+  .drawer { position: fixed; inset: 0; z-index: 60; background: rgba(15, 42, 51, .45); }
+  .drawer[hidden] { display: none; }
+  .drawer-panel { position: absolute; top: 0; right: 0; width: min(340px, 88vw); height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: calc(12px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); background: var(--sand); }
+  .drawer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Kanit'; font-size: 18px; }
+  .drawer a.m { display: flex; align-items: center; min-height: 52px; padding: 0 12px; border-radius: 12px; font-weight: 600; font-size: 18px; }
+  .drawer .btn { margin-top: 10px; }
+
+  /* ---------- Hero + ค้นหา ---------- */
+  .hero { position: relative; overflow: hidden; color: var(--white); }
+  .hero-art { position: absolute; inset: 0; }
+  .hero-art svg { width: 100%; height: 100%; display: block; }
+  .hero::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(8, 70, 76, .62) 0%, rgba(8, 70, 76, .28) 55%, rgba(8, 70, 76, 0) 100%); }
+  .hero .wrap { position: relative; z-index: 2; padding-top: 40px; padding-bottom: 28px; }
+  .hero-kicker { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .2); font-weight: 600; font-size: 14px; }
+  .hero h1 { font-size: clamp(30px, 8vw, 56px); margin-top: 12px; max-width: 14ch; text-shadow: 0 2px 18px rgba(10, 89, 96, .35); }
+  .hero p.lead { max-width: 40ch; margin-top: 8px; font-size: 17px; text-shadow: 0 1px 10px rgba(10, 89, 96, .4); }
+  .search { margin-top: 22px; display: grid; gap: 10px; padding: 14px; border-radius: 20px; background: var(--white); color: var(--ink); box-shadow: 0 18px 40px rgba(10, 89, 96, .25); }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field label { font-size: 13px; font-weight: 700; color: var(--muted); }
+  .field select { min-height: 48px; padding: 0 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--white); font-size: 16px; }
+  .trust-row { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; font-size: 14px; font-weight: 600; text-shadow: 0 1px 8px rgba(10, 89, 96, .5); }
+  .trust-row span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* ---------- หมวด + การ์ดทัวร์ ---------- */
+  section.block { padding: 36px 0; }
+  .sec-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+  .sec-head h2 { font-size: 26px; }
+  .sec-head p { color: var(--muted); }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--line); background: var(--white); font-weight: 600; }
+  .chip[aria-pressed="true"] { background: var(--sea); border-color: var(--sea); color: var(--white); }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .tour { display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; background: var(--white); border: 1px solid var(--line); transition: box-shadow .2s, transform .2s; }
+  .tour .media { position: relative; aspect-ratio: 16 / 10; }
+  .tour .media svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tour .media .tag { position: absolute; top: 10px; left: 10px; background: var(--white); color: var(--coral-deep); }
+  .tour .media .dur { top: auto; bottom: 10px; background: rgba(15, 42, 51, .78); color: var(--white); }
+  .tour .body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; flex: 1; }
+  .tour .where { color: var(--muted); font-size: 14px; }
+  .tour h3 { font-size: 18px; }
+  .rating { font-size: 14px; color: var(--muted); }
+  .rating b { color: var(--ink); }
+  .tour .foot { margin-top: auto; padding-top: 10px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; border-top: 1px dashed var(--line); }
+  .from small { display: block; color: var(--muted); font-size: 13px; }
+  .from b { font-family: 'Kanit'; font-size: 22px; color: var(--coral-deep); }
+  .seats-low { color: var(--warn); font-size: 13px; font-weight: 700; }
+  .empty { display: none; padding: 32px; border-radius: 20px; border: 2px dashed var(--line); color: var(--muted); text-align: center; }
+
+  /* ---------- หน้ารายละเอียด + จอง ---------- */
+  .detail { background: var(--white); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .detail-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .crumb { color: var(--muted); font-size: 14px; }
+  .detail h2 { font-size: clamp(24px, 6vw, 34px); margin-top: 4px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .facts span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 12px; background: var(--sky); color: var(--sea-deep); font-weight: 600; font-size: 14px; }
+  .gallery { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; margin-top: 16px; aspect-ratio: 16 / 9; }
+  .gallery div { border-radius: 16px; overflow: hidden; }
+  .gallery div:first-child { grid-row: span 2; }
+  .gallery svg { width: 100%; height: 100%; display: block; }
+  .highlights { display: grid; gap: 8px; margin-top: 18px; }
+  .highlights li { list-style: none; display: flex; gap: 10px; }
+  .highlights svg { color: var(--sea); margin-top: 3px; }
+  h3.sub { font-size: 20px; margin: 26px 0 10px; }
+  .day { border: 1px solid var(--line); border-radius: 16px; margin-bottom: 8px; background: var(--sand); }
+  .day summary { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 16px; cursor: pointer; list-style: none; font-weight: 700; }
+  .day summary::-webkit-details-marker { display: none; }
+  .day summary .n { width: 34px; height: 34px; border-radius: 10px; background: var(--sea); color: var(--white); display: grid; place-items: center; font-family: 'Kanit'; flex: none; }
+  .day summary::after { content: '+'; margin-left: auto; font-size: 22px; color: var(--sea); }
+  .day[open] summary::after { content: '−'; }
+  .day ul { padding: 0 16px 14px 62px; display: grid; gap: 4px; color: var(--muted); }
+  .day li::marker { color: var(--coral); }
+  .incl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .incl div { padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); }
+  .incl b { display: block; margin-bottom: 4px; }
+  .incl li { list-style: none; color: var(--muted); }
+  .incl .yes li::before { content: '✓ '; color: var(--ok); font-weight: 700; }
+  .incl .no li::before { content: '✕ '; color: var(--coral-deep); font-weight: 700; }
+
+  .book { border-radius: 22px; border: 1.5px solid var(--line); background: var(--white); padding: 18px; box-shadow: 0 14px 34px rgba(15, 42, 51, .08); }
+  .book h3 { font-size: 20px; }
+  .book .hint { color: var(--muted); font-size: 14px; }
+  .dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 16px; }
+  .date { min-height: 72px; padding: 8px 10px; border-radius: 14px; border: 1.5px solid var(--line); text-align: left; display: flex; flex-direction: column; gap: 0; line-height: 1.35; }
+  .date b { font-size: 15px; }
+  .date span { font-size: 13px; color: var(--muted); }
+  .date em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--ok); }
+  .date em.low { color: var(--warn); }
+  .date[aria-pressed="true"] { border-color: var(--sea); background: var(--sky); box-shadow: inset 0 0 0 1px var(--sea); }
+  .date:disabled { opacity: .5; cursor: not-allowed; text-decoration: line-through; }
+  .pax { display: grid; gap: 10px; }
+  .pax-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .pax-row small { display: block; color: var(--muted); font-size: 13px; }
+  .step { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 14px; }
+  .step button { width: 44px; height: 44px; font-size: 22px; font-weight: 700; color: var(--sea); }
+  .step button:disabled { color: #B7C7CB; cursor: not-allowed; }
+  .step output { min-width: 32px; text-align: center; font-weight: 700; }
+  .single { display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 4px; }
+  .single input { width: 22px; height: 22px; accent-color: var(--sea); }
+  .sum { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 4px; font-size: 15px; }
+  .sum div { display: flex; justify-content: space-between; gap: 12px; }
+  .sum .total { font-family: 'Kanit'; font-size: 20px; }
+  .deposit { margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: var(--sky); display: grid; gap: 2px; }
+  .deposit b { font-family: 'Kanit'; font-size: 22px; color: var(--sea-deep); }
+  .deposit small { color: var(--muted); }
+  .book .btn { width: 100%; margin-top: 14px; }
+  .note { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .toast { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #E7F6EE; color: var(--ok); font-weight: 600; font-size: 14px; }
+  .toast[hidden] { display: none; }
+
+  .sticky-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--white); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(15, 42, 51, .08); }
+  .sticky-cta div { flex: 1; min-width: 0; line-height: 1.3; }
+  .sticky-cta small { display: block; color: var(--muted); font-size: 13px; }
+  .sticky-cta b { font-family: 'Kanit'; font-size: 20px; color: var(--coral-deep); }
+
+  /* ---------- รีวิว + ความน่าเชื่อถือ ---------- */
+  .reviews { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .review { flex: 0 0 85%; scroll-snap-align: start; padding: 16px; border-radius: 18px; background: var(--white); border: 1px solid var(--line); }
+  .review .stars { color: #F59E0B; letter-spacing: 2px; }
+  .review p { margin: 6px 0 10px; }
+  .review small { color: var(--muted); }
+  .license { display: grid; gap: 12px; margin-top: 20px; padding: 18px; border-radius: 20px; background: var(--sea-deep); color: var(--white); }
+  .license b { font-family: 'Kanit'; font-size: 18px; }
+  .license p { opacity: .85; font-size: 15px; }
+  .pay { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pay span { padding: 4px 12px; border-radius: 10px; background: rgba(255, 255, 255, .14); font-weight: 600; font-size: 14px; }
+
+  /* ---------- หลังบ้านบริษัททัวร์ ---------- */
+  .admin { background: var(--ink); color: #E8F2F4; }
+  .admin .sec-head p { color: #9FB6BC; }
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .kpi { padding: 14px; border-radius: 16px; background: #173B46; }
+  .kpi small { display: block; color: #9FB6BC; font-size: 13px; }
+  .kpi b { font-family: 'Kanit'; font-size: 24px; }
+  .kpi span { font-size: 13px; color: #7FE0C2; }
+  .deps { display: grid; gap: 10px; }
+  .dep { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 14px; border-radius: 16px; background: #173B46; }
+  .dep .t b { display: block; }
+  .dep .t small { color: #9FB6BC; }
+  .fill { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; font-size: 13px; color: #9FB6BC; }
+  .bar { height: 8px; border-radius: 99px; background: #0F2A33; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; background: #4FD1C5; }
+  .bar i.full { background: var(--coral); }
+  .st { grid-column: 2; grid-row: 1; align-self: start; justify-self: end; font-size: 12px; white-space: nowrap; }
+  .st.go { background: #134E4A; color: #7FE0C2; }
+  .st.wait { background: #4A3410; color: #FCD34D; }
+  .st.full { background: #4C1D16; color: #FFB4A3; }
+  .dep .money { display: none; }
+
+  /* ---------- FAQ + footer ---------- */
+  .faq details { border-bottom: 1px solid var(--line); }
+  .faq summary { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-weight: 700; list-style: none; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; color: var(--sea); font-size: 22px; }
+  .faq details[open] summary::after { content: '−'; }
+  .faq p { padding-bottom: 14px; color: var(--muted); }
+  footer { padding: 32px 0 calc(110px + env(safe-area-inset-bottom)); background: var(--sea-deep); color: #CFE6E8; font-size: 14px; }
+  footer .cols { display: grid; gap: 18px; }
+  footer b { color: var(--white); }
+  footer ul { list-style: none; display: grid; gap: 4px; margin-top: 6px; }
+  footer .demo { margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .18); opacity: .8; }
+
+  @media (hover: hover) {
+    .tour:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(15, 42, 51, .12); }
+    .chip:hover, .date:not(:disabled):hover { border-color: var(--sea); }
+    .btn-coral:hover { background: var(--coral-deep); }
+    .btn-sea:hover { background: var(--sea-deep); }
+    .nav a:hover { color: var(--sea); }
+  }
+
+  @media (min-width: 640px) {
+    .wrap { padding: 0 24px; }
+    .search { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .search .btn { grid-column: 1 / -1; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dates { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .incl { grid-template-columns: 1fr 1fr; }
+    .review { flex-basis: 46%; }
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    footer .cols { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 768px) {
+    .hero .wrap { padding-top: 64px; padding-bottom: 48px; }
+    .dep { grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) auto auto; align-items: center; }
+    .fill { grid-column: auto; }
+    .dep .money { display: block; text-align: right; font-weight: 700; }
+    .dep .money small { display: block; font-weight: 400; color: #9FB6BC; font-size: 12px; }
+    .st { grid-column: auto; grid-row: auto; align-self: center; }
+  }
+  @media (min-width: 1024px) {
+    .nav { display: flex; gap: 4px; margin-left: 20px; font-weight: 600; }
+    .nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px; }
+    .head-right .btn { display: inline-flex; }
+    .burger { display: none; }
+    .search { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; max-width: 920px; }
+    .search .btn { grid-column: auto; }
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .detail-grid { grid-template-columns: minmax(0, 1fr) 380px; gap: 36px; align-items: start; }
+    .book { position: sticky; top: calc(var(--head-h) + 16px); }
+    .dates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sticky-cta { display: none; }
+    .review { flex-basis: 31.5%; }
+    .license { grid-template-columns: 1fr auto; align-items: center; }
+    footer { padding-bottom: 32px; }
+  }
+  @media (min-width: 1280px) {
+    .grid.tours { gap: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="ทะเลใส ทราเวล หน้าแรก"><span class="logo-mark" aria-hidden="true">⛵</span>ทะเลใส</a>
+    <nav class="nav" aria-label="เมนูหลัก">
+      <a href="#tours">ทัวร์ทั้งหมด</a><a href="#detail">ทัวร์แนะนำ</a><a href="#reviews">รีวิว</a><a href="#faq">คำถามที่พบบ่อย</a>
+    </nav>
+    <div class="head-right">
+      <a class="btn btn-ghost" href="#faq">เช็กการจอง</a>
+      <a class="btn btn-line" href="#contact">LINE สอบถาม</a>
+      <button class="burger" type="button" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="drawer" id="burger"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="เมนู">
+    <div class="drawer-top">เมนู<button class="burger" type="button" aria-label="ปิดเมนู" id="drawer-close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <a class="m" href="#tours">ทัวร์ทั้งหมด</a><a class="m" href="#detail">ทัวร์แนะนำ</a><a class="m" href="#reviews">รีวิว</a><a class="m" href="#faq">คำถามที่พบบ่อย</a><a class="m" href="#faq">เช็กการจอง</a>
+    <a class="btn btn-line" href="#contact">LINE สอบถาม</a>
+  </div>
+</div>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-art" id="hero-art"></div>
+    <div class="wrap">
+      <span class="hero-kicker">🌊 ทัวร์ทะเลไทย จัดเองทุกทริป</span>
+      <h1>ทะเลสวยกว่าที่คิด จองง่ายกว่าที่เคย</h1>
+      <p class="lead">เห็นที่นั่งว่างจริงทุกรอบ จ่ายมัดจำเพียง ฿2,000 ต่อคน ที่เหลือจ่ายก่อนเดินทาง</p>
+      <form class="search" onsubmit="event.preventDefault(); document.getElementById('tours').scrollIntoView();">
+        <div class="field"><label for="s-where">ไปที่ไหน</label><select id="s-where"><option>ทุกจังหวัด</option><option>ตราด</option><option>พังงา</option><option>สตูล</option><option>เชียงราย</option></select></div>
+        <div class="field"><label for="s-when">เดือนที่เดินทาง</label><select id="s-when"><option>พฤศจิกายน 2569</option><option>ธันวาคม 2569</option><option>มกราคม 2570</option></select></div>
+        <div class="field"><label for="s-who">ผู้เดินทาง</label><select id="s-who"><option>2 ผู้ใหญ่</option><option>2 ผู้ใหญ่ 1 เด็ก</option><option>1 ผู้ใหญ่</option><option>กรุ๊ป 10 คนขึ้นไป</option></select></div>
+        <button class="btn btn-coral" type="submit"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>ค้นหาทัวร์</button>
+      </form>
+      <div class="trust-row"><span>✓ ใบอนุญาตนำเที่ยวถูกต้อง</span><span>✓ ประกันอุบัติเหตุทุกทริป</span><span>★ 4.9 จาก 2,300 รีวิว</span></div>
+    </div>
+  </section>
+
+  <section class="block" id="tours">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>ทัวร์ยอดนิยม</h2><p>ราคาต่อคน รวมรถ เรือ ที่พัก อาหาร และไกด์</p></div><span class="rating" id="count"></span></div>
+      <div class="chips" role="group" aria-label="กรองตามประเภททัวร์">
+        <button class="chip" type="button" data-cat="all" aria-pressed="true">ทั้งหมด</button>
+        <button class="chip" type="button" data-cat="sea" aria-pressed="false">🏝️ ทะเล-เกาะ</button>
+        <button class="chip" type="button" data-cat="mountain" aria-pressed="false">⛰️ ภูเขา</button>
+        <button class="chip" type="button" data-cat="day" aria-pressed="false">☀️ วันเดย์ทริป</button>
+        <button class="chip" type="button" data-cat="family" aria-pressed="false">👨‍👩‍👧 ครอบครัว</button>
+      </div>
+      <div class="grid tours" id="tour-grid"></div>
+      <p class="empty" id="empty">ยังไม่มีทัวร์ในหมวดนี้ ลองเลือกหมวดอื่น หรือทัก LINE ให้เราจัดทริปส่วนตัว</p>
+    </div>
+  </section>
+
+  <section class="block detail" id="detail">
+    <div class="wrap detail-grid">
+      <div>
+        <p class="crumb">ทัวร์ทั้งหมด › ตราด › เกาะกูด</p>
+        <h2>เกาะกูด–เกาะหมาก 3 วัน 2 คืน</h2>
+        <p class="rating"><b>★ 4.9</b> · 312 รีวิว · ออกเดินทางจากกรุงเทพฯ</p>
+        <div class="facts"><span>🚐 รถตู้ VIP + เรือสปีดโบ๊ท</span><span>🏨 รีสอร์ตติดทะเล</span><span>🍽️ 6 มื้อ</span><span>👥 กลุ่มละไม่เกิน 20 คน</span></div>
+        <div class="gallery" id="gallery"></div>
+        <ul class="highlights">
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>ดำน้ำตื้น 3 จุด อ่าวพร้าว–เกาะรัง พร้อมอุปกรณ์</li>
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>น้ำตกคลองเจ้า และหมู่บ้านประมงอ่าวสลัด</li>
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>ดูพระอาทิตย์ตกที่ท่าเรือเกาะหมาก</li>
+        </ul>
+
+        <h3 class="sub">กำหนดการเดินทาง</h3>
+        <details class="day" open><summary><span class="n">1</span>กรุงเทพฯ – ท่าเรือแหลมศอก – เกาะกูด</summary><ul><li>06:00 รถตู้รับที่จุดนัดหมาย (อนุสาวรีย์ชัยฯ / บางนา)</li><li>12:30 ลงเรือสปีดโบ๊ทข้ามไปเกาะกูด เช็กอินรีสอร์ต</li><li>16:00 เล่นน้ำหน้ารีสอร์ต · 19:00 ซีฟู้ดริมทะเล</li></ul></details>
+        <details class="day"><summary><span class="n">2</span>ดำน้ำเกาะรัง – น้ำตกคลองเจ้า</summary><ul><li>09:00 ดำน้ำตื้น 3 จุด พร้อมอาหารกลางวันบนเรือ</li><li>15:00 น้ำตกคลองเจ้า · อิสระพักผ่อน</li></ul></details>
+        <details class="day"><summary><span class="n">3</span>เกาะหมาก – กลับกรุงเทพฯ</summary><ul><li>09:30 ปั่นจักรยานรอบเกาะหมาก</li><li>13:00 ลงเรือกลับฝั่ง ถึงกรุงเทพฯ ประมาณ 20:00</li></ul></details>
+
+        <h3 class="sub">ราคานี้รวมอะไร</h3>
+        <div class="incl">
+          <div class="yes"><b>รวมแล้ว</b><ul><li>รถตู้ VIP ไป-กลับ และเรือสปีดโบ๊ท</li><li>ที่พัก 2 คืน (ห้องละ 2 ท่าน)</li><li>อาหาร 6 มื้อ น้ำดื่ม และไกด์</li><li>ประกันอุบัติเหตุวงเงิน 1,000,000 บาท</li></ul></div>
+          <div class="no"><b>ไม่รวม</b><ul><li>ค่าใช้จ่ายส่วนตัวและเครื่องดื่มแอลกอฮอล์</li><li>ทิปไกด์และคนขับ (แล้วแต่ความพอใจ)</li><li>ห้องพักเดี่ยว (เพิ่ม ฿1,500)</li></ul></div>
+        </div>
+      </div>
+
+      <aside class="book" id="book" aria-labelledby="book-title">
+        <h3 id="book-title">เลือกรอบเดินทาง</h3>
+        <p class="hint">ที่นั่งอัปเดตทันทีเมื่อมีคนจอง</p>
+        <div class="dates" id="dates" role="group" aria-label="รอบเดินทาง"></div>
+        <div class="pax">
+          <div class="pax-row"><div>ผู้ใหญ่<small id="p-adult">฿0 / คน</small></div><div class="step"><button type="button" data-pax="adult" data-d="-1" aria-label="ลดผู้ใหญ่">−</button><output id="n-adult" aria-live="polite">2</output><button type="button" data-pax="adult" data-d="1" aria-label="เพิ่มผู้ใหญ่">+</button></div></div>
+          <div class="pax-row"><div>เด็ก 4–11 ปี<small id="p-child">฿0 / คน (เตียงเสริม)</small></div><div class="step"><button type="button" data-pax="child" data-d="-1" aria-label="ลดเด็ก">−</button><output id="n-child" aria-live="polite">0</output><button type="button" data-pax="child" data-d="1" aria-label="เพิ่มเด็ก">+</button></div></div>
+          <label class="single"><input type="checkbox" id="single">พักห้องเดี่ยว (+฿1,500 / คน)</label>
+        </div>
+        <div class="sum" aria-live="polite">
+          <div><span id="l-adult">ผู้ใหญ่</span><span id="v-adult"></span></div>
+          <div id="row-child"><span id="l-child">เด็ก</span><span id="v-child"></span></div>
+          <div id="row-single"><span>ห้องพักเดี่ยว</span><span id="v-single"></span></div>
+          <div class="total"><span>รวมทั้งหมด</span><span id="v-total"></span></div>
+        </div>
+        <div class="deposit"><small>ชำระมัดจำวันนี้</small><b id="v-deposit"></b><small id="v-balance"></small></div>
+        <button class="btn btn-coral" type="button" id="book-btn">จองที่นั่งและชำระมัดจำ</button>
+        <p class="toast" id="toast" role="status" hidden></p>
+        <p class="note">ชำระด้วย PromptPay หรือบัตรเครดิต · ยกเลิกก่อนเดินทาง 15 วันคืนมัดจำเต็มจำนวน</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="block" id="reviews">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>รีวิวจากลูกทริป</h2><p>รีวิวจากผู้ที่เดินทางจริงเท่านั้น</p></div></div>
+      <div class="reviews">
+        <article class="review"><div class="stars" aria-label="5 ดาว">★★★★★</div><p>น้ำใสมาก ไกด์ดูแลดี มีเสื้อชูชีพไซซ์เด็กให้ลูกด้วย จองผ่านเว็บแล้วได้ใบยืนยันทาง LINE ทันที</p><small>คุณแพร · เกาะกูด · ต.ค. 2569</small></article>
+        <article class="review"><div class="stars" aria-label="5 ดาว">★★★★★</div><p>ชอบที่เห็นที่นั่งเหลือจริง ไม่ต้องทักถามทีละรอบ จ่ายมัดจำก่อนแล้วค่อยจ่ายส่วนที่เหลือ สะดวกมาก</p><small>คุณต้น · หลีเป๊ะ · ก.ย. 2569</small></article>
+        <article class="review"><div class="stars" aria-label="4 ดาว">★★★★☆</div><p>ทริปวันเดย์สิมิลันคุ้มค่า อาหารอร่อย เสียดายคลื่นแรงไปหน่อยช่วงบ่าย ทีมงานเปลี่ยนจุดดำน้ำให้</p><small>คุณมายด์ · สิมิลัน · เม.ย. 2569</small></article>
+      </div>
+      <div class="license" id="contact">
+        <div><b>บริษัท ทะเลใส ทราเวล จำกัด (ตัวอย่าง)</b><p>ใบอนุญาตประกอบธุรกิจนำเที่ยว เลขที่ 11/0XXXX · ทุกทริปมีประกันอุบัติเหตุและไกด์ที่มีบัตรถูกต้อง</p></div>
+        <div class="pay"><span>PromptPay</span><span>Visa / Mastercard</span><span>โอนผ่านธนาคาร</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block admin" aria-labelledby="admin-title">
+    <div class="wrap">
+      <div class="sec-head"><div><h2 id="admin-title">หลังบ้านบริษัททัวร์</h2><p>ตัวอย่างหน้าที่ทีมงานใช้ดูรอบเดินทาง ที่นั่ง และยอดมัดจำ</p></div></div>
+      <div class="kpis">
+        <div class="kpi"><small>ยอดจองสัปดาห์นี้</small><b>48 ที่นั่ง</b> <span>▲ 18%</span></div>
+        <div class="kpi"><small>มัดจำรับแล้ว</small><b>฿96,000</b></div>
+        <div class="kpi"><small>ค้างชำระส่วนที่เหลือ</small><b>฿212,400</b></div>
+        <div class="kpi"><small>รอบที่ยืนยันออกเดินทาง</small><b>5 / 7</b></div>
+      </div>
+      <div class="deps" id="deps"></div>
+    </div>
+  </section>
+
+  <section class="block faq" id="faq">
+    <div class="wrap">
+      <div class="sec-head"><h2>คำถามที่พบบ่อย</h2></div>
+      <details><summary>ถ้าคนไม่ครบ ทริปยังออกเดินทางไหม</summary><p>แต่ละรอบต้องมีผู้เดินทางอย่างน้อย 8 คน ถ้าไม่ครบเราจะแจ้งล่วงหน้า 10 วัน และให้เลือกเลื่อนรอบหรือรับเงินคืนเต็มจำนวน</p></details>
+      <details><summary>ชำระส่วนที่เหลือเมื่อไร</summary><p>ชำระส่วนที่เหลือภายใน 14 วันก่อนเดินทาง ระบบจะส่งลิงก์ชำระเงินและแจ้งเตือนทาง LINE ให้</p></details>
+      <details><summary>ยกเลิกการจองได้ไหม</summary><p>ยกเลิกก่อนเดินทาง 15 วันขึ้นไปคืนมัดจำเต็มจำนวน 7–14 วันคืน 50% และน้อยกว่า 7 วันไม่คืนเงิน ยกเว้นกรณีสภาพอากาศที่ทางเรือประกาศงดเดินเรือ</p></details>
+      <details><summary>เด็กอายุเท่าไรถึงคิดราคาเด็ก</summary><p>เด็กอายุ 4–11 ปีพักกับผู้ใหญ่ (เตียงเสริม) คิดราคาเด็ก ต่ำกว่า 4 ปีเดินทางฟรีโดยไม่มีที่นั่งบนรถ</p></details>
+    </div>
+  </section>
+</main>
+
+<div class="sticky-cta" id="sticky">
+  <div><small id="sticky-date">เกาะกูด–เกาะหมาก</small><b id="sticky-price"></b></div>
+  <a class="btn btn-coral" href="#book">เลือกรอบและจอง</a>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div><b>ทะเลใส ทราเวล</b><p>ทัวร์ทะเลไทยแบบกลุ่มเล็ก ดูแลทุกทริปด้วยทีมงานของเราเอง</p></div>
+      <div><b>ติดต่อ</b><ul><li>LINE @talaysai-demo</li><li>โทร 08X-XXX-XXXX</li><li>ทุกวัน 09:00–20:00 น.</li></ul></div>
+      <div><b>ข้อมูล</b><ul><li>เงื่อนไขการจองและยกเลิก</li><li>นโยบายความเป็นส่วนตัว</li><li>ใบอนุญาตนำเที่ยว 11/0XXXX</li></ul></div>
+    </div>
+    <p class="demo">Design 1 — Horizon · ระบบ PaiTiew · ชื่อบริษัท เลขใบอนุญาต ราคา และรีวิวในหน้านี้เป็นข้อมูลตัวอย่าง</p>
+  </div>
+</footer>
+
+<script>
+  const baht = n => '฿' + n.toLocaleString('en-US');
+  const thDate = (iso, opt = { weekday: 'short', day: 'numeric', month: 'short' }) => new Intl.DateTimeFormat('th-TH', { ...opt, timeZone: 'Asia/Bangkok' }).format(new Date(iso + 'T00:00:00+07:00'));
+  const addDays = (iso, n) => { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+
+  /* ภาพประกอบ SVG สร้างจากโค้ด (ไม่ต้องพึ่งรูปจากภายนอก) */
+  function art(kind, id, sun = '#FFD58A') {
+    const g = `g${id}`;
+    const skies = { sea: ['#7FD3DB', '#FFE1C2'], mountain: ['#A9C9E8', '#F7E6D3'], day: ['#56B8D6', '#C9F0F2'], family: ['#9ED8B9', '#FFF1D6'] };
+    const [a, b] = skies[kind] || skies.sea;
+    const land = kind === 'mountain'
+      ? `<path d="M0 230 L90 120 L150 180 L230 90 L330 200 L400 150 L400 300 L0 300Z" fill="#3E7C6B"/><path d="M0 260 L120 180 L220 240 L320 170 L400 230 L400 300 L0 300Z" fill="#2E5E52"/><path d="M0 285 Q200 250 400 285 L400 300 L0 300Z" fill="#F1E3C8" opacity=".6"/>`
+      : kind === 'family'
+      ? `<path d="M0 220 Q100 170 200 210 T400 200 L400 300 L0 300Z" fill="#6DB28A"/><path d="M0 250 Q120 220 240 250 T400 240 L400 300 L0 300Z" fill="#4E9470"/><circle cx="90" cy="215" r="22" fill="#2F6E50"/><rect x="86" y="230" width="8" height="22" fill="#6B4A2B"/><circle cx="320" cy="205" r="26" fill="#2F6E50"/><rect x="316" y="222" width="8" height="26" fill="#6B4A2B"/>`
+      : `<path d="M0 200 L400 200 L400 300 L0 300Z" fill="#1AA3AE"/><path d="M0 214 Q50 206 100 214 T200 214 T300 214 T400 214" stroke="#DFF6F7" stroke-width="3" fill="none" opacity=".7"/><path d="M0 246 Q60 238 120 246 T240 246 T360 246 T480 246" stroke="#DFF6F7" stroke-width="3" fill="none" opacity=".5"/><path d="M230 200 Q270 150 320 165 Q360 150 400 190 L400 200Z" fill="#2E7D5B"/><path d="M0 272 Q140 252 260 270 T400 268 L400 300 L0 300Z" fill="#F6E2BE"/><path d="M60 270 q4 -40 -10 -70" stroke="#6B4A2B" stroke-width="5" fill="none"/><path d="M50 200 q-24 4 -34 18 M50 200 q20 -8 34 4 M50 200 q-6 -20 -24 -24 M50 200 q14 -16 32 -12" stroke="#2E7D5B" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+    const boat = kind === 'sea' || kind === 'day' ? `<path d="M150 226 h46 l-8 10 h-30z" fill="#FFFFFF"/><path d="M172 226 v-24 l14 20z" fill="#FF6B4A"/>` : '';
+    return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="400" height="300" fill="url(#${g})"/><circle cx="300" cy="${kind === 'mountain' ? 70 : 120}" r="34" fill="${sun}"/>${land}${boat}</svg>`;
+  }
+
+  document.getElementById('hero-art').innerHTML = art('sea', 'hero', '#FFCF7A');
+  document.getElementById('gallery').innerHTML = [art('sea', 'ga'), art('day', 'gb'), art('family', 'gc')].map(s => `<div>${s}</div>`).join('');
+
+  /* ---------- ทัวร์ + ตัวกรอง ---------- */
+  const tours = [
+    { name: 'เกาะกูด–เกาะหมาก 3 วัน 2 คืน', where: 'ตราด', cat: 'sea', art: 'sea', days: '3 วัน 2 คืน', price: 6490, rating: 4.9, reviews: 312, left: 3, tag: 'ขายดี' },
+    { name: 'สิมิลัน วันเดย์ทริป ดำน้ำ 4 เกาะ', where: 'พังงา', cat: 'day', art: 'day', days: '1 วัน', price: 3290, rating: 4.8, reviews: 921, left: 12 },
+    { name: 'ภูชี้ฟ้า–ภูชี้ดาว ทะเลหมอก', where: 'เชียงราย', cat: 'mountain', art: 'mountain', days: '3 วัน 2 คืน', price: 5990, rating: 4.7, reviews: 204, left: 6, tag: 'ฤดูหนาว' },
+    { name: 'เกาะหลีเป๊ะ ทะเลอันดามันใต้', where: 'สตูล', cat: 'sea', art: 'sea', days: '4 วัน 3 คืน', price: 9990, rating: 4.9, reviews: 455, left: 2 },
+    { name: 'เขาใหญ่ครอบครัว ฟาร์มและน้ำตก', where: 'นครราชสีมา', cat: 'family', art: 'family', days: '2 วัน 1 คืน', price: 3990, rating: 4.6, reviews: 138, left: 14 },
+    { name: 'อ่าวพังงา–เกาะยาวน้อย พายคายัค', where: 'พังงา', cat: 'sea', art: 'day', days: '2 วัน 1 คืน', price: 4590, rating: 4.8, reviews: 267, left: 9 },
+  ];
+  const grid = document.getElementById('tour-grid');
+  function renderTours(cat) {
+    const list = tours.filter(t => cat === 'all' || t.cat === cat);
+    grid.innerHTML = list.map((t, i) => `
+      <a class="tour" href="#detail">
+        <div class="media">${art(t.art, 't' + i + cat)}${t.tag ? `<span class="tag">${t.tag}</span>` : ''}<span class="tag dur">${t.days}</span></div>
+        <div class="body">
+          <span class="where">📍 ${t.where}</span>
+          <h3>${t.name}</h3>
+          <span class="rating"><b>★ ${t.rating}</b> · ${t.reviews.toLocaleString('en-US')} รีวิว</span>
+          <div class="foot"><div class="from"><small>เริ่มต้น / คน</small><b>${baht(t.price)}</b></div>${t.left <= 5 ? `<span class="seats-low">เหลือ ${t.left} ที่</span>` : `<span class="rating">ว่าง ${t.left} ที่</span>`}</div>
+        </div>
+      </a>`).join('');
+    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+    document.getElementById('count').textContent = `พบ ${list.length} ทัวร์`;
+  }
+  document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
+    renderTours(chip.dataset.cat);
+  }));
+  renderTours('all');
+
+  /* ---------- จอง: รอบ + ผู้เดินทาง + ราคา + มัดจำ ---------- */
+  const departures = [
+    { date: '2026-11-06', price: 6990, child: 5490, left: 3, cap: 20 },
+    { date: '2026-11-13', price: 6990, child: 5490, left: 8, cap: 20 },
+    { date: '2026-11-20', price: 6490, child: 4990, left: 15, cap: 20, promo: true },
+    { date: '2026-11-27', price: 6990, child: 5490, left: 0, cap: 20 },
+    { date: '2026-12-04', price: 7490, child: 5990, left: 12, cap: 20 },
+    { date: '2026-12-30', price: 9990, child: 7990, left: 5, cap: 20 },
+  ];
+  const DEPOSIT = 2000, SINGLE = 1500, BALANCE_DAYS = 14;
+  const state = { dep: 2, adult: 2, child: 0, single: false };
+  const datesEl = document.getElementById('dates');
+  datesEl.innerHTML = departures.map((d, i) => `
+    <button class="date" type="button" data-i="${i}" ${d.left === 0 ? 'disabled' : ''} aria-pressed="${i === state.dep}">
+      <b>${thDate(d.date)}</b><span>${baht(d.price)}${d.promo ? ' · โปร' : ''}</span>
+      <em class="${d.left > 0 && d.left <= 5 ? 'low' : ''}">${d.left === 0 ? 'เต็มแล้ว' : 'เหลือ ' + d.left + ' ที่'}</em>
+    </button>`).join('');
+  datesEl.addEventListener('click', e => {
+    const b = e.target.closest('.date');
+    if (!b || b.disabled) return;
+    state.dep = +b.dataset.i;
+    datesEl.querySelectorAll('.date').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    update();
+  });
+  document.querySelectorAll('[data-pax]').forEach(btn => btn.addEventListener('click', () => {
+    state[btn.dataset.pax] += +btn.dataset.d;
+    update();
+  }));
+  document.getElementById('single').addEventListener('change', e => { state.single = e.target.checked; update(); });
+
+  function update() {
+    const d = departures[state.dep];
+    const seats = d.left;
+    state.adult = Math.max(1, Math.min(state.adult, seats - state.child));
+    state.child = Math.max(0, Math.min(state.child, seats - state.adult));
+    const people = state.adult + state.child;
+    document.getElementById('n-adult').textContent = state.adult;
+    document.getElementById('n-child').textContent = state.child;
+    document.querySelector('[data-pax=adult][data-d="-1"]').disabled = state.adult <= 1;
+    document.querySelector('[data-pax=child][data-d="-1"]').disabled = state.child <= 0;
+    document.querySelectorAll('[data-d="1"]').forEach(b => { b.disabled = people >= seats; });
+    document.getElementById('p-adult').textContent = `${baht(d.price)} / คน`;
+    document.getElementById('p-child').textContent = `${baht(d.child)} / คน (เตียงเสริม)`;
+    const a = d.price * state.adult, c = d.child * state.child, s = state.single ? SINGLE * state.adult : 0;
+    const total = a + c + s, deposit = DEPOSIT * people;
+    const due = addDays(d.date, -BALANCE_DAYS);
+    document.getElementById('l-adult').textContent = `ผู้ใหญ่ × ${state.adult}`;
+    document.getElementById('v-adult').textContent = baht(a);
+    document.getElementById('l-child').textContent = `เด็ก × ${state.child}`;
+    document.getElementById('v-child').textContent = baht(c);
+    document.getElementById('row-child').hidden = !state.child;
+    document.getElementById('v-single').textContent = baht(s);
+    document.getElementById('row-single').hidden = !state.single;
+    document.getElementById('v-total').textContent = baht(total);
+    document.getElementById('v-deposit').textContent = baht(deposit);
+    document.getElementById('v-balance').textContent = `ส่วนที่เหลือ ${baht(total - deposit)} ชำระภายใน ${thDate(due, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    document.getElementById('sticky-date').textContent = `รอบ ${thDate(d.date)} · ${people} คน`;
+    document.getElementById('sticky-price').textContent = `${baht(total)}`;
+    document.getElementById('toast').hidden = true;
+  }
+  document.getElementById('book-btn').addEventListener('click', () => {
+    const t = document.getElementById('toast');
+    t.textContent = `ล็อกที่นั่ง ${state.adult + state.child} ที่ไว้ให้ 15 นาที — ชำระมัดจำผ่าน PromptPay เพื่อยืนยันการจอง (ตัวอย่าง)`;
+    t.hidden = false;
+  });
+  update();
+
+  /* ---------- หลังบ้าน: รอบเดินทาง ---------- */
+  const MIN_PAX = 8;
+  document.getElementById('deps').innerHTML = departures.map(d => {
+    const booked = d.cap - d.left;
+    const st = booked >= d.cap ? ['full', 'เต็ม'] : booked >= MIN_PAX ? ['go', 'ยืนยันออกเดินทาง'] : ['wait', `รออีก ${MIN_PAX - booked} คน`];
+    return `<div class="dep">
+      <div class="t"><b>${thDate(d.date, { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' })}</b><small>เกาะกูด–เกาะหมาก 3D2N</small></div>
+      <div class="fill"><div class="bar"><i class="${booked >= d.cap ? 'full' : ''}" style="width:${booked / d.cap * 100}%"></i></div><span>${booked}/${d.cap}</span></div>
+      <div class="money">${baht(booked * DEPOSIT)}<small>มัดจำรับแล้ว</small></div>
+      <span class="tag st ${st[0]}">${st[1]}</span>
+    </div>`;
+  }).join('');
+
+  /* ---------- drawer ---------- */
+  const drawer = document.getElementById('drawer'), burger = document.getElementById('burger');
+  const setDrawer = open => {
+    drawer.hidden = !open;
+    burger.setAttribute('aria-expanded', String(open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    (open ? document.getElementById('drawer-close') : burger).focus();
+  };
+  burger.addEventListener('click', () => setDrawer(true));
+  document.getElementById('drawer-close').addEventListener('click', () => setDrawer(false));
+  drawer.addEventListener('click', e => { if (e.target === drawer || e.target.closest('a')) setDrawer(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !drawer.hidden) setDrawer(false); });
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@
 | ระบบจัดการหอพัก | [`apps/dormitory`](apps/dormitory) | เลือก design |
 | ระบบอสังหาริมทรัพย์ | [`apps/real-estate`](apps/real-estate) | เลือก design |
 | เว็บไซต์บริษัท | [`apps/company-website`](apps/company-website) | เลือก design |
+| ระบบจองทัวร์ | [`apps/tour-booking`](apps/tour-booking) | 🎨 รอเลือก design (Horizon · Journey · Getaway) |
 
 ## ดู Design ทั้งหมด
 

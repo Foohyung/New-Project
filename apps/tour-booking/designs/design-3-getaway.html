@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaiTiew · Design 3 — Getaway</title>
+<meta name="description" content="Design 3 ของ PaiTiew ระบบจองทัวร์: ทัวร์ต่างประเทศแนวโปรโมชัน มีทัวร์ไฟไหม้ ปฏิทินราคาต่ำสุดรายวัน เปรียบเทียบทัวร์ และฟอร์มจัดกรุ๊ปส่วนตัว (ตัวอย่าง: บินเพลิน ทัวร์)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Design 3 — Getaway: ทัวร์ต่างประเทศ เน้นโปร → ปฏิทินราคา → เปรียบเทียบ → จอง / ขอกรุ๊ปส่วนตัว
+     เขียนแบบ mobile-first: base = มือถือ แล้วเพิ่มด้วย min-width 640 / 768 / 1024 / 1280 (§15.2.1) */
+  :root {
+    --night: #17153B;
+    --night-2: #24215A;
+    --indigo: #3B36C4;
+    --indigo-soft: #ECEBFF;
+    --sun: #FFD23F;
+    --pink: #E83E7A;
+    --cloud: #F5F6FF;
+    --white: #FFFFFF;
+    --ink: #17163A;
+    --muted: #5D5B7E;
+    --line: #E2E1F3;
+    --green: #0F7A55;
+    --green-soft: #DDF5EA;
+    --amber-soft: #FFF2C7;
+    --red: #B42318;
+    --head-h: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--head-h) + 12px); }
+  body { font-family: 'Noto Sans Thai', system-ui, sans-serif; background: var(--cloud); color: var(--ink); font-size: 16px; line-height: 1.6; }
+  h1, h2, h3, .bj { font-family: 'Bai Jamjuree', sans-serif; font-weight: 700; line-height: 1.3; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  :focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 12px; font-weight: 700; white-space: nowrap; }
+  .btn-indigo { background: var(--indigo); color: var(--white); }
+  .btn-sun { background: var(--sun); color: var(--night); }
+  .btn-out { border: 1.5px solid var(--line); background: var(--white); }
+  .btn-line { background: #06C755; color: var(--white); }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+  /* ---------- Header ---------- */
+  .head { position: sticky; top: 0; z-index: 40; background: var(--night); color: var(--white); }
+  .head .wrap { display: flex; align-items: center; gap: 12px; height: var(--head-h); }
+  .logo { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-family: 'Bai Jamjuree'; font-size: 22px; font-weight: 700; }
+  .logo i { width: 36px; height: 36px; border-radius: 10px; background: var(--sun); color: var(--night); display: grid; place-items: center; font-style: normal; font-size: 18px; transform: rotate(-8deg); }
+  .nav { display: none; }
+  .head-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .head-right .btn { display: none; }
+  .burger { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--night-2); color: var(--white); }
+  .drawer { position: fixed; inset: 0; z-index: 70; background: rgba(23, 21, 59, .55); }
+  .drawer[hidden] { display: none; }
+  .drawer-panel { position: absolute; inset: 0 0 0 auto; width: min(340px, 88vw); height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: calc(12px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); background: var(--white); }
+  .drawer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Bai Jamjuree'; font-size: 18px; }
+  .drawer-top .burger { background: var(--cloud); color: var(--ink); }
+  .drawer a.m { display: flex; align-items: center; min-height: 52px; padding: 0 12px; border-radius: 12px; font-weight: 600; font-size: 18px; }
+  .drawer .btn { margin-top: 10px; }
+
+  /* ---------- Hero: ทัวร์ไฟไหม้ ---------- */
+  .hero { background: radial-gradient(600px 300px at 90% 0%, rgba(255, 210, 63, .25), transparent 70%), var(--night); color: var(--white); padding: 26px 0 30px; overflow: hidden; }
+  .hero-top { display: grid; gap: 14px; }
+  .hero h1 { font-size: clamp(30px, 8vw, 54px); }
+  .hero h1 em { font-style: normal; color: var(--sun); }
+  .hero p { color: #C8C6F0; max-width: 46ch; }
+  .countdown { display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--night-2); font-size: 14px; width: fit-content; }
+  .countdown b { font-family: 'Bai Jamjuree'; font-size: 22px; color: var(--sun); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .deals { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 18px 0 6px; scrollbar-width: none; }
+  .deals::-webkit-scrollbar { display: none; }
+  .deal { flex: 0 0 82%; scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 20px; background: var(--white); color: var(--ink); position: relative; }
+  .deal .off { position: absolute; top: 14px; right: 14px; background: var(--pink); color: var(--white); }
+  .deal .flag { font-size: 26px; line-height: 1; }
+  .deal h3 { font-size: 18px; padding-right: 70px; }
+  .deal small { color: var(--muted); font-size: 14px; }
+  .deal .price { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+  .deal .price b { font-family: 'Bai Jamjuree'; font-size: 26px; color: var(--indigo); }
+  .deal .price s { color: var(--muted); }
+  .meter { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--red); }
+  .meter span.track { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .meter span.track i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--sun), var(--pink)); }
+  .deal .btn { margin-top: 6px; }
+
+  /* ---------- ปฏิทินราคา ---------- */
+  section.block { padding: 36px 0; }
+  .sec-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 16px; margin-bottom: 14px; }
+  .sec-head h2 { font-size: clamp(24px, 6vw, 32px); }
+  .sec-head p { color: var(--muted); }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; min-height: 44px; padding: 0 16px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; background: var(--white); border: 1.5px solid var(--line); font-weight: 600; }
+  .chip[aria-pressed="true"] { background: var(--indigo); color: var(--white); border-color: var(--indigo); }
+  .cal-box { margin-top: 12px; padding: 14px; border-radius: 22px; background: var(--white); border: 1px solid var(--line); }
+  .cal-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .cal-top h3 { font-size: 19px; }
+  .month-btn { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--line); display: grid; place-items: center; }
+  .month-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 4px; }
+  .low-c { background: var(--green-soft); }
+  .mid-c { background: var(--indigo-soft); }
+  .high-c { background: var(--amber-soft); }
+  /* มือถือ: แถบวันเลื่อนแนวนอน · แท็บเล็ตขึ้นไป: ปฏิทินเต็มเดือน */
+  .strip { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; }
+  .day-btn { flex: none; scroll-snap-align: start; min-width: 74px; min-height: 64px; padding: 6px 8px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.25; border: 1.5px solid transparent; }
+  .day-btn small { font-size: 12px; color: var(--muted); }
+  .day-btn b { font-size: 15px; }
+  .day-btn span { font-size: 12px; font-weight: 700; }
+  .day-btn[aria-pressed="true"] { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); }
+  .cal { display: none; }
+  .all-month { margin-top: 10px; }
+
+  /* ---------- รายการรอบเดินทาง ---------- */
+  .results { display: grid; gap: 12px; margin-top: 18px; }
+  .res { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 16px; border-radius: 20px; background: var(--white); border: 1.5px solid var(--line); }
+  .res .flag { font-size: 30px; line-height: 1.1; grid-row: span 2; }
+  .res h3 { font-size: 18px; }
+  .res .meta { color: var(--muted); font-size: 14px; }
+  .res .bot { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .res .pr small { display: block; color: var(--muted); font-size: 13px; }
+  .res .pr b { font-family: 'Bai Jamjuree'; font-size: 24px; color: var(--indigo); }
+  .res .pr s { color: var(--muted); font-size: 14px; margin-left: 6px; }
+  .res .meter { grid-column: 1 / -1; color: var(--muted); }
+  .res .meter.hot { color: var(--red); }
+  .res .acts { grid-column: 1 / -1; display: flex; gap: 8px; }
+  .res .acts .btn { flex: 1; min-height: 44px; padding: 0 12px; }
+  .cmp[aria-pressed="true"] { background: var(--indigo-soft); border-color: var(--indigo); color: var(--indigo); }
+  .res.picked { border-color: var(--indigo); }
+  .empty { padding: 28px; border-radius: 20px; border: 2px dashed var(--line); text-align: center; color: var(--muted); }
+
+  .tray { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 50; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 18px; background: var(--night); color: var(--white); box-shadow: 0 16px 40px rgba(23, 21, 59, .35); }
+  .tray[hidden] { display: none; }
+  .tray div { flex: 1; min-width: 0; font-size: 14px; line-height: 1.35; }
+  .tray b { display: block; font-size: 16px; }
+  .tray .clear { min-height: 44px; padding: 0 12px; color: #C8C6F0; font-weight: 600; }
+
+  dialog.cmp-dlg { border: 0; padding: 0; width: 100%; max-width: 100%; max-height: 92dvh; margin: auto auto 0; border-radius: 22px 22px 0 0; background: var(--white); color: var(--ink); }
+  dialog.cmp-dlg::backdrop { background: rgba(23, 21, 59, .55); }
+  .dlg-head { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; background: var(--white); border-bottom: 1px solid var(--line); z-index: 2; }
+  .dlg-head h2 { font-size: 20px; }
+  .dlg-head button { width: 44px; height: 44px; border-radius: 12px; background: var(--cloud); display: grid; place-items: center; }
+  .tbl-box { overflow-x: auto; padding: 0 0 calc(16px + env(safe-area-inset-bottom)); }
+  table.ct { border-collapse: separate; border-spacing: 0; min-width: 560px; width: 100%; font-size: 14px; }
+  .ct th, .ct td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .ct th[scope=row] { position: sticky; left: 0; background: var(--cloud); font-weight: 600; width: 120px; }
+  .ct thead th { font-family: 'Bai Jamjuree'; font-size: 15px; }
+  .ct .best { color: var(--green); font-weight: 700; }
+
+  /* ---------- ข้อมูลก่อนเดินทาง + กรุ๊ปส่วนตัว ---------- */
+  .info { display: grid; gap: 10px; }
+  .info div { display: flex; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--white); border: 1px solid var(--line); }
+  .info .ic { width: 40px; height: 40px; border-radius: 12px; background: var(--indigo-soft); color: var(--indigo); display: grid; place-items: center; flex: none; font-size: 20px; }
+  .info b { display: block; }
+  .info p { color: var(--muted); font-size: 14px; }
+  .group { margin-top: 26px; display: grid; gap: 18px; padding: 20px; border-radius: 24px; background: var(--indigo); color: var(--white); }
+  .group h2 { font-size: 26px; }
+  .group > div > p { color: #DCDAFF; }
+  .group ul { list-style: none; display: grid; gap: 6px; margin-top: 12px; }
+  .group li::before { content: '✓ '; color: var(--sun); font-weight: 700; }
+  form.gform { display: grid; gap: 12px; padding: 16px; border-radius: 18px; background: var(--white); color: var(--ink); }
+  .f { display: grid; gap: 4px; }
+  .f label { font-weight: 600; font-size: 15px; }
+  .f input, .f select, .f textarea { width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--white); font-size: 16px; }
+  .f textarea { min-height: 84px; resize: vertical; }
+  .f input[aria-invalid="true"] { border-color: var(--red); }
+  .err { color: var(--red); font-size: 14px; }
+  .err:empty { display: none; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; font-size: 14px; color: var(--muted); }
+  .consent input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--indigo); flex: none; font-size: 16px; }
+  .ok-msg { padding: 12px 14px; border-radius: 12px; background: var(--green-soft); color: var(--green); font-weight: 600; }
+  .ok-msg[hidden] { display: none; }
+
+  /* ---------- หลังบ้าน ---------- */
+  .admin { background: var(--night); color: #E7E6FF; }
+  .admin .sec-head p { color: #A9A7D6; }
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpi { padding: 14px; border-radius: 16px; background: var(--night-2); }
+  .kpi small { display: block; color: #A9A7D6; font-size: 13px; }
+  .kpi b { font-family: 'Bai Jamjuree'; font-size: 24px; color: var(--white); }
+  .kpi span { display: block; font-size: 13px; color: var(--sun); }
+  .decide { display: grid; gap: 10px; margin-top: 16px; }
+  .dec { display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: var(--night-2); }
+  .dec-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .dec-top b { display: block; color: var(--white); }
+  .dec-top small { color: #A9A7D6; font-size: 13px; }
+  .dec .meter { color: #C8C6F0; }
+  .dec .meter span.track { background: #17153B; }
+  .dec .meter span.track i { background: #8B87FF; }
+  .dec .meter span.track i.ok { background: #4ADE9B; }
+  .dec .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dec .acts .btn { min-height: 44px; padding: 0 14px; font-size: 14px; }
+  .btn-ghost-d { border: 1.5px solid #4B479A; color: var(--white); }
+  .b-due { background: #4A1D2E; color: #FFB3CB; }
+  .b-ok { background: #123E33; color: #7EE2B8; }
+
+  footer { padding: 32px 0 calc(100px + env(safe-area-inset-bottom)); background: var(--white); border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+  footer .cols { display: grid; gap: 18px; }
+  footer b { color: var(--ink); }
+  footer ul { list-style: none; display: grid; gap: 4px; margin-top: 6px; }
+  footer .demo { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+  @media (hover: hover) {
+    .btn-indigo:hover { filter: brightness(1.12); }
+    .btn-sun:hover { filter: brightness(.95); }
+    .chip:hover, .btn-out:hover { border-color: var(--indigo); }
+    .res:hover { border-color: #B9B6F5; }
+    .nav a:hover { color: var(--sun); }
+    .day-btn:not(:disabled):hover { border-color: #B9B6F5; }
+  }
+
+  @media (min-width: 640px) {
+    .wrap { padding: 0 24px; }
+    .deal { flex-basis: 46%; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .res .acts { grid-column: auto; }
+    .res .bot { grid-template-columns: minmax(0, 1fr) auto; }
+    dialog.cmp-dlg { max-width: 860px; margin: auto; border-radius: 22px; }
+    footer .cols { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 768px) {
+    .strip { display: none; }
+    .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+    .cal .dow { text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); padding: 4px 0; }
+    .cal .day-btn { min-width: 0; min-height: 72px; }
+    .cal .blank { min-height: 72px; }
+    .cal .day-btn:disabled { color: #B6B5CC; cursor: default; }
+    .res { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+    .res .flag { grid-row: span 1; }
+    .res .bot { grid-column: auto; margin-top: 0; padding-top: 0; border-top: 0; grid-template-columns: auto; justify-items: end; text-align: right; }
+    .res .meter { grid-column: 2; }
+    .res .acts { grid-column: 3; justify-content: flex-end; }
+    .res .acts .btn { flex: none; }
+    .dec { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .nav { display: flex; gap: 4px; margin-left: 24px; font-weight: 600; color: #C8C6F0; }
+    .nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 10px; }
+    .head-right .btn { display: inline-flex; }
+    .burger { display: none; }
+    .hero { padding: 44px 0 40px; }
+    .hero-top { grid-template-columns: 1fr auto; align-items: end; }
+    .deal { flex-basis: 23.5%; }
+    .layout { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .cal-col { position: sticky; top: calc(var(--head-h) + 16px); }
+    .results { margin-top: 0; }
+    .res { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .group { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); padding: 32px; align-items: start; }
+    .cal .day-btn { min-height: 60px; }
+  }
+  @media (min-width: 1280px) {
+    .layout { grid-template-columns: 440px minmax(0, 1fr); gap: 36px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="บินเพลิน ทัวร์ หน้าแรก"><i aria-hidden="true">✈</i>บินเพลิน</a>
+    <nav class="nav" aria-label="เมนูหลัก"><a href="#deals">ทัวร์ไฟไหม้</a><a href="#calendar">ปฏิทินราคา</a><a href="#before">ก่อนเดินทาง</a><a href="#group">กรุ๊ปส่วนตัว</a></nav>
+    <div class="head-right">
+      <a class="btn btn-out" href="#group" style="color:var(--ink)">ทัวร์ของฉัน</a>
+      <a class="btn btn-line" href="#group">LINE</a>
+      <button class="burger" type="button" id="burger" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="drawer"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="เมนู">
+    <div class="drawer-top">เมนู<button class="burger" type="button" id="drawer-close" aria-label="ปิดเมนู"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <a class="m" href="#deals">ทัวร์ไฟไหม้</a><a class="m" href="#calendar">ปฏิทินราคา</a><a class="m" href="#before">ก่อนเดินทาง</a><a class="m" href="#group">กรุ๊ปส่วนตัว</a><a class="m" href="#group">ทัวร์ของฉัน</a>
+    <a class="btn btn-line" href="#group">แชทกับเราทาง LINE</a>
+  </div>
+</div>
+
+<main id="top">
+  <section class="hero" id="deals">
+    <div class="wrap">
+      <div class="hero-top">
+        <div>
+          <h1>ทัวร์ไฟไหม้ <em>ลดสูงสุด ฿8,000</em></h1>
+          <p>ที่นั่งสุดท้ายของรอบที่ใกล้ออกเดินทาง ราคานี้รวมตั๋วเครื่องบิน โรงแรม อาหาร และประกันการเดินทางแล้ว</p>
+        </div>
+        <div class="countdown" role="timer" aria-label="เวลาที่เหลือของโปรวันนี้">โปรวันนี้หมดใน <b id="cd">--:--:--</b></div>
+      </div>
+      <div class="deals" id="deal-list"></div>
+    </div>
+  </section>
+
+  <section class="block" id="calendar">
+    <div class="wrap layout">
+      <div class="cal-col">
+        <div class="sec-head"><div><h2>ปฏิทินราคา</h2><p>ราคาต่ำสุดต่อคนของแต่ละวัน แตะวันเพื่อดูรอบเดินทาง</p></div></div>
+        <div class="chips" role="group" aria-label="เลือกประเทศ" id="countries"></div>
+        <div class="cal-box">
+          <div class="cal-top"><button class="month-btn" type="button" id="prev" aria-label="เดือนก่อนหน้า"><svg class="i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button><h3 id="month-title" aria-live="polite"></h3><button class="month-btn" type="button" id="next" aria-label="เดือนถัดไป"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button></div>
+          <div class="strip" id="strip"></div>
+          <div class="cal" id="cal"></div>
+          <div class="legend"><span><i class="low-c"></i>ถูก (ต่ำกว่า ฿18,000)</span><span><i class="mid-c"></i>ปกติ</span><span><i class="high-c"></i>ช่วงพีค (฿30,000 ขึ้นไป)</span></div>
+          <button class="chip all-month" type="button" id="all-month" aria-pressed="true">ดูทั้งเดือน</button>
+        </div>
+      </div>
+      <div>
+        <div class="sec-head"><div><h2 id="res-title">รอบเดินทาง</h2><p id="res-sub"></p></div></div>
+        <div class="results" id="results"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="before">
+    <div class="wrap">
+      <div class="sec-head"><div><h2>ก่อนเดินทาง</h2><p>เราเช็กให้ทุกการจอง แต่เตรียมไว้ก่อนจะสบายใจกว่า</p></div></div>
+      <div class="info">
+        <div><span class="ic" aria-hidden="true">🛂</span><span><b>พาสปอร์ตเหลืออายุ 6 เดือนขึ้นไป</b><p>นับจากวันเดินทางกลับ ส่งรูปหน้าพาสปอร์ตผ่านลิงก์ที่ปลอดภัยหลังจองเท่านั้น</p></span></div>
+        <div><span class="ic" aria-hidden="true">📄</span><span><b>เช็กวีซ่าให้ทุกการจอง</b><p>ทีมงานแจ้งเงื่อนไขวีซ่าหรือการลงทะเบียนเข้าประเทศที่ใช้ ณ วันเดินทาง</p></span></div>
+        <div><span class="ic" aria-hidden="true">💳</span><span><b>มัดจำ ฿10,000 ต่อคน</b><p>ส่วนที่เหลือชำระก่อนเดินทาง 30 วัน ตั๋วกรุ๊ปเปลี่ยนชื่อได้ก่อนออกตั๋ว</p></span></div>
+      </div>
+
+      <div class="group" id="group">
+        <div>
+          <h2>จัดกรุ๊ปส่วนตัว / ทัวร์บริษัท</h2>
+          <p>10 คนขึ้นไป เลือกวันเดินทาง โรงแรม และโปรแกรมเองได้ เราส่งใบเสนอราคาภายใน 1 วันทำการ</p>
+          <ul><li>ไกด์ไทยดูแลตลอดทริป</li><li>ออกใบกำกับภาษีในนามบริษัทได้</li><li>มีรถและร้านอาหารสำหรับกรุ๊ปโดยเฉพาะ</li></ul>
+        </div>
+        <form class="gform" id="gform" novalidate>
+          <div class="two">
+            <div class="f"><label for="g-name">ชื่อผู้ติดต่อ</label><input id="g-name" autocomplete="name"></div>
+            <div class="f"><label for="g-tel">เบอร์มือถือ</label><input id="g-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="08X-XXX-XXXX" aria-describedby="g-tel-err"><span class="err" id="g-tel-err"></span></div>
+          </div>
+          <div class="two">
+            <div class="f"><label for="g-country">ประเทศ</label><select id="g-country"><option>ญี่ปุ่น</option><option>เกาหลีใต้</option><option>ไต้หวัน</option><option>เวียดนาม</option><option>ยังไม่แน่ใจ</option></select></div>
+            <div class="f"><label for="g-pax">จำนวนผู้เดินทาง</label><input id="g-pax" type="number" inputmode="numeric" min="10" value="15"></div>
+          </div>
+          <div class="two">
+            <div class="f"><label for="g-when">ช่วงเดินทาง</label><select id="g-when"><option>ธันวาคม 2569</option><option>มกราคม 2570</option><option>กุมภาพันธ์ 2570</option><option>มีนาคม 2570</option></select></div>
+            <div class="f"><label for="g-budget">งบต่อคน</label><select id="g-budget"><option>ไม่เกิน ฿20,000</option><option>฿20,000–35,000</option><option>฿35,000 ขึ้นไป</option></select></div>
+          </div>
+          <div class="f"><label for="g-note">รายละเอียดเพิ่มเติม</label><textarea id="g-note" placeholder="เช่น อยากได้โรงแรมใกล้สถานีรถไฟ มีผู้สูงอายุ 3 ท่าน"></textarea></div>
+          <label class="consent"><input type="checkbox" id="g-consent">ยินยอมให้ติดต่อกลับเพื่อเสนอราคา ตามนโยบายความเป็นส่วนตัว</label>
+          <span class="err" id="g-consent-err"></span>
+          <button class="btn btn-indigo" type="submit">ขอใบเสนอราคา</button>
+          <p class="ok-msg" id="g-ok" role="status" hidden></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="block admin" aria-labelledby="admin-title">
+    <div class="wrap">
+      <div class="sec-head"><div><h2 id="admin-title">หลังบ้านบริษัททัวร์</h2><p>ตัวอย่างหน้าฝ่ายขาย: ยอดขาย และรอบที่ต้องตัดสินใจก่อนยืนยันที่นั่งกับสายการบิน</p></div></div>
+      <div class="kpis">
+        <div class="kpi"><small>ยอดขายเดือนนี้</small><b>฿4.82 ล้าน</b> <span>▲ 12%</span></div>
+        <div class="kpi"><small>ที่นั่งขายแล้ว</small><b>71%</b> <span>412 / 580</span></div>
+        <div class="kpi"><small>สลิปรอตรวจ</small><b>9 รายการ</b></div>
+        <div class="kpi"><small>พาสปอร์ตยังไม่ส่ง</small><b>23 คน</b></div>
+      </div>
+      <div class="decide" id="decide"></div>
+    </div>
+  </section>
+</main>
+
+<div class="tray" id="tray" hidden><div><b id="tray-n"></b><span>เลือกได้สูงสุด 3 รอบ</span></div><button class="clear" type="button" id="tray-clear">ล้าง</button><button class="btn btn-sun" type="button" id="tray-open">เปรียบเทียบ</button></div>
+
+<dialog class="cmp-dlg" id="cmp" aria-labelledby="cmp-title">
+  <div class="dlg-head"><h2 id="cmp-title">เปรียบเทียบทัวร์</h2><button type="button" id="cmp-close" aria-label="ปิด"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="tbl-box"><table class="ct" id="cmp-table"></table></div>
+</dialog>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div><b>บินเพลิน ทัวร์</b><p>ทัวร์ต่างประเทศแบบกรุ๊ปและกรุ๊ปส่วนตัว</p></div>
+      <div><b>ติดต่อ</b><ul><li>LINE @binplern-demo</li><li>โทร 08X-XXX-XXXX</li></ul></div>
+      <div><b>ข้อมูล</b><ul><li>ใบอนุญาตนำเที่ยว 11/0XXXX</li><li>เงื่อนไขการยกเลิก</li><li>นโยบายความเป็นส่วนตัว</li></ul></div>
+    </div>
+    <p class="demo">Design 3 — Getaway · ระบบ PaiTiew · ชื่อบริษัท โปรแกรมทัวร์ ราคา และตัวเลขในหน้านี้เป็นข้อมูลตัวอย่าง</p>
+  </div>
+</footer>
+
+<script>
+  const baht = n => '฿' + n.toLocaleString('en-US');
+  const TZ = 'Asia/Bangkok';
+  const fmt = (iso, opt) => new Intl.DateTimeFormat('th-TH', { ...opt, timeZone: TZ }).format(new Date(iso + 'T00:00:00+07:00'));
+  const addDays = (iso, n) => { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+
+  const COUNTRY = { jp: ['🇯🇵', 'ญี่ปุ่น'], kr: ['🇰🇷', 'เกาหลีใต้'], tw: ['🇹🇼', 'ไต้หวัน'], vn: ['🇻🇳', 'เวียดนาม'] };
+  const TOURS = {
+    tokyo: { c: 'jp', name: 'โตเกียว ฟูจิ คาวากูจิโกะ', days: 5, nights: 3, air: 'ฟูลเซอร์วิส บินตรง', bag: '30 กก.', hotel: '4 ดาว 3 คืน', meals: 7, onsen: true },
+    osaka: { c: 'jp', name: 'โอซาก้า เกียวโต นารา', days: 6, nights: 4, air: 'ฟูลเซอร์วิส บินตรง', bag: '30 กก.', hotel: '3–4 ดาว 4 คืน', meals: 9 },
+    seoul: { c: 'kr', name: 'โซล นามิ สวนสนุก', days: 5, nights: 3, air: 'โลว์คอสต์ บินตรง', bag: '20 กก.', hotel: '3 ดาว 3 คืน', meals: 8 },
+    taipei: { c: 'tw', name: 'ไทเป จิ่วเฟิ่น อาลีซาน', days: 5, nights: 4, air: 'โลว์คอสต์ บินตรง', bag: '20 กก.', hotel: '3–4 ดาว 4 คืน', meals: 10 },
+    dalat: { c: 'vn', name: 'ดาลัด เมืองแห่งดอกไม้', days: 4, nights: 3, air: 'โลว์คอสต์ บินตรง', bag: '20 กก.', hotel: '3 ดาว 3 คืน', meals: 8 },
+  };
+  const CAP = 30, DEPOSIT = 10000;
+  const deps = [
+    ['2026-10-24', 'seoul', 15900, 3, 22900], ['2026-10-29', 'tokyo', 24900, 2, 32900], ['2026-11-04', 'taipei', 13900, 5, 18900], ['2026-11-06', 'dalat', 9900, 6, 13900],
+    ['2026-11-13', 'osaka', 33900, 11], ['2026-11-20', 'seoul', 21900, 14], ['2026-11-26', 'tokyo', 30900, 16], ['2026-11-27', 'dalat', 12900, 19],
+    ['2026-12-02', 'tokyo', 29900, 12], ['2026-12-05', 'seoul', 19900, 3, 23900], ['2026-12-09', 'dalat', 12900, 18], ['2026-12-12', 'taipei', 17900, 9],
+    ['2026-12-16', 'osaka', 34900, 6], ['2026-12-19', 'tokyo', 32900, 4], ['2026-12-23', 'seoul', 27900, 10], ['2026-12-26', 'taipei', 22900, 2],
+    ['2026-12-29', 'tokyo', 45900, 8], ['2026-12-30', 'dalat', 18900, 5],
+    ['2027-01-07', 'osaka', 29900, 15], ['2027-01-09', 'seoul', 18900, 7, 21900], ['2027-01-14', 'tokyo', 27900, 20], ['2027-01-16', 'dalat', 11900, 22],
+    ['2027-01-21', 'taipei', 16900, 12], ['2027-01-28', 'osaka', 31900, 9],
+  ].map(([date, tour, price, left, old], id) => ({ id, date, tour, price, left, old, ...TOURS[tour] }));
+  const rangeFmt = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: '2-digit', timeZone: TZ });
+  const range = d => rangeFmt.formatRange(new Date(d.date + 'T00:00:00+07:00'), new Date(addDays(d.date, d.days - 1) + 'T00:00:00+07:00'));
+  const seatMeter = (d, cls = '') => `<div class="meter ${cls}"><span class="track"><i style="width:${(CAP - d.left) / CAP * 100}%"></i></span><span>เหลือ ${d.left}/${CAP} ที่</span></div>`;
+
+  /* ---------- ทัวร์ไฟไหม้ + นับถอยหลัง ---------- */
+  const deals = deps.filter(d => d.old).slice(0, 4);
+  document.getElementById('deal-list').innerHTML = deals.map(d => `
+    <article class="deal">
+      <span class="badge off">-${baht(d.old - d.price)}</span>
+      <span class="flag" aria-hidden="true">${COUNTRY[d.c][0]}</span>
+      <h3>${d.name} ${d.days} วัน ${d.nights} คืน</h3>
+      <small>${range(d)} · ${d.air}</small>
+      <div class="price"><b>${baht(d.price)}</b><s>${baht(d.old)}</s></div>
+      ${seatMeter(d)}
+      <button class="btn btn-indigo" type="button" data-book="${d.id}">จองรอบนี้</button>
+    </article>`).join('');
+  const cd = document.getElementById('cd');
+  const tick = () => {
+    const now = new Date();
+    const bkk = new Date(now.toLocaleString('en-US', { timeZone: TZ }));
+    const left = Math.max(0, (24 * 3600) - (bkk.getHours() * 3600 + bkk.getMinutes() * 60 + bkk.getSeconds()));
+    cd.textContent = [left / 3600, left % 3600 / 60, left % 60].map(n => String(Math.floor(n)).padStart(2, '0')).join(':');
+  };
+  tick(); setInterval(tick, 1000);
+
+  /* ---------- ปฏิทินราคา ---------- */
+  const MONTHS = ['2026-11', '2026-12', '2027-01'];
+  const state = { country: 'all', month: 1, day: null, compare: [] };
+  document.getElementById('countries').innerHTML = [['all', '🌏', 'ทุกประเทศ'], ...Object.entries(COUNTRY).map(([k, [f, n]]) => [k, f, n])]
+    .map(([k, f, n]) => `<button class="chip" type="button" data-c="${k}" aria-pressed="${k === 'all'}"><span aria-hidden="true">${f}</span>${n}</button>`).join('');
+  document.getElementById('countries').addEventListener('click', e => {
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    state.country = b.dataset.c; state.day = null;
+    document.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    render();
+  });
+  const visible = () => deps.filter(d => (state.country === 'all' || d.c === state.country) && d.date.startsWith(MONTHS[state.month]));
+  const tier = p => p < 18000 ? ['low-c', 'ถูก'] : p >= 30000 ? ['high-c', 'พีค'] : ['mid-c', 'ปกติ'];
+  const shortK = p => (p / 1000).toFixed(1).replace('.0', '') + 'K';
+
+  function render() {
+    const [y, m] = MONTHS[state.month].split('-').map(Number);
+    document.getElementById('month-title').textContent = fmt(`${MONTHS[state.month]}-01`, { month: 'long', year: 'numeric' });
+    document.getElementById('prev').disabled = state.month === 0;
+    document.getElementById('next').disabled = state.month === MONTHS.length - 1;
+    const list = visible();
+    const byDay = {};
+    list.forEach(d => { if (!byDay[d.date] || byDay[d.date] > d.price) byDay[d.date] = d.price; });
+    const dayBtn = (iso, inGrid) => {
+      const p = byDay[iso], dnum = +iso.slice(8);
+      if (!p) return inGrid ? `<button class="day-btn" type="button" disabled aria-label="${fmt(iso, { day: 'numeric', month: 'long' })} ไม่มีรอบเดินทาง"><b>${dnum}</b></button>` : '';
+      const [c, label] = tier(p);
+      return `<button class="day-btn ${c}" type="button" data-day="${iso}" aria-pressed="${state.day === iso}" aria-label="${fmt(iso, { day: 'numeric', month: 'long' })} เริ่ม ${baht(p)} (${label})">${inGrid ? '' : `<small>${fmt(iso, { weekday: 'short' })}</small>`}<b>${dnum}</b><span>${shortK(p)}</span></button>`;
+    };
+    const daysIn = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+    const isoOf = d => `${MONTHS[state.month]}-${String(d).padStart(2, '0')}`;
+    document.getElementById('strip').innerHTML = Object.keys(byDay).sort().map(iso => dayBtn(iso, false)).join('') || '<p class="empty" style="flex:1">เดือนนี้ไม่มีรอบเดินทาง</p>';
+    document.getElementById('cal').innerHTML = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(d => `<span class="dow">${d}</span>`).join('')
+      + '<span class="blank"></span>'.repeat(firstDow)
+      + Array.from({ length: daysIn }, (_, i) => dayBtn(isoOf(i + 1), true)).join('');
+    document.getElementById('all-month').setAttribute('aria-pressed', String(!state.day));
+
+    const shown = state.day ? list.filter(d => d.date === state.day) : list;
+    document.getElementById('res-title').textContent = state.day ? `รอบวันที่ ${fmt(state.day, { day: 'numeric', month: 'long' })}` : `รอบเดินทาง${fmt(`${MONTHS[state.month]}-01`, { month: 'long' })}`;
+    document.getElementById('res-sub').textContent = `${shown.length} รอบ · ราคาต่อคน รวมตั๋ว โรงแรม อาหาร และประกัน`;
+    document.getElementById('results').innerHTML = shown.length ? shown.map(d => `
+      <article class="res${state.compare.includes(d.id) ? ' picked' : ''}">
+        <span class="flag" aria-hidden="true">${COUNTRY[d.c][0]}</span>
+        <div><h3>${d.name}</h3><p class="meta">${range(d)} · ${d.days} วัน ${d.nights} คืน · ${d.air}</p></div>
+        <div class="bot"><div class="pr"><small>ราคาต่อคน</small><b>${baht(d.price)}</b>${d.old ? `<s>${baht(d.old)}</s>` : ''}</div></div>
+        ${seatMeter(d, d.left <= 5 ? 'hot' : '')}
+        <div class="acts"><button class="btn btn-out cmp" type="button" data-cmp="${d.id}" aria-pressed="${state.compare.includes(d.id)}">${state.compare.includes(d.id) ? '✓ เทียบอยู่' : '+ เปรียบเทียบ'}</button><button class="btn btn-indigo" type="button" data-book="${d.id}">จอง</button></div>
+      </article>`).join('') : '<p class="empty">ไม่มีรอบเดินทางที่ตรงกับตัวเลือก ลองเปลี่ยนเดือนหรือประเทศ หรือขอจัดกรุ๊ปส่วนตัว</p>';
+    renderTray();
+  }
+  document.getElementById('prev').addEventListener('click', () => { state.month--; state.day = null; render(); });
+  document.getElementById('next').addEventListener('click', () => { state.month++; state.day = null; render(); });
+  document.getElementById('all-month').addEventListener('click', () => { state.day = null; render(); });
+  document.getElementById('calendar').addEventListener('click', e => {
+    const day = e.target.closest('[data-day]');
+    if (day) { state.day = state.day === day.dataset.day ? null : day.dataset.day; render(); return; }
+    const c = e.target.closest('[data-cmp]');
+    if (c) {
+      const id = +c.dataset.cmp;
+      if (state.compare.includes(id)) state.compare = state.compare.filter(x => x !== id);
+      else if (state.compare.length < 3) state.compare.push(id);
+      render();
+    }
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-book]');
+    if (b) { b.textContent = 'ล็อกที่นั่ง 15 นาที ✓'; b.disabled = true; }
+  });
+
+  /* ---------- เปรียบเทียบ ---------- */
+  const tray = document.getElementById('tray'), dlg = document.getElementById('cmp');
+  function renderTray() {
+    tray.hidden = !state.compare.length;
+    document.getElementById('tray-n').textContent = `เลือกเปรียบเทียบ ${state.compare.length} รอบ`;
+    document.getElementById('tray-open').disabled = state.compare.length < 2;
+    document.getElementById('tray-open').style.opacity = state.compare.length < 2 ? .5 : 1;
+  }
+  document.getElementById('tray-clear').addEventListener('click', () => { state.compare = []; render(); });
+  document.getElementById('tray-open').addEventListener('click', () => {
+    const list = state.compare.map(id => deps[id]);
+    const min = Math.min(...list.map(d => d.price));
+    const perNight = d => Math.round(d.price / d.nights);
+    const minPN = Math.min(...list.map(perNight));
+    const row = (label, f) => `<tr><th scope="row">${label}</th>${list.map(d => `<td>${f(d)}</td>`).join('')}</tr>`;
+    document.getElementById('cmp-table').innerHTML = `<thead><tr><th scope="col"></th>${list.map(d => `<th scope="col">${COUNTRY[d.c][0]} ${d.name}</th>`).join('')}</tr></thead><tbody>
+      ${row('วันเดินทาง', range)}
+      ${row('ราคาต่อคน', d => `<span class="${d.price === min ? 'best' : ''}">${baht(d.price)}${d.price === min ? ' · ถูกสุด' : ''}</span>`)}
+      ${row('เฉลี่ยต่อคืน', d => `<span class="${perNight(d) === minPN ? 'best' : ''}">${baht(perNight(d))}</span>`)}
+      ${row('สายการบิน', d => d.air)}
+      ${row('กระเป๋า', d => d.bag)}
+      ${row('โรงแรม', d => d.hotel)}
+      ${row('อาหาร', d => `${d.meals} มื้อ${d.onsen ? ' · ออนเซ็น 1 คืน' : ''}`)}
+      ${row('ที่นั่งเหลือ', d => `${d.left} ที่`)}
+      ${row('มัดจำ', () => `${baht(DEPOSIT)} / คน`)}
+    </tbody>`;
+    dlg.showModal();
+  });
+  document.getElementById('cmp-close').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+  render();
+
+  /* ---------- ฟอร์มกรุ๊ปส่วนตัว ---------- */
+  document.getElementById('gform').addEventListener('submit', e => {
+    e.preventDefault();
+    const tel = document.getElementById('g-tel'), consent = document.getElementById('g-consent');
+    const telErr = /^0[689]\d{8}$/.test(tel.value.replace(/\D/g, '')) ? '' : 'กรอกเบอร์มือถือ 10 หลัก ขึ้นต้นด้วย 06, 08 หรือ 09';
+    const cErr = consent.checked ? '' : 'กรุณาติ๊กยินยอมเพื่อให้เราติดต่อกลับได้';
+    tel.setAttribute('aria-invalid', String(!!telErr));
+    document.getElementById('g-tel-err').textContent = telErr;
+    document.getElementById('g-consent-err').textContent = cErr;
+    if (telErr) return tel.focus();
+    if (cErr) return consent.focus();
+    const ok = document.getElementById('g-ok');
+    ok.textContent = 'ได้รับคำขอแล้ว ฝ่ายขายจะส่งใบเสนอราคาทาง LINE หรืออีเมลภายใน 1 วันทำการ (ตัวอย่าง)';
+    ok.hidden = false;
+  });
+
+  /* ---------- หลังบ้าน: รอบที่ต้องตัดสินใจ ---------- */
+  const MIN_GROUP = 15, CONFIRM_DAYS = 45;
+  const todayIso = '2026-10-17';
+  const daysUntil = iso => Math.round((new Date(iso + 'T00:00:00Z') - new Date(todayIso + 'T00:00:00Z')) / 864e5);
+  document.getElementById('decide').innerHTML = deps.filter(d => addDays(d.date, -CONFIRM_DAYS) >= todayIso).slice(0, 4).map(d => {
+    const sold = CAP - d.left, deadline = addDays(d.date, -CONFIRM_DAYS), left = daysUntil(deadline);
+    const ok = sold >= MIN_GROUP;
+    return `<div class="dec">
+      <div class="dec-top"><div><b>${COUNTRY[d.c][0]} ${d.name}</b><small>${range(d)} · ยืนยันกับสายการบินภายใน ${fmt(deadline, { day: 'numeric', month: 'short' })} (${left > 0 ? 'อีก ' + left + ' วัน' : 'ครบกำหนดแล้ว'})</small></div><span class="badge ${ok ? 'b-ok' : 'b-due'}">${ok ? 'ครบขั้นต่ำ' : `ขาด ${MIN_GROUP - sold} คน`}</span></div>
+      <div class="meter"><span class="track"><i class="${ok ? 'ok' : ''}" style="width:${sold / CAP * 100}%"></i></span><span>${sold}/${CAP}</span></div>
+      <div class="acts">${ok ? '<button class="btn btn-sun" type="button">ยืนยันกรุ๊ป</button>' : '<button class="btn btn-sun" type="button">เปิดโปรไฟไหม้</button><button class="btn btn-ghost-d" type="button">ย้ายลูกค้าไปรอบอื่น</button>'}</div>
+    </div>`;
+  }).join('');
+
+  /* ---------- drawer ---------- */
+  const drawer = document.getElementById('drawer'), burger = document.getElementById('burger');
+  const setDrawer = open => { drawer.hidden = !open; burger.setAttribute('aria-expanded', String(open)); document.body.style.overflow = open ? 'hidden' : ''; (open ? document.getElementById('drawer-close') : burger).focus(); };
+  burger.addEventListener('click', () => setDrawer(true));
+  document.getElementById('drawer-close').addEventListener('click', () => setDrawer(false));
+  drawer.addEventListener('click', e => { if (e.target === drawer || e.target.closest('a')) setDrawer(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !drawer.hidden) setDrawer(false); });
+</script>
+</body>
+</html>
