@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechForceStudio · ชุดเพจ Facebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* mobile-first ตาม §15.2 */
+  :root { --bg: #F0F2F5; --surface: #FFFFFF; --ink: #1C1E21; --muted: #65676B; --line: #E4E6EB; --fb: #1877F2; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; font-size: 16px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: clamp(26px, 6vw, 36px); line-height: 1.3; }
+  header p { color: var(--muted); max-width: 72ch; margin-top: 6px; }
+  .jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .jump a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 6px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 600; }
+  .jump img { width: 32px; height: 32px; border-radius: 50%; }
+  section { margin-top: 32px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+  .head { padding: 20px 20px 4px; }
+  .head h2 { font-size: 24px; }
+  .head p { color: var(--muted); }
+  .views { display: grid; gap: 20px; padding: 16px 20px 20px; }
+  .label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+  /* เดสก์ท็อป: ปกเต็ม รูปโปรไฟล์ทับมุมล่างซ้าย */
+  .desk { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #fff; }
+  .desk .cover { aspect-ratio: 1640 / 624; background-size: cover; background-position: center; }
+  .desk .bar { display: flex; align-items: flex-end; gap: 14px; padding: 0 18px 16px; }
+  .desk .pp { width: 22%; max-width: 168px; aspect-ratio: 1; margin-top: -8%; border-radius: 50%; border: 4px solid #fff; background-size: cover; flex: none; }
+  .desk .nm b { display: block; font-size: clamp(18px, 3vw, 28px); line-height: 1.2; }
+  .desk .nm span { color: var(--muted); font-size: 14px; }
+  .desk .btns { margin-left: auto; display: none; gap: 8px; }
+  .desk .btns span { padding: 8px 14px; border-radius: 8px; background: #E4E6EB; font-weight: 600; font-size: 14px; }
+  .desk .btns span.p { background: var(--fb); color: #fff; }
+  /* มือถือ: ปกถูกครอปเป็น 16:9 ตรงกลาง รูปโปรไฟล์อยู่กลาง */
+  .mob { width: min(100%, 360px); margin: 0 auto; border-radius: 26px; border: 8px solid #1C1E21; overflow: hidden; background: #fff; }
+  .mob .cover { aspect-ratio: 16 / 9; background-size: auto 100%; background-position: center; }
+  .mob .pp { width: 36%; aspect-ratio: 1; margin: -18% auto 0; border-radius: 50%; border: 4px solid #fff; background-size: cover; position: relative; }
+  .mob .nm { text-align: center; padding: 6px 12px 16px; }
+  .mob .nm b { display: block; font-size: 20px; }
+  .mob .nm span { color: var(--muted); font-size: 13px; }
+  .mob .btn { margin: 0 12px 14px; padding: 8px; border-radius: 8px; background: var(--fb); color: #fff; text-align: center; font-weight: 600; font-size: 14px; }
+  .files { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 20px; }
+  .files a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 600; font-size: 14px; }
+  .wms { display: grid; gap: 12px; padding: 0 20px 20px; }
+  .wms div { display: grid; place-items: center; padding: 18px; border-radius: 14px; border: 1px solid var(--line); }
+  .wms div.dark { background: #0B1026; border-color: #0B1026; }
+  .wms img { max-width: 100%; height: auto; max-height: 64px; }
+  .tips { margin-top: 32px; padding: 18px 20px; border-radius: 18px; background: var(--surface); border: 1px dashed #C4C7CE; color: var(--muted); }
+  .tips b { color: var(--ink); }
+  .tips ul { margin: 6px 0 0 20px; }
+  @media (hover: hover) { .jump a:hover, .files a:hover { border-color: var(--ink); } }
+  @media (min-width: 768px) {
+    .wrap { padding: 48px 24px 80px; }
+    .wms { grid-template-columns: 1fr 1fr; }
+    .desk .btns { display: flex; }
+  }
+  @media (min-width: 1024px) { .views { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ชุดเพจ Facebook · TechForceStudio</h1>
+    <p>โลโก้แบบ A, E และ F พร้อมภาพปกที่ออกแบบคู่กัน แต่ละชุดแสดงหน้าตาเพจบนคอม (ปกเต็ม รูปโปรไฟล์ทับมุมล่างซ้าย) และบนมือถือ (ปกถูกตัดซ้าย-ขวาเหลือ 16:9)</p>
+    <nav class="jump" aria-label="ไปยังชุด"><a href="#set-a"><img src="logos/techforce-2-codebolt-profile.png" alt="">A · Original</a><a href="#set-e"><img src="logos/techforce-2e-chat-profile.png" alt="">E · Chat Bubble</a><a href="#set-f"><img src="logos/techforce-2f-badge-profile.png" alt="">F · Badge Ring</a></nav>
+  </header>
+  
+  <section id="set-a" aria-labelledby="h-a">
+    <div class="head"><h2 id="h-a">A · Original</h2><p>ปกแบบโชว์ผลงาน: หน้าจอระบบจริงบนโน้ตบุ๊กและมือถือ</p></div>
+    <div class="views">
+      <div><p class="label">บนคอม</p>
+        <div class="desk"><div class="cover" style="background-image:url(covers/techforce-cover-a.png)" role="img" aria-label="ภาพปกแบบ A · Original"></div>
+          <div class="bar"><div class="pp" style="background-image:url(logos/techforce-2-codebolt-profile.png)"></div><div class="nm"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบ · ผู้ติดตาม 1.2K</span></div><div class="btns"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div></div></div>
+      <div><p class="label">บนมือถือ</p>
+        <div class="mob"><div class="cover" style="background-image:url(covers/techforce-cover-a.png)"></div><div class="pp" style="background-image:url(logos/techforce-2-codebolt-profile.png)"></div>
+          <div class="nm"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบ</span></div><div class="btn">ส่งข้อความ</div></div></div>
+    </div>
+    <div class="wms"><div><img src="wordmarks/techforce-2-codebolt-wordmark-navy.png" alt="โลโก้คู่ชื่อ สำหรับพื้นสว่าง"></div><div class="dark"><img src="wordmarks/techforce-2-codebolt-wordmark-white.png" alt="โลโก้คู่ชื่อ สำหรับพื้นมืด"></div></div>
+    <div class="files">
+      <a href="logos/techforce-2-codebolt-profile.png">รูปโปรไฟล์ 1080×1080</a>
+      <a href="covers/techforce-cover-a.png">ภาพปก 1640×624</a>
+      <a href="wordmarks/techforce-2-codebolt-wordmark-navy.png">โลโก้คู่ชื่อ (พื้นสว่าง)</a>
+      <a href="wordmarks/techforce-2-codebolt-wordmark-white.png">โลโก้คู่ชื่อ (พื้นมืด)</a>
+      <a href="logos/techforce-2-codebolt.svg">SVG</a>
+    </div>
+  </section>
+  <section id="set-e" aria-labelledby="h-e">
+    <div class="head"><h2 id="h-e">E · Chat Bubble</h2><p>ปกแบบแชท: จำลองบทสนทนาลูกค้าทักเพจแล้วได้ตัวอย่างงานทันที</p></div>
+    <div class="views">
+      <div><p class="label">บนคอม</p>
+        <div class="desk"><div class="cover" style="background-image:url(covers/techforce-cover-e.png)" role="img" aria-label="ภาพปกแบบ E · Chat Bubble"></div>
+          <div class="bar"><div class="pp" style="background-image:url(logos/techforce-2e-chat-profile.png)"></div><div class="nm"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบ · ผู้ติดตาม 1.2K</span></div><div class="btns"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div></div></div>
+      <div><p class="label">บนมือถือ</p>
+        <div class="mob"><div class="cover" style="background-image:url(covers/techforce-cover-e.png)"></div><div class="pp" style="background-image:url(logos/techforce-2e-chat-profile.png)"></div>
+          <div class="nm"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบ</span></div><div class="btn">ส่งข้อความ</div></div></div>
+    </div>
+    <div class="wms"><div><img src="wordmarks/techforce-2e-chat-wordmark-navy.png" alt="โลโก้คู่ชื่อ สำหรับพื้นสว่าง"></div><div class="dark"><img src="wordmarks/techforce-2e-chat-wordmark-white.png" alt="โลโก้คู่ชื่อ สำหรับพื้นมืด"></div></div>
+    <div class="files">
+      <a href="logos/techforce-2e-chat-profile.png">รูปโปรไฟล์ 1080×1080</a>
+      <a href="covers/techforce-cover-e.png">ภาพปก 1640×624</a>
+      <a href="wordmarks/techforce-2e-chat-wordmark-navy.png">โลโก้คู่ชื่อ (พื้นสว่าง)</a>
+      <a href="wordmarks/techforce-2e-chat-wordmark-white.png">โลโก้คู่ชื่อ (พื้นมืด)</a>
+      <a href="logos/techforce-2e-chat.svg">SVG</a>
+    </div>
+  </section>
+  <section id="set-f" aria-labelledby="h-f">
+    <div class="head"><h2 id="h-f">F · Badge Ring</h2><p>ปกแบบวงโคจร: โลโก้อยู่กลาง ล้อมด้วย 5 ระบบที่เราทำ</p></div>
+    <div class="views">
+      <div><p class="label">บนคอม</p>
+        <div class="desk"><div class="cover" style="background-image:url(covers/techforce-cover-f.png)" role="img" aria-label="ภาพปกแบบ F · Badge Ring"></div>
+          <div class="bar"><div class="pp" style="background-image:url(logos/techforce-2f-badge-profile.png)"></div><div class="nm"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบ · ผู้ติดตาม 1.2K</span></div><div class="btns"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div></div></div>
+      <div><p class="label">บนมือถือ</p>
+        <div class="mob"><div class="cover" style="background-image:url(covers/techforce-cover-f.png)"></div><div class="pp" style="background-image:url(logos/techforce-2f-badge-profile.png)"></div>
+          <div class="nm"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบ</span></div><div class="btn">ส่งข้อความ</div></div></div>
+    </div>
+    <div class="wms"><div><img src="wordmarks/techforce-2f-badge-wordmark-navy.png" alt="โลโก้คู่ชื่อ สำหรับพื้นสว่าง"></div><div class="dark"><img src="wordmarks/techforce-2f-badge-wordmark-white.png" alt="โลโก้คู่ชื่อ สำหรับพื้นมืด"></div></div>
+    <div class="files">
+      <a href="logos/techforce-2f-badge-profile.png">รูปโปรไฟล์ 1080×1080</a>
+      <a href="covers/techforce-cover-f.png">ภาพปก 1640×624</a>
+      <a href="wordmarks/techforce-2f-badge-wordmark-navy.png">โลโก้คู่ชื่อ (พื้นสว่าง)</a>
+      <a href="wordmarks/techforce-2f-badge-wordmark-white.png">โลโก้คู่ชื่อ (พื้นมืด)</a>
+      <a href="logos/techforce-2f-badge.svg">SVG</a>
+    </div>
+  </section>
+  <div class="tips"><b>วิธีอัปโหลด</b>
+    <ul>
+      <li>รูปโปรไฟล์: ใช้ไฟล์ 1080×1080 Facebook จะครอปเป็นวงกลมเอง</li>
+      <li>ภาพปก: ใช้ไฟล์ 1640×624 แบบ PNG ภาพจะคมกว่า JPG เพราะมีตัวหนังสือ บนมือถือด้านซ้าย-ขวาจะถูกตัด แต่ข้อความหลักอยู่ในส่วนที่ยังเห็น</li>
+      <li>โลโก้คู่ชื่อเป็นพื้นโปร่งใส ใช้กับใบเสนอราคา สไลด์ หรือภาพโปรโมทได้</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
