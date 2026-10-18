@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechForceStudio · ตัวเลือกโลโก้</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700&family=Space+Grotesk:wght@400;700&family=Chakra+Petch:wght@400;700&family=Unbounded:wght@400;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* mobile-first ตาม §15.2 */
+  :root { --bg: #F3F4F6; --surface: #FFFFFF; --ink: #111827; --muted: #6B7280; --line: #E5E7EB; --fb: #1877F2; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; font-size: 16px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: clamp(26px, 6vw, 36px); line-height: 1.3; }
+  header p { color: var(--muted); max-width: 70ch; margin-top: 6px; }
+  .jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .jump a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 600; }
+  .jump a svg { width: 28px; height: 28px; border-radius: 50%; }
+  section { margin-top: 36px; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 20px 20px 0; }
+  .head h2 { font-size: 24px; }
+  .head .num { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; margin-right: 8px; vertical-align: 3px; }
+  .idea { padding: 6px 20px 0; color: var(--muted); max-width: 72ch; }
+  .grid { display: grid; gap: 20px; padding: 20px; }
+  .big { display: grid; place-items: center; padding: 24px; border-radius: 20px; background: #F9FAFB; }
+  .big svg { width: min(260px, 70vw); height: auto; filter: drop-shadow(0 18px 30px rgba(17, 24, 39, .18)); }
+  .label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+  /* ตัวอย่างหน้าเพจ Facebook */
+  .fb { border-radius: 18px; border: 1px solid var(--line); overflow: hidden; background: #fff; }
+  .cover { height: 120px; position: relative; overflow: hidden; }
+  .cover::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .07) 0 1px, transparent 1px 28px), repeating-linear-gradient(0deg, rgba(255, 255, 255, .07) 0 1px, transparent 1px 28px); }
+  .fb-body { display: flex; align-items: flex-end; gap: 14px; padding: 0 16px 16px; margin-top: -44px; position: relative; }
+  .avatar { flex: none; width: 112px; height: 112px; border-radius: 50%; border: 5px solid #fff; overflow: hidden; background: #fff; }
+  .avatar svg { width: 100%; height: 100%; display: block; }
+  .fb-name b { display: block; font-family: system-ui, sans-serif; font-size: 20px; line-height: 1.25; }
+  .fb-name span { color: var(--muted); font-size: 14px; }
+  .fb-btn { margin: 0 16px 16px; display: flex; gap: 8px; }
+  .fb-btn span { flex: 1; text-align: center; padding: 8px; border-radius: 8px; background: #E4E6EB; font-weight: 600; font-size: 14px; }
+  .fb-btn span.p { background: var(--fb); color: #fff; }
+  .sizes { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+  .sizes figure { display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+  .sizes svg { border-radius: 50%; display: block; }
+  .chat { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; background: #F0F2F5; font-size: 14px; }
+  .chat svg { width: 32px; height: 32px; border-radius: 50%; flex: none; }
+  .wm { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 16px; background: #fff; border: 1px solid var(--line); color: #0B1026; }
+  .wm.dark { background: #0B1026; border-color: #0B1026; color: #fff; }
+  .wm-mark svg { width: 56px; height: 56px; display: block; }
+  .wm-text { font-size: clamp(22px, 6vw, 30px); letter-spacing: -.01em; line-height: 1.1; white-space: nowrap; }
+  .wm-text b { font-weight: 700; }
+  .wm-text span { font-weight: 400; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; font-size: 14px; color: var(--muted); }
+  .sw { display: flex; }
+  .sw i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); margin-left: -6px; }
+  .sw i:first-child { margin-left: 0; }
+  .files { display: flex; flex-wrap: wrap; gap: 8px; }
+  .files a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); color: inherit; text-decoration: none; font-weight: 600; font-size: 14px; }
+  .note { margin-top: 36px; padding: 18px 20px; border-radius: 18px; border: 1px dashed #C4C7CE; color: var(--muted); }
+  .note b { color: var(--ink); }
+  @media (hover: hover) { .jump a:hover, .files a:hover { border-color: var(--ink); } }
+  @media (min-width: 768px) {
+    .wrap { padding: 48px 24px 80px; }
+    .grid { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+    .big { grid-row: span 2; min-height: 320px; }
+    .cover { height: 150px; }
+    .avatar { width: 132px; height: 132px; }
+  }
+  @media (min-width: 1024px) {
+    .grid { grid-template-columns: 320px minmax(0, 1fr) minmax(0, 1fr); }
+    .big { grid-row: span 3; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>โลโก้เพจ TechForceStudio · 4 แบบ</h1>
+    <p>ทุกแบบออกแบบให้อยู่ในวงกลมกลางภาพ เพราะ Facebook แสดงรูปโปรไฟล์เป็นวงกลม และยังอ่านออกตอนเล็กเท่าไอคอนในแชท แต่ละแบบมีตัวอย่างหน้าเพจ ขนาดเล็ก และโลโก้คู่ชื่อทั้งพื้นสว่างและพื้นมืด</p>
+    <nav class="jump" aria-label="ไปยังแบบ"><a href="#circuit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="j-circuit-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#j-circuit-circle)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg>1 Circuit TF</a><a href="#codebolt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="j-codebolt-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#j-codebolt-circle)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg>2 Code Bolt</a><a href="#block"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="256" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg>3 Build Block</a><a href="#forcef"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="j-forcef-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#j-forcef-circle)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg>4 Force F</a></nav>
+  </header>
+  
+  <section id="circuit" aria-labelledby="t-circuit">
+    <div class="head"><h2 id="t-circuit"><span class="num">1</span>Circuit TF</h2></div>
+    <p class="idea">ตัว T กับ F ใช้เส้นร่วมกันแบบลายวงจร ปลายเส้นเป็นจุดเชื่อมต่อ สื่อว่าเราสร้างระบบที่เชื่อมกันทุกส่วน</p>
+    <div class="grid">
+      <div class="big"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="g-circuit-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#g-circuit-rounded)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg></div>
+      <div>
+        <p class="label">ตัวอย่างหน้าเพจ Facebook</p>
+        <div class="fb"><div class="cover" style="background:linear-gradient(120deg,#1E1A8C,#3A2BEA 45%,#00B8F0)"></div>
+          <div class="fb-body"><div class="avatar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="a-circuit-square" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="0" fill="url(#a-circuit-square)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg></div><div class="fb-name"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบสำหรับธุรกิจ</span></div></div>
+          <div class="fb-btn"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div><p class="label">ขนาดเล็ก (คอมเมนต์ · แชท · แท็บเบราว์เซอร์)</p>
+          <div class="sizes"><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="96" height="96" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="s96-circuit-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s96-circuit-circle)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg><figcaption>96px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="56" height="56" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="s56-circuit-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s56-circuit-circle)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg><figcaption>56px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="40" height="40" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="s40-circuit-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s40-circuit-circle)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg><figcaption>40px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="s24-circuit-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s24-circuit-circle)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg><figcaption>24px</figcaption></figure></div></div>
+        <div class="chat"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="c-circuit-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#c-circuit-circle)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg><span><b>TechForceStudio</b> สวัสดีครับ สนใจระบบแบบไหน ทักมาได้เลย</span></div>
+      </div>
+      <div><div class="wm " style="font-family:'Sora',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="w1-circuit-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#w1-circuit-rounded)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#3A2BEA">Studio</span></span></div></div>
+      <div><div class="wm dark" style="font-family:'Sora',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="w2-circuit-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#w2-circuit-rounded)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#5FD4FF">Studio</span></span></div></div>
+      <div class="meta" style="grid-column:1/-1">
+        <span class="sw" aria-hidden="true"><i style="background:#3A2BEA"></i><i style="background:#00B8F0"></i><i style="background:#FFFFFF"></i><i style="background:#0B1026"></i></span>
+        <span>สี #3A2BEA · #00B8F0 · #FFFFFF · #0B1026</span><span>ฟอนต์ Sora</span>
+        <span class="files"><a href="logos/techforce-1-circuit-profile.png">รูปโปรไฟล์ PNG 1080px</a><a href="logos/techforce-1-circuit.svg">ไฟล์ SVG</a></span>
+      </div>
+    </div>
+  </section>
+  <section id="codebolt" aria-labelledby="t-codebolt">
+    <div class="head"><h2 id="t-codebolt"><span class="num">2</span>Code Bolt</h2></div>
+    <p class="idea">เครื่องหมายโค้ด < > ที่ตรงกลางเป็นสายฟ้า = โค้ด + พลัง (Force) อ่านง่ายแม้ภาพเล็กมาก</p>
+    <div class="grid">
+      <div class="big"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="g-codebolt-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#g-codebolt-rounded)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg></div>
+      <div>
+        <p class="label">ตัวอย่างหน้าเพจ Facebook</p>
+        <div class="fb"><div class="cover" style="background:linear-gradient(120deg,#0B1026,#1B2559 60%,#2B3A80)"></div>
+          <div class="fb-body"><div class="avatar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="a-codebolt-square" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="0" fill="url(#a-codebolt-square)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg></div><div class="fb-name"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบสำหรับธุรกิจ</span></div></div>
+          <div class="fb-btn"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div><p class="label">ขนาดเล็ก (คอมเมนต์ · แชท · แท็บเบราว์เซอร์)</p>
+          <div class="sizes"><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="96" height="96" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="s96-codebolt-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s96-codebolt-circle)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg><figcaption>96px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="56" height="56" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="s56-codebolt-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s56-codebolt-circle)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg><figcaption>56px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="40" height="40" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="s40-codebolt-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s40-codebolt-circle)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg><figcaption>40px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="s24-codebolt-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s24-codebolt-circle)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg><figcaption>24px</figcaption></figure></div></div>
+        <div class="chat"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="c-codebolt-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#c-codebolt-circle)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg><span><b>TechForceStudio</b> สวัสดีครับ สนใจระบบแบบไหน ทักมาได้เลย</span></div>
+      </div>
+      <div><div class="wm " style="font-family:'Space Grotesk',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="w1-codebolt-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#w1-codebolt-rounded)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#C99A00">Studio</span></span></div></div>
+      <div><div class="wm dark" style="font-family:'Space Grotesk',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Code Bolt"><defs><linearGradient id="w2-codebolt-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B1026"/><stop offset="1" stop-color="#1F2B66"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#w2-codebolt-rounded)"/><g fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M182 170 110 256l72 86M330 170l72 86-72 86"/></g>
+      <path d="M290 112 206 274h52l-32 126 84-168h-52Z" fill="#FFD60A" stroke="#FFD60A" stroke-width="8" stroke-linejoin="round"/></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#FFD60A">Studio</span></span></div></div>
+      <div class="meta" style="grid-column:1/-1">
+        <span class="sw" aria-hidden="true"><i style="background:#0B1026"></i><i style="background:#1B2559"></i><i style="background:#FFD60A"></i><i style="background:#FFFFFF"></i></span>
+        <span>สี #0B1026 · #1B2559 · #FFD60A · #FFFFFF</span><span>ฟอนต์ Space Grotesk</span>
+        <span class="files"><a href="logos/techforce-2-codebolt-profile.png">รูปโปรไฟล์ PNG 1080px</a><a href="logos/techforce-2-codebolt.svg">ไฟล์ SVG</a></span>
+      </div>
+    </div>
+  </section>
+  <section id="block" aria-labelledby="t-block">
+    <div class="head"><h2 id="t-block"><span class="num">3</span>Build Block</h2></div>
+    <p class="idea">ลูกบาศก์ 3 หน้าแบบ isometric = ระบบที่ประกอบจากหลายส่วนอย่างแข็งแรง โทนดำ-เขียวแบบหน้าจอ terminal</p>
+    <div class="grid">
+      <div class="big"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="116" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg></div>
+      <div>
+        <p class="label">ตัวอย่างหน้าเพจ Facebook</p>
+        <div class="fb"><div class="cover" style="background:linear-gradient(120deg,#0D1117,#13231A 60%,#1D3B22)"></div>
+          <div class="fb-body"><div class="avatar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="0" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg></div><div class="fb-name"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบสำหรับธุรกิจ</span></div></div>
+          <div class="fb-btn"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div><p class="label">ขนาดเล็ก (คอมเมนต์ · แชท · แท็บเบราว์เซอร์)</p>
+          <div class="sizes"><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="96" height="96" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="256" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg><figcaption>96px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="56" height="56" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="256" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg><figcaption>56px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="40" height="40" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="256" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg><figcaption>40px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="256" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg><figcaption>24px</figcaption></figure></div></div>
+        <div class="chat"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="256" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg><span><b>TechForceStudio</b> สวัสดีครับ สนใจระบบแบบไหน ทักมาได้เลย</span></div>
+      </div>
+      <div><div class="wm " style="font-family:'Chakra Petch',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="116" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#2E9E3F">Studio</span></span></div></div>
+      <div><div class="wm dark" style="font-family:'Chakra Petch',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Build Block"><rect width="512" height="512" rx="116" fill="#0D1117"/><g stroke="#0D1117" stroke-width="16" stroke-linejoin="round">
+      <path d="M256 86 403 171 256 256 109 171Z" fill="#B6FF3B"/>
+      <path d="M109 171 256 256V426L109 341Z" fill="#4FD46B"/>
+      <path d="M256 256 403 171V341L256 426Z" fill="#1F8F55"/></g></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#B6FF3B">Studio</span></span></div></div>
+      <div class="meta" style="grid-column:1/-1">
+        <span class="sw" aria-hidden="true"><i style="background:#0D1117"></i><i style="background:#B6FF3B"></i><i style="background:#4FD46B"></i><i style="background:#1F8F55"></i></span>
+        <span>สี #0D1117 · #B6FF3B · #4FD46B · #1F8F55</span><span>ฟอนต์ Chakra Petch</span>
+        <span class="files"><a href="logos/techforce-3-block-profile.png">รูปโปรไฟล์ PNG 1080px</a><a href="logos/techforce-3-block.svg">ไฟล์ SVG</a></span>
+      </div>
+    </div>
+  </section>
+  <section id="forcef" aria-labelledby="t-forcef">
+    <div class="head"><h2 id="t-forcef"><span class="num">4</span>Force F</h2></div>
+    <p class="idea">ตัว F เอียงไปข้างหน้าพร้อมเส้นความเร็ว = ทีมที่ทำงานไวและพาธุรกิจไปข้างหน้า สีม่วง-ชมพูดูทันสมัย</p>
+    <div class="grid">
+      <div class="big"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="g-forcef-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#g-forcef-rounded)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg></div>
+      <div>
+        <p class="label">ตัวอย่างหน้าเพจ Facebook</p>
+        <div class="fb"><div class="cover" style="background:linear-gradient(120deg,#4C1D95,#7C3AED 45%,#EC4899)"></div>
+          <div class="fb-body"><div class="avatar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="a-forcef-square" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="0" fill="url(#a-forcef-square)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg></div><div class="fb-name"><b>TechForceStudio</b><span>รับทำเว็บไซต์และระบบสำหรับธุรกิจ</span></div></div>
+          <div class="fb-btn"><span class="p">ส่งข้อความ</span><span>ถูกใจ</span></div></div>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div><p class="label">ขนาดเล็ก (คอมเมนต์ · แชท · แท็บเบราว์เซอร์)</p>
+          <div class="sizes"><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="96" height="96" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="s96-forcef-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s96-forcef-circle)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg><figcaption>96px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="56" height="56" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="s56-forcef-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s56-forcef-circle)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg><figcaption>56px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="40" height="40" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="s40-forcef-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s40-forcef-circle)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg><figcaption>40px</figcaption></figure><figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="s24-forcef-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#s24-forcef-circle)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg><figcaption>24px</figcaption></figure></div></div>
+        <div class="chat"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="c-forcef-circle" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="256" fill="url(#c-forcef-circle)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg><span><b>TechForceStudio</b> สวัสดีครับ สนใจระบบแบบไหน ทักมาได้เลย</span></div>
+      </div>
+      <div><div class="wm " style="font-family:'Unbounded',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="w1-forcef-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#w1-forcef-rounded)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#9333EA">Studio</span></span></div></div>
+      <div><div class="wm dark" style="font-family:'Unbounded',sans-serif">
+  <span class="wm-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Force F"><defs><linearGradient id="w2-forcef-rounded" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset="1" stop-color="#EC4899"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#w2-forcef-rounded)"/><g transform="translate(256 256) skewX(-14) translate(-246 -256)">
+      <g fill="none" stroke="#fff" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"><path d="M232 156V356M232 156H378M232 258H336"/></g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="22"><path d="M126 206h50" opacity=".9"/><path d="M96 262h80" opacity=".65"/><path d="M136 318h40" opacity=".4"/></g></g></svg></span>
+  <span class="wm-text"><b>TechForce</b><span style="color:#F472B6">Studio</span></span></div></div>
+      <div class="meta" style="grid-column:1/-1">
+        <span class="sw" aria-hidden="true"><i style="background:#7C3AED"></i><i style="background:#EC4899"></i><i style="background:#FFFFFF"></i><i style="background:#1E0B3A"></i></span>
+        <span>สี #7C3AED · #EC4899 · #FFFFFF · #1E0B3A</span><span>ฟอนต์ Unbounded</span>
+        <span class="files"><a href="logos/techforce-4-forcef-profile.png">รูปโปรไฟล์ PNG 1080px</a><a href="logos/techforce-4-forcef.svg">ไฟล์ SVG</a></span>
+      </div>
+    </div>
+  </section>
+  <div class="note"><b>ขั้นต่อไป</b> เลือก 1 แบบ แล้วจะทำภาพปก Facebook (1640×624) โลโก้คู่ชื่อแบบไฟล์ และปรับภาพโปรโมททุกไฟล์ให้ใช้โลโก้นี้</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="โลโก้ TechForceStudio แบบ Circuit TF"><defs><linearGradient id="g-circuit-square" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2BEA"/><stop offset="1" stop-color="#00B8F0"/></linearGradient></defs><rect width="512" height="512" rx="0" fill="url(#g-circuit-square)"/><g fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"><path d="M136 158H372M236 158V362M236 262H330"/></g>
+      <g fill="#fff"><circle cx="372" cy="158" r="28"/><circle cx="330" cy="262" r="28"/><circle cx="236" cy="362" r="28"/></g>
+      <g fill="#2E35E6"><circle cx="372" cy="158" r="11"/><circle cx="330" cy="262" r="11"/><circle cx="236" cy="362" r="11"/></g>
+      <path d="M330 290v44" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/><circle cx="330" cy="344" r="10" fill="#fff" fill-opacity=".55"/></svg>
