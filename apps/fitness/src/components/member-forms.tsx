@@ -1,13 +1,15 @@
 'use client';
 
 import { addDays, formatBaht, formatThaiDate, formatThaiMobile } from '@repo/utils';
+import { CalendarDays } from 'lucide-react';
 import { useActionState, useState } from 'react';
 import { FREEZE_MAX_DAYS, membershipPeriod, type PackageLike } from '@/features/members/service';
 import { METHOD_LABEL, type PaymentMethod } from '@/features/payments/service';
 import type { ActionResult } from '@/features/shared/action-result';
 import { ResultMessage } from './action-button';
+import { Dropdown } from './dropdown';
 import { ChoiceCard, FieldError, TextField } from './field';
-import { btn, inputClass } from './ui';
+import { btn } from './ui';
 
 export interface PackageOption extends PackageLike {
   id: string;
@@ -152,12 +154,15 @@ export function FreezeForm({ action, expiresOn, today }: { action: Action; expir
   const [days, setDays] = useState(14);
   return (
     <form action={formAction} className="flex flex-col gap-3">
-      <label htmlFor="days" className="text-sm font-semibold">จำนวนวันที่พัก</label>
-      <select id="days" name="days" value={days} onChange={e => {
-          setDays(Number(e.target.value));
-        }} className={inputClass}>
-        {FREEZE_OPTIONS.map(d => <option key={d} value={d}>{d} วัน</option>)}
-      </select>
+      <Dropdown
+        name="days"
+        label="จำนวนวันที่พัก"
+        value={String(days)}
+        onChange={v => {
+          setDays(Number(v));
+        }}
+        options={FREEZE_OPTIONS.map(d => ({ value: String(d), label: `${String(d)} วัน`, description: `กลับมาใช้ได้ ${formatThaiDate(addDays(today, d))}`, icon: <CalendarDays className="size-4" /> }))}
+      />
       <p className="text-sm text-muted">พักถึง {formatThaiDate(addDays(today, days - 1))} · วันหมดอายุเลื่อนเป็น {formatThaiDate(addDays(expiresOn, days))} · ระหว่างพักเช็กอินไม่ได้</p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={btn.secondary}>{pending ? 'กำลังบันทึก…' : 'พักสมาชิก'}</button>

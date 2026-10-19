@@ -121,7 +121,9 @@ test.describe('สมาชิก', () => {
     await page.getByRole('radio', { name: /^3 เดือน/ }).check();
     await page.getByRole('button', { name: 'ยืนยันการต่ออายุ' }).click();
     await expect(page.getByText(/ชำระเงินแล้ว ใช้ได้ถึง/)).toBeVisible();
-    await page.getByLabel('จำนวนวันที่พัก').selectOption('30');
+    await page.getByRole('combobox', { name: 'จำนวนวันที่พัก' }).click();
+    await page.getByRole('option', { name: /^30 วัน/ }).click();
+    await expect(page.getByRole('combobox', { name: 'จำนวนวันที่พัก' })).toHaveText(/30 วัน/);
     await page.getByRole('button', { name: 'พักสมาชิก' }).click();
     // หลังพัก หน้าโปรไฟล์แสดงช่วงพักและปุ่มยกเลิกการพักแทนฟอร์ม
     await expect(page.getByRole('button', { name: 'ยกเลิกการพัก' })).toBeVisible();
@@ -161,7 +163,13 @@ test.describe('คลาส', () => {
 test.describe('บทบาทและสิทธิ์', () => {
   test('สลับเป็นสมาชิก เห็นบัตร QR และจองคลาสเองได้', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel('ดูในฐานะ').selectOption('member');
+    // ใช้คีย์บอร์ดเลือก เพื่อทดสอบ Dropdown แบบ combobox ไปด้วย
+    const role = page.getByRole('combobox', { name: 'ดูในฐานะ' });
+    await role.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('listbox')).toBeVisible();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/me$/);
     await expect(page.getByRole('img', { name: /QR บัตรสมาชิก FF-002318/ })).toBeVisible();
     await expectNoHorizontalScroll(page);
@@ -198,7 +206,23 @@ test.describe('การเงินและรายงาน', () => {
     await page.goto('/payments/p-101');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('ใบเสร็จรับเงิน');
     await expect(page.getByRole('button', { name: 'พิมพ์ใบเสร็จ' })).toBeVisible();
+    const receipt = page.getByRole('article', { name: /ใบเสร็จ RC-6910-0101/ });
+    await expect(receipt.getByText('ใบกำกับภาษีอย่างย่อ')).toBeVisible();
+    await expect(receipt.getByText('(หนึ่งพันสองร้อยบาทถ้วน)')).toBeVisible();
+    await expect(receipt.getByText('78.50')).toBeVisible();
     await expectNoHorizontalScroll(page);
+    // ตอนพิมพ์ เหลือเฉพาะใบเสร็จ (เมนู/แถบโหมดทดลอง/ปุ่มซ่อน)
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByRole('button', { name: 'พิมพ์ใบเสร็จ' })).toBeHidden();
+    await expect(page.getByRole('combobox', { name: 'ดูในฐานะ' })).toBeHidden();
+    await expect(receipt).toBeVisible();
+  });
+
+  test('ใบแจ้งชำระมี QR PromptPay และพิมพ์ได้', async ({ page }) => {
+    await page.goto('/payments/p-109');
+    await expect(page.getByRole('heading', { name: 'ใบแจ้งชำระเงิน' })).toBeVisible();
+    await expect(page.getByRole('img', { name: /QR PromptPay ยอด/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'พิมพ์ใบแจ้งชำระ' })).toBeVisible();
   });
 
   test('รายงานส่งออก CSV ได้', async ({ page }) => {
@@ -207,5 +231,55 @@ test.describe('การเงินและรายงาน', () => {
     const csv = await page.request.get('/reports/export');
     expect(csv.headers()['content-type']).toContain('text/csv');
     expect(await csv.text()).toContain('วันที่,รายได้ (บาท),เช็กอิน (คน)');
+  });
+});
+
+test.describe('มุมมองและตัวกรอง', () => {
+  test('รายชื่อสมาชิกสลับ ตาราง/การ์ด/บอร์ด และเรียงตามชื่อได้', async ({ page }) => {
+    await page.goto('/members');
+    await page.getByRole('link', { name: 'การ์ด', exact: true }).click();
+    await expect(page).toHaveURL(/view=cards/);
+    await expectNoHorizontalScroll(page);
+    await page.getByRole('link', { name: 'บอร์ดสถานะ', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /ใกล้หมดอายุ/ })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    await page.getByRole('combobox', { name: 'เรียงตาม' }).click();
+    await page.getByRole('option', { name: 'ชื่อ ก–ฮ' }).click();
+    await expect(page).toHaveURL(/sort=name/);
+    await expect(page).toHaveURL(/view=board/); // เปลี่ยนการเรียงแล้วมุมมองเดิมยังอยู่
+  });
+
+  test('กรองสมาชิกตามแพ็กเกจ', async ({ page }) => {
+    await page.goto('/members');
+    await page.getByRole('combobox', { name: 'แพ็กเกจ' }).click();
+    await page.getByRole('option', { name: /^Day pass/ }).click();
+    await expect(page).toHaveURL(/pkg=daypass/);
+    await expect(page.getByRole('link', { name: 'เอกชัย บุญมา' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'อรวรรณ มีสุข' })).toHaveCount(0);
+  });
+
+  test('การเงินดูแบบรายวัน และกรองช่องทางชำระ', async ({ page }) => {
+    await page.goto('/payments');
+    await page.getByRole('link', { name: 'รายวัน', exact: true }).click();
+    await expect(page.getByRole('heading', { name: '15 ตุลาคม 2569' })).toBeVisible();
+    await page.getByRole('combobox', { name: 'ช่องทาง' }).click();
+    await page.getByRole('option', { name: 'เงินสด' }).click();
+    await expect(page).toHaveURL(/method=cash/);
+    await expect(page.getByText('วรเมธ พูลผล')).toHaveCount(0); // รายการ PromptPay ถูกกรองออก
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('ตารางคลาส 4 มุมมอง ไม่มี scroll แนวนอน', async ({ page }) => {
+    await page.goto('/classes');
+    for (const name of ['รายวันตามห้อง', 'รายการ', 'ตามเทรนเนอร์']) {
+      await page.getByRole('link', { name, exact: true }).click();
+      await expect(page.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+      await expectNoHorizontalScroll(page);
+    }
+    await page.getByRole('combobox', { name: 'เทรนเนอร์' }).click();
+    await page.getByRole('option', { name: /^ครูแพร/ }).click();
+    await expect(page).toHaveURL(/trainer=t2/);
+    await expect(page.getByRole('heading', { name: 'โค้ชบอส' })).toHaveCount(0);
   });
 });

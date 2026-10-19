@@ -103,6 +103,10 @@ export interface PaymentRecord {
   paidAt: string | null;
   /** ผลของการชำระ (ต่ออายุ / เพิ่มครั้ง PT) ถูกใช้ไปแล้วหรือยัง */
   applied: boolean;
+  /** ช่วงสิทธิ์ที่ได้จากการชำระ (แพ็กเกจรายเดือน/รายวัน) — บันทึกตอนชำระสำเร็จเพื่อพิมพ์ในใบเสร็จ */
+  coverage: { from: string; to: string } | null;
+  /** เจ้าหน้าที่ที่รับเงิน/ยืนยันสลิป */
+  receivedBy: string | null;
   /** ข้อมูลตั้งต้น — รวมอยู่ในยอดสรุปของแดชบอร์ดแล้ว */
   seeded: boolean;
 }
@@ -229,17 +233,17 @@ const PT_SESSIONS: PtSessionRecord[] = [
   { id: 'pt-4', trainerId: 't4', memberId: '06', startsAt: '2026-10-15T12:00:00Z', minutes: 60, status: 'booked' },
 ];
 
-function payment(seq: number, memberId: string, packageId: string, kind: PaymentRecord['kind'], amountSatang: number, method: PaymentMethod, status: PaymentStatus, createdAt: string): PaymentRecord {
-  return { id: `p-${String(seq)}`, receiptNo: `RC-6910-${String(seq).padStart(4, '0')}`, memberId, packageId, kind, amountSatang, method, status, createdAt, paidAt: status === 'paid' ? createdAt : null, applied: status === 'paid', seeded: true };
+function payment(seq: number, memberId: string, packageId: string, kind: PaymentRecord['kind'], amountSatang: number, method: PaymentMethod, status: PaymentStatus, createdAt: string, coverage: PaymentRecord['coverage'] = null): PaymentRecord {
+  return { id: `p-${String(seq)}`, receiptNo: `RC-6910-${String(seq).padStart(4, '0')}`, memberId, packageId, kind, amountSatang, method, status, createdAt, paidAt: status === 'paid' ? createdAt : null, applied: status === 'paid', coverage, receivedBy: status === 'paid' ? 'มนัสนันท์ ร.' : null, seeded: true };
 }
 
 const PAYMENTS: PaymentRecord[] = [
-  payment(101, '10', 'monthly', 'renew', 120_000, 'promptpay', 'paid', '2026-10-10T04:12:00Z'),
+  payment(101, '10', 'monthly', 'renew', 120_000, 'promptpay', 'paid', '2026-10-10T04:12:00Z', { from: '2026-10-11', to: '2026-11-10' }),
   payment(102, '06', 'pt10', 'pt', 900_000, 'card', 'paid', '2026-10-11T09:30:00Z'),
   payment(103, '03', '3m', 'renew', 330_000, 'transfer', 'paid', '2026-10-12T03:45:00Z'),
   payment(104, '11', '6m', 'renew', 600_000, 'card', 'paid', '2026-10-13T11:05:00Z'),
   payment(105, '08', 'monthly', 'renew', 120_000, 'cash', 'paid', '2026-10-14T00:20:00Z'),
-  payment(106, '12', 'daypass', 'daypass', 20_000, 'cash', 'paid', '2026-10-15T11:30:00Z'),
+  payment(106, '12', 'daypass', 'daypass', 20_000, 'cash', 'paid', '2026-10-15T11:30:00Z', { from: '2026-10-15', to: '2026-10-15' }),
   payment(107, '07', '3m', 'renew', 330_000, 'promptpay', 'review', '2026-10-15T09:50:00Z'),
   payment(108, '09', '6m', 'renew', 600_000, 'transfer', 'review', '2026-10-15T10:15:00Z'),
   payment(109, '05', 'monthly', 'renew', 120_000, 'promptpay', 'pending', '2026-10-15T11:39:30Z'),

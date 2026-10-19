@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, daysLeft, isFrozenOn, memberCode, memberQrValue, membershipPeriod, membershipStatus, parseMemberQr, planFreeze, planUnfreeze } from './service';
+import { addMonths, compareMembers, daysLeft, isFrozenOn, memberCode, memberQrValue, membershipPeriod, membershipStatus, parseMemberQr, planFreeze, planUnfreeze } from './service';
 
 const today = '2026-10-15';
 
@@ -80,5 +80,27 @@ describe('รหัสและ QR สมาชิก', () => {
     expect(parseMemberQr(memberQrValue('FF-002332'))).toBe('FF-002332');
     expect(parseMemberQr(' fitflow:ff-002318 ')).toBe('FF-002318');
     expect(parseMemberQr('080-000-0101')).toBe('080-000-0101');
+  });
+});
+
+describe('compareMembers (เรียงรายชื่อ)', () => {
+  const rows = [
+    { name: 'อรวรรณ', daysLeft: 3, lastCheckInAt: '2026-10-15T01:00:00Z', joinedOn: '2026-01-01' },
+    { name: 'กิตติ', daysLeft: 30, lastCheckInAt: null, joinedOn: '2026-09-01' },
+    { name: 'ธนกร', daysLeft: 3, lastCheckInAt: '2026-10-15T09:00:00Z', joinedOn: '2025-05-01' },
+  ];
+  const names = (sort: Parameters<typeof compareMembers>[0]) => [...rows].sort(compareMembers(sort)).map(r => r.name);
+
+  it('ใกล้หมดอายุก่อน ค่าเท่ากันเรียงตามชื่อ', () => {
+    expect(names('expires')).toEqual(['ธนกร', 'อรวรรณ', 'กิตติ']);
+  });
+  it('ชื่อเรียงตามพจนานุกรมไทย', () => {
+    expect(names('name')).toEqual(['กิตติ', 'ธนกร', 'อรวรรณ']);
+  });
+  it('เช็กอินล่าสุดก่อน คนที่ไม่เคยเช็กอินอยู่ท้าย', () => {
+    expect(names('recent')).toEqual(['ธนกร', 'อรวรรณ', 'กิตติ']);
+  });
+  it('สมัครล่าสุดก่อน', () => {
+    expect(names('newest')).toEqual(['กิตติ', 'อรวรรณ', 'ธนกร']);
   });
 });

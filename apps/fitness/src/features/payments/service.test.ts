@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { crc16, isInstantMethod, promptPayPayload, receiptNo } from './service';
+import { crc16, isInstantMethod, promptPayPayload, receiptNo, vatFromInclusive } from './service';
 
 describe('crc16 (CRC-16/CCITT-FALSE)', () => {
   it('ตรงกับค่ามาตรฐานของข้อความทดสอบ', () => {
@@ -36,5 +36,16 @@ describe('ใบเสร็จและวิธีชำระ', () => {
   });
   it('เงินสด/บัตรยืนยันทันที ส่วน PromptPay/โอนต้องตรวจสลิป', () => {
     expect([isInstantMethod('cash'), isInstantMethod('card'), isInstantMethod('promptpay'), isInstantMethod('transfer')]).toEqual([true, true, false, false]);
+  });
+});
+
+describe('vatFromInclusive', () => {
+  it('แยก VAT 7% จากราคารวม โดยผลรวมเท่าราคาเดิมเสมอ', () => {
+    expect(vatFromInclusive(120_000)).toEqual({ baseSatang: 112_150, vatSatang: 7_850 });
+    expect(vatFromInclusive(20_000)).toEqual({ baseSatang: 18_692, vatSatang: 1_308 });
+    for (const total of [1, 99, 330_000, 1_090_000]) {
+      const { baseSatang, vatSatang } = vatFromInclusive(total);
+      expect(baseSatang + vatSatang).toBe(total);
+    }
   });
 });

@@ -29,7 +29,7 @@ export function ClassChip({ c, href }: { c: ClassDto; href: string }) {
  * ตารางคลาส 7 วัน
  * มือถือ: เลือกทีละวัน (แท็บวัน) · เดสก์ท็อป (≥ xl): 7 คอลัมน์พร้อมกัน (§15.2.4)
  */
-export function WeekSchedule({ classes, from, selected, basePath, hrefFor }: { classes: ClassDto[]; from: string; selected: string; basePath: string; hrefFor: (c: ClassDto) => string }) {
+export function WeekSchedule({ classes, from, selected, basePath, hrefFor, dayHref }: { classes: ClassDto[]; from: string; selected: string; basePath: string; hrefFor: (c: ClassDto) => string; dayHref?: (date: string) => string }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(from, i));
   const byDay = (date: string) => classes.filter(c => bangkokDate(new Date(c.startsAt)) === date);
   return (
@@ -38,7 +38,7 @@ export function WeekSchedule({ classes, from, selected, basePath, hrefFor }: { c
         {days.map(d => {
           const l = label(d);
           return (
-            <Link key={d} href={`${basePath}?from=${from}&day=${d}`} aria-current={d === selected ? 'page' : undefined} className="flex min-h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-surface px-3 text-sm aria-[current=page]:border-lime aria-[current=page]:bg-lime aria-[current=page]:text-bg">
+            <Link key={d} href={dayHref ? dayHref(d) : `${basePath}?from=${from}&day=${d}`} aria-current={d === selected ? 'page' : undefined} className="flex min-h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-surface px-3 text-sm aria-[current=page]:border-lime aria-[current=page]:bg-lime aria-[current=page]:text-bg">
               <span className="text-xs">{l.weekday}</span>
               <b className="font-semibold">{l.day}</b>
             </Link>
@@ -68,3 +68,5 @@ export function WeekSchedule({ classes, from, selected, basePath, hrefFor }: { c
     </>
   );
 }
+
+export { label as dayLabel };

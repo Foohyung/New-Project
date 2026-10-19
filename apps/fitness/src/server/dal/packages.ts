@@ -1,4 +1,5 @@
 import 'server-only';
+import { packageDurationLabel } from '@/features/packages/service';
 import type { Session } from '../auth';
 import { db, type PackageRecord } from '../db';
 import { authorize, can, ForbiddenError } from '../rbac';
@@ -13,13 +14,7 @@ export interface PackageDto {
   durationLabel: string;
 }
 
-function durationLabel(p: PackageRecord): string {
-  if (p.kind === 'pt') return `${String(p.sessions ?? 0)} ครั้ง`;
-  if (p.kind === 'daypass') return `${String(p.days ?? 1)} วัน`;
-  return `${String(p.months ?? 1)} เดือน`;
-}
-
-const toDto = (p: PackageRecord): PackageDto => ({ id: p.id, name: p.name, kind: p.kind, priceSatang: p.priceSatang, description: p.description, active: p.active, durationLabel: durationLabel(p) });
+const toDto = (p: PackageRecord): PackageDto => ({ id: p.id, name: p.name, kind: p.kind, priceSatang: p.priceSatang, description: p.description, active: p.active, durationLabel: packageDurationLabel(p) });
 
 /** ราคาแพ็กเกจเป็นข้อมูล Public (§11.1) แต่ระบบนี้ให้ดูได้เฉพาะผู้ที่ login แล้ว */
 export function listPackages(session: Session, options: { activeOnly?: boolean } = {}): Promise<PackageDto[]> {

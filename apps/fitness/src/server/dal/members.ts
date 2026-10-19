@@ -1,6 +1,6 @@
 import 'server-only';
 import { addDays, bangkokDate, normalizePhone } from '@repo/utils';
-import { daysLeft, isFrozenOn, memberCode, membershipStatus, planFreeze, planUnfreeze, type FreezeDecision, type MembershipStatus } from '@/features/members/service';
+import { compareMembers, daysLeft, isFrozenOn, memberCode, membershipStatus, planFreeze, planUnfreeze, type FreezeDecision, type MemberSort, type MembershipStatus } from '@/features/members/service';
 import type { MemberDetailDto, MemberDto } from '@/features/members/types';
 import type { PaymentMethod } from '@/features/payments/service';
 import type { Session } from '../auth';
@@ -25,10 +25,11 @@ export function toMemberDto(store: Store, m: MemberRecord, date: string): Member
     status: membershipStatus({ expiresOn: m.expiresOn, frozen }, date),
     lastCheckInAt: m.lastCheckInAt,
     ptSessionsLeft: m.ptSessionsLeft,
+    joinedOn: m.joinedOn,
   };
 }
 
-export async function listMembers(session: Session, filter: { status?: MembershipStatus; q?: string } = {}): Promise<MemberDto[]> {
+export async function listMembers(session: Session, filter: { status?: MembershipStatus; q?: string; packageId?: string; sort?: MemberSort } = {}): Promise<MemberDto[]> {
   await authorize(session, 'members.view');
   const store = db();
   const date = today();
@@ -37,8 +38,9 @@ export async function listMembers(session: Session, filter: { status?: Membershi
   return store.members
     .map(m => toMemberDto(store, m, date))
     .filter(m => !filter.status || m.status === filter.status)
+    .filter(m => !filter.packageId || m.packageId === filter.packageId)
     .filter(m => !q || m.name.toLowerCase().includes(q) || m.code.toLowerCase().includes(q) || (digits.length >= 3 && m.phone.includes(digits)))
-    .sort((a, b) => a.daysLeft - b.daysLeft);
+    .sort(compareMembers(filter.sort ?? 'expires'));
 }
 
 export async function countByStatus(session: Session): Promise<Record<MembershipStatus | 'all', number>> {
@@ -73,7 +75,6 @@ export async function getMemberDetail(session: Session, id: string): Promise<Mem
   return {
     ...toMemberDto(store, m, date),
     email: m.email,
-    joinedOn: m.joinedOn,
     note: m.note,
     freeze: m.freeze && m.freeze.until >= date ? m.freeze : null,
     checkIns: store.checkIns.filter(c => c.memberId === m.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10).map(c => ({ at: c.at, allowed: c.allowed })),
@@ -180,7 +181,7 @@ export async function createMember(session: Session, input: MemberInput & { pack
   store.members.push(member);
   const pkg = store.packages.find(p => p.id === input.packageId);
   const kind = pkg?.kind === 'daypass' ? 'daypass' : pkg?.kind === 'pt' ? 'pt' : 'signup';
-  const payment = createPaymentRecord(store, { memberId: member.id, packageId: input.packageId, kind, method: input.method });
+  const payment = createPaymentRecord(store, { memberId: member.id, packageId: input.packageId, kind, method: input.method, receivedBy: session.name });
   return { memberId: member.id, paymentId: payment.id, paid: payment.status === 'paid' };
 }
 
@@ -201,7 +202,7 @@ export async function renewMember(session: Session, id: string, packageId: strin
   const pkg = store.packages.find(p => p.id === packageId && p.active);
   if (!m || !pkg) throw new Error('NOT_FOUND');
   const kind = pkg.kind === 'pt' ? 'pt' : pkg.kind === 'daypass' ? 'daypass' : 'renew';
-  const payment = createPaymentRecord(store, { memberId: m.id, packageId: pkg.id, kind, method });
+  const payment = createPaymentRecord(store, { memberId: m.id, packageId: pkg.id, kind, method, receivedBy: session.name });
   return { paymentId: payment.id, paid: payment.status === 'paid' };
 }
 

@@ -14,11 +14,11 @@ export interface MemberDto {
   status: MembershipStatus;
   lastCheckInAt: string | null;
   ptSessionsLeft: number;
+  joinedOn: string;
 }
 
 export interface MemberDetailDto extends MemberDto {
   email: string | null;
-  joinedOn: string;
   note: string | null;
   freeze: { from: string; until: string } | null;
   checkIns: { at: string; allowed: boolean }[];

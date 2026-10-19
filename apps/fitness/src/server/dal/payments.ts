@@ -3,6 +3,7 @@ import { bangkokDate } from '@repo/utils';
 import { membershipPeriod } from '@/features/members/service';
 import { isInstantMethod, receiptNo, type PaymentMethod, type PaymentStatus } from '@/features/payments/service';
 import type { PaymentDto } from '@/features/payments/types';
+import { packageDurationLabel } from '@/features/packages/service';
 import type { Session } from '../auth';
 import { now, today } from '../clock';
 import { db, nextId, type PaymentRecord, type Store } from '../db';
@@ -29,6 +30,9 @@ export function toPaymentDto(store: Store, p: PaymentRecord): PaymentDto {
     status: p.status,
     createdAt: p.createdAt,
     paidAt: p.paidAt,
+    packageDuration: pkg ? packageDurationLabel(pkg) : '—',
+    coverage: p.coverage,
+    receivedBy: p.receivedBy,
   };
 }
 
@@ -43,14 +47,17 @@ function applyPayment(store: Store, p: PaymentRecord, date: string): void {
   } else {
     // สมัครใหม่ที่ยังไม่ได้จ่าย วันหมดอายุเป็นเมื่อวาน จึงเริ่มนับวันนี้
     const period = membershipPeriod(pkg, member.expiresOn, date);
-    if (period) member.expiresOn = period.expiresOn;
+    if (period) {
+      member.expiresOn = period.expiresOn;
+      p.coverage = { from: period.startsOn, to: period.expiresOn };
+    }
     member.packageId = pkg.id;
   }
   p.applied = true;
 }
 
 /** สร้างรายการชำระ (เรียกจาก DAL สมาชิก) — เงินสด/บัตรถือว่าชำระทันที ส่วน PromptPay/โอนรอตรวจ */
-export function createPaymentRecord(store: Store, input: { memberId: string; packageId: string; kind: PaymentRecord['kind']; method: PaymentMethod }): PaymentRecord {
+export function createPaymentRecord(store: Store, input: { memberId: string; packageId: string; kind: PaymentRecord['kind']; method: PaymentMethod; receivedBy: string | null }): PaymentRecord {
   const pkg = store.packages.find(x => x.id === input.packageId);
   if (!pkg) throw new Error('PACKAGE_NOT_FOUND');
   store.sequence.receipt += 1;
@@ -68,6 +75,8 @@ export function createPaymentRecord(store: Store, input: { memberId: string; pac
     createdAt: at,
     paidAt: status === 'paid' ? at : null,
     applied: false,
+    coverage: null,
+    receivedBy: status === 'paid' ? input.receivedBy : null,
     seeded: false,
   };
   store.payments.push(record);
@@ -75,11 +84,12 @@ export function createPaymentRecord(store: Store, input: { memberId: string; pac
   return record;
 }
 
-export async function listPayments(session: Session, filter: { status?: PaymentStatus } = {}): Promise<PaymentDto[]> {
+export async function listPayments(session: Session, filter: { status?: PaymentStatus; method?: PaymentMethod } = {}): Promise<PaymentDto[]> {
   await authorize(session, 'payments.view');
   const store = db();
   return store.payments
     .filter(p => !filter.status || p.status === filter.status)
+    .filter(p => !filter.method || p.method === filter.method)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map(p => toPaymentDto(store, p));
 }
@@ -113,6 +123,7 @@ export async function confirmPayment(session: Session, id: string): Promise<Paym
   if (p.status === 'paid') return toPaymentDto(store, p);
   p.status = 'paid';
   p.paidAt = now().toISOString();
+  p.receivedBy = session.name;
   applyPayment(store, p, today());
   return toPaymentDto(store, p);
 }
@@ -138,5 +149,5 @@ export async function createSelfPayment(session: Session, packageId: string): Pr
   // ยกเลิกรายการรอชำระเดิมของสมาชิกคนนี้ เพื่อไม่ให้มี QR ค้างหลายใบ
   store.payments = store.payments.filter(p => !(p.memberId === member.id && p.status === 'pending' && !p.seeded));
   const kind = pkg.kind === 'pt' ? 'pt' : pkg.kind === 'daypass' ? 'daypass' : 'renew';
-  return toPaymentDto(store, createPaymentRecord(store, { memberId: member.id, packageId: pkg.id, kind, method: 'promptpay' }));
+  return toPaymentDto(store, createPaymentRecord(store, { memberId: member.id, packageId: pkg.id, kind, method: 'promptpay', receivedBy: null }));
 }

@@ -46,11 +46,11 @@
   }
 }
 
-/* ใบเสร็จพิมพ์เป็น A4 ได้ (§15.2.8) */
+/* ใบเสร็จพิมพ์เป็น A4 ได้ (§15.2.8) — ส่วนอื่นของหน้าซ่อนด้วย print:hidden */
 @media print {
   @page {
     size: A4;
-    margin: 16mm;
+    margin: 12mm 14mm;
   }
   html {
     color-scheme: light;
@@ -59,20 +59,19 @@
     background: #fff !important;
     color: #000 !important;
   }
-  .receipt {
-    border: 0 !important;
-    background: #fff !important;
-    padding: 0 !important;
-  }
-  .receipt * {
-    color: #000 !important;
-    border-color: #d4d4d8 !important;
+  .receipt-paper {
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
 /* §15.2.5 ลิงก์ข้อความในรายการต้องแตะได้อย่างน้อย 44px บนจอสัมผัส/จอเล็ก (เติม padding ให้สูงครบ 44px ตามความสูงบรรทัด) */
 @utility tap {
-  @media (max-width: 1023.98px), (pointer: coarse) {
+  @media screen and (max-width: 1023.98px), screen and (pointer: coarse) {
     padding-block: max(0px, calc((44px - 1lh) / 2));
   }
 }

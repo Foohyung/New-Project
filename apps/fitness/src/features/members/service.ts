@@ -115,3 +115,30 @@ export function parseMemberQr(value: string): string {
   const match = /^FITFLOW:(FF-\d{6})$/i.exec(value.trim());
   return match?.[1]?.toUpperCase() ?? value.trim();
 }
+
+export type MemberSort = 'expires' | 'name' | 'recent' | 'newest';
+
+export const MEMBER_SORT_LABEL: Record<MemberSort, string> = {
+  expires: 'ใกล้หมดอายุก่อน',
+  name: 'ชื่อ ก–ฮ',
+  recent: 'เช็กอินล่าสุด',
+  newest: 'สมัครล่าสุด',
+};
+
+export function isMemberSort(value: unknown): value is MemberSort {
+  return typeof value === 'string' && value in MEMBER_SORT_LABEL;
+}
+
+const thaiCollator = new Intl.Collator('th');
+
+/** ตัวเปรียบเทียบสำหรับเรียงรายชื่อ — ค่าเท่ากันเรียงตามชื่อเสมอ เพื่อให้ลำดับคงที่ */
+export function compareMembers(sort: MemberSort) {
+  return (a: { name: string; daysLeft: number; lastCheckInAt: string | null; joinedOn: string }, b: typeof a): number => {
+    const primary =
+      sort === 'expires' ? a.daysLeft - b.daysLeft
+      : sort === 'recent' ? (b.lastCheckInAt ?? '').localeCompare(a.lastCheckInAt ?? '')
+      : sort === 'newest' ? b.joinedOn.localeCompare(a.joinedOn)
+      : 0;
+    return primary || thaiCollator.compare(a.name, b.name);
+  };
+}

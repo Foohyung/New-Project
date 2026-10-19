@@ -54,3 +54,11 @@ export function receiptNo(sequence: number, date: string): string {
   const [year, month] = date.split('-');
   return `RC-${String(Number(year) + 543).slice(-2)}${month ?? '00'}-${String(sequence).padStart(4, '0')}`;
 }
+
+export const VAT_RATE_PCT = 7;
+
+/** แยกภาษีมูลค่าเพิ่มจากราคาที่รวม VAT แล้ว (ราคาแพ็กเกจเป็นราคารวม VAT) */
+export function vatFromInclusive(totalSatang: number, ratePct = VAT_RATE_PCT): { baseSatang: number; vatSatang: number } {
+  const baseSatang = Math.round((totalSatang * 100) / (100 + ratePct));
+  return { baseSatang, vatSatang: totalSatang - baseSatang };
+}

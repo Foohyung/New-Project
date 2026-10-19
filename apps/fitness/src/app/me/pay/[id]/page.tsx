@@ -1,13 +1,15 @@
-import { formatThaiDateOf, formatThaiTime } from '@repo/utils';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ActionButton } from '@/components/action-button';
 import { PaymentStatusBadge, PromptPayCard } from '@/components/payments';
+import { PrintButton } from '@/components/print-button';
+import { ReceiptDocument } from '@/components/receipt';
 import { Card, Forbidden, PageHeader } from '@/components/ui';
 import { submitSlipAction } from '@/features/payments/actions';
 import { promptPayPayload } from '@/features/payments/service';
 import { getPayment, shopPromptPayId } from '@/server/dal/payments';
 import { pageGuard } from '@/server/guard';
+import { shopProfile } from '@/server/shop';
 
 export const metadata: Metadata = { title: 'ชำระเงิน' };
 
@@ -18,15 +20,22 @@ export default async function MyPaymentPage({ params }: { params: Promise<{ id: 
   const p = await getPayment(session, (await params).id);
   if (!p) notFound();
 
+  if (p.status === 'paid') {
+    return (
+      <>
+        <div className="print:hidden">
+          <PageHeader back={{ href: '/me', label: 'บัตรสมาชิก' }} kicker={p.receiptNo} title="ใบเสร็จของฉัน" actions={<PrintButton label="พิมพ์ / บันทึก PDF" />} />
+        </div>
+        <ReceiptDocument payment={p} shop={shopProfile(session.branch)} />
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader back={{ href: '/me', label: 'บัตรสมาชิก' }} kicker={p.receiptNo} title={p.status === 'paid' ? 'ชำระเรียบร้อย' : 'ชำระด้วย PromptPay'} />
+      <PageHeader back={{ href: '/me', label: 'บัตรสมาชิก' }} kicker={p.receiptNo} title="ชำระด้วย PromptPay" />
       <div className="mx-auto grid w-full max-w-3xl gap-4 md:grid-cols-2">
-        {p.status === 'paid' ? (
-          <Card title={p.packageName}><p className="text-muted">ชำระเมื่อ {formatThaiDateOf(p.paidAt ?? p.createdAt, 'long')} {formatThaiTime(p.paidAt ?? p.createdAt)} น. ขอบคุณที่ใช้บริการ</p></Card>
-        ) : (
-          <PromptPayCard payload={promptPayPayload(shopPromptPayId(), p.amountSatang)} amountSatang={p.amountSatang} note={`${p.packageName} · ${p.receiptNo}`} />
-        )}
+        <PromptPayCard payload={promptPayPayload(shopPromptPayId(), p.amountSatang)} amountSatang={p.amountSatang} note={`${p.packageName} · ${p.receiptNo}`} />
         <Card title="สถานะ" action={<PaymentStatusBadge status={p.status} />}>
           {p.status === 'pending' && (
             <>
@@ -39,7 +48,6 @@ export default async function MyPaymentPage({ params }: { params: Promise<{ id: 
             </>
           )}
           {p.status === 'review' && <p className="text-sm text-muted">เจ้าหน้าที่กำลังตรวจยอด สิทธิ์จะต่อให้อัตโนมัติหลังตรวจเสร็จ (ปกติไม่เกิน 15 นาทีในเวลาทำการ)</p>}
-          {p.status === 'paid' && <p className="text-sm text-muted">ระบบต่ออายุให้เรียบร้อยแล้ว ดูวันหมดอายุใหม่ได้ที่หน้าบัตรสมาชิก</p>}
         </Card>
       </div>
     </>
