@@ -11,285 +11,196 @@
   :root { --bg:#0B0D10; --surface:#13161B; --surface-2:#1A1E25; --border:#252A33; --text:#ECEFF3; --muted:#8B94A3; --faint:#5D6573; --accent:#C6FF3D; --cyan:#3DDCFF; --violet:#A78BFA; --warn:#FFB547; --danger:#FF5C7A; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
-  h1, h2, h3, .k { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.25; }
+  h1, h2, h3, .k { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.3; }
   button, input { font: inherit; color: inherit; }
   button { background: none; border: 0; cursor: pointer; }
   svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-  .wrap { max-width: 1320px; margin: 0 auto; padding: 32px 16px 56px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 16px 56px; }
   .kicker { color: var(--accent); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; }
   header.top h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 4px 0 6px; }
   header.top p { color: var(--muted); max-width: 820px; }
-  .opt { margin-top: 44px; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  .rules { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .rules span { border: 1px solid var(--border); background: var(--surface); padding: 5px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); }
+  .rules b { color: var(--text); }
+
+  .opt { margin-top: 44px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
   .opt-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .tag { font-family: 'Kanit'; font-weight: 700; color: var(--bg); background: var(--accent); border-radius: 8px; padding: 0 8px; }
   .opt-h h2 { font-size: 20px; }
   .opt-h p { color: var(--muted); font-size: 13px; flex-basis: 100%; }
-  .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-  .desk { flex: 1 1 760px; min-width: 0; height: 700px; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: var(--bg); position: relative; }
-  .phone { flex: none; width: 300px; max-width: 100%; height: 700px; border: 8px solid #20242c; border-radius: 36px; overflow: hidden; background: var(--bg); position: relative; }
+  .views { display: grid; gap: 16px; align-items: start; }
+  @media (min-width: 1000px) { .views { grid-template-columns: minmax(0, 1fr) 300px; } }
+  .screen { border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: var(--bg); min-height: 560px; display: flex; position: relative; }
+  .label { font-size: 11px; letter-spacing: .12em; color: var(--faint); margin-bottom: 6px; text-transform: uppercase; }
+  .phone { width: 300px; max-width: 100%; height: 600px; border: 8px solid #20242c; border-radius: 36px; overflow: hidden; background: var(--bg); position: relative; margin: 0 auto; }
   .pros { display: grid; gap: 6px; font-size: 13px; color: var(--muted); list-style: none; }
   .pros li { display: flex; gap: 8px; }
   .pros li::before { content: '✓'; color: var(--accent); font-weight: 700; }
   .pros li.con::before { content: '–'; color: var(--faint); }
 
-  /* shared form bits */
-  .logo { display: flex; align-items: center; gap: 10px; font-family: 'Kanit'; font-weight: 700; letter-spacing: .08em; font-size: 18px; }
-  .logo i { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--bg); display: grid; place-items: center; font-style: normal; }
-  .field { display: grid; gap: 6px; }
+  /* ฟอร์มใช้ร่วมทุกแบบ */
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--bg); display: grid; place-items: center; flex: none; }
+  .brand b { font-family: 'Kanit'; font-weight: 700; letter-spacing: .08em; font-size: 18px; display: block; line-height: 1.1; }
+  .brand small { color: var(--muted); font-size: 12px; }
+  .form { display: flex; flex-direction: column; gap: 14px; }
+  .form h3 { font-size: 24px; }
+  .form .lead { color: var(--muted); font-size: 13px; margin-top: -8px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
   .field label { font-size: 13px; font-weight: 600; }
-  .input { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); }
-  .input input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--text); font-size: 16px; }
-  .input:focus-within { border-color: var(--accent); }
-  .input.err { border-color: var(--danger); }
-  .input .eye { color: var(--faint); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; }
-  .between { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; }
-  .check { display: flex; align-items: center; gap: 8px; color: var(--muted); }
-  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .input { position: relative; }
+  .input svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .input input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); padding: 0 44px; font-size: 16px; outline: none; }
+  .input input:focus { border-color: var(--accent); }
+  .input .eye { position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; display: grid; place-items: center; color: var(--muted); }
+  .input .eye svg { position: static; transform: none; }
+  .hint { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; min-height: 18px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 9px; font-size: 11.5px; font-weight: 600; }
+  .chip.staff { background: color-mix(in oklab, var(--cyan) 15%, transparent); color: var(--cyan); }
+  .chip.member { background: color-mix(in oklab, var(--accent) 14%, transparent); color: var(--accent); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; flex-wrap: wrap; }
+  .row label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
   .link { color: var(--accent); font-weight: 600; }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 12px; font-weight: 600; width: 100%; }
-  .btn.p { background: var(--accent); color: var(--bg); }
-  .btn.s { border: 1px solid var(--border); background: var(--surface-2); }
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); }
-  .seg button { min-height: 40px; border-radius: 9px; font-weight: 600; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .seg button.on { background: var(--surface-2); color: var(--accent); }
-  .alert { display: flex; gap: 8px; padding: 10px 12px; border-radius: 12px; font-size: 13px; background: color-mix(in oklab, var(--danger) 12%, transparent); color: var(--danger); border: 1px solid color-mix(in oklab, var(--danger) 35%, transparent); }
-  .muted { color: var(--muted); font-size: 13px; }
-  .divider { display: flex; align-items: center; gap: 10px; color: var(--faint); font-size: 12px; }
-  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .demo { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
-  .demo button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px dashed color-mix(in oklab, var(--warn) 45%, var(--border)); color: var(--text); font-size: 13px; text-align: left; }
-  .demo button:hover { background: color-mix(in oklab, var(--warn) 8%, transparent); }
-  .demo .av { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--bg); flex: none; }
-  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--warn); background: color-mix(in oklab, var(--warn) 12%, transparent); }
-  .otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-  .otp input { width: 100%; height: 52px; text-align: center; font-size: 22px; font-family: 'Kanit'; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); outline: none; }
-  .otp input:focus { border-color: var(--accent); }
-  .stack { display: flex; flex-direction: column; gap: 14px; }
-  [hidden] { display: none !important; }
+  .submit { min-height: 50px; border-radius: 12px; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 16px; }
+  .err { display: none; border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--danger); border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+  .err.on { display: block; }
+  .foot { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: center; text-align: center; }
+  .demo-btn { font-size: 12px; color: var(--faint); text-decoration: underline; align-self: center; }
 
-  /* A: split */
-  .a { display: grid; grid-template-columns: 1.05fr 1fr; height: 100%; }
-  .a-brand { position: relative; overflow: hidden; padding: 32px; display: flex; flex-direction: column; justify-content: space-between; background: radial-gradient(700px 400px at 0% 0%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 60%), radial-gradient(600px 400px at 100% 100%, color-mix(in oklab, var(--cyan) 14%, transparent), transparent 60%), var(--surface); border-right: 1px solid var(--border); }
-  .a-brand h2 { font-size: 30px; margin-top: 40px; }
-  .a-brand h2 em { font-style: normal; color: var(--accent); }
-  .a-brand > p { color: var(--muted); margin-top: 8px; max-width: 360px; }
-  .a-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .a-card { border: 1px solid var(--border); background: color-mix(in oklab, var(--bg) 70%, transparent); border-radius: 14px; padding: 12px 14px; }
-  .a-card small { color: var(--muted); font-size: 12px; }
-  .a-card b { display: block; font-family: 'Kanit'; font-size: 24px; }
-  .a-card.hl { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-  .a-card.hl small { color: color-mix(in oklab, var(--bg) 70%, transparent); }
-  .a-form { padding: 40px 48px; display: flex; flex-direction: column; justify-content: center; gap: 16px; overflow: auto; }
-  .a-form h1 { font-size: 26px; }
+  /* A: แบ่งครึ่ง */
+  .a-left { flex: 1.1; padding: 32px; display: none; flex-direction: column; justify-content: space-between; background: radial-gradient(500px 400px at 0% 0%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), var(--surface); border-right: 1px solid var(--border); }
+  @media (min-width: 760px) { .a-left { display: flex; } }
+  .a-left h2 { font-size: 34px; margin-top: 26px; }
+  .a-left h2 em { font-style: normal; color: var(--accent); display: block; }
+  .a-left p { color: var(--muted); margin-top: 8px; max-width: 360px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { border: 1px solid var(--border); background: var(--bg); border-radius: 14px; padding: 12px; }
+  .stat span { color: var(--muted); font-size: 11.5px; }
+  .stat b { display: block; font-family: 'Kanit'; font-size: 22px; }
+  .stat b.l { color: var(--accent); }
+  .a-right { flex: 1; display: grid; place-items: center; padding: 32px 24px; }
+  .a-right .form { width: 100%; max-width: 360px; }
 
-  /* B: centered card */
-  .b { height: 100%; display: grid; place-items: center; padding: 24px; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 40px 40px; background-position: center; }
-  .b::before { content: ''; position: absolute; inset: 0; background: radial-gradient(420px 300px at 50% 40%, transparent, var(--bg) 80%); pointer-events: none; }
-  .b-card { position: relative; width: 420px; max-width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
-  .b-card .top { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-  .b-card h1 { font-size: 22px; }
+  /* B: การ์ดกลาง */
+  .b-bg { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 44px 44px; -webkit-mask-image: radial-gradient(closest-side, #000, transparent); mask-image: radial-gradient(closest-side, #000, transparent); opacity: .7; }
+  .b-glow { position: absolute; right: -10%; top: -30%; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 16%, transparent), transparent); }
+  .b-center { position: relative; flex: 1; display: grid; place-items: center; padding: 28px 16px; }
+  .card { width: 100%; max-width: 410px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px; }
 
-  /* C: member-first */
-  .c { height: 100%; display: grid; grid-template-columns: 1fr 1fr; }
-  .c-hero { position: relative; overflow: hidden; background: var(--accent); color: var(--bg); padding: 32px; display: flex; flex-direction: column; justify-content: space-between; }
-  .c-hero .logo i { background: var(--bg); color: var(--accent); }
-  .c-hero h2 { font-size: 34px; line-height: 1.15; }
-  .c-hero p { color: color-mix(in oklab, var(--bg) 70%, transparent); max-width: 340px; margin-top: 8px; }
-  .c-card { width: 240px; border-radius: 22px; background: var(--bg); color: var(--text); padding: 16px; transform: rotate(-4deg); align-self: flex-end; border: 1px solid #0003; }
-  .c-card .qr { width: 120px; height: 120px; margin: 10px auto; border-radius: 12px; background: #fff; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 10px; }
-  .c-card .qr span { background: #0B0D10; border-radius: 2px; }
-  .c-card .qr span.w { background: transparent; }
-  .c-form { padding: 40px 44px; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
-  .c-form h1 { font-size: 26px; }
-  .steps { display: flex; gap: 6px; }
-  .steps span { height: 4px; flex: 1; border-radius: 4px; background: var(--border); }
-  .steps span.on { background: var(--accent); }
-
-  /* mobile frames */
-  .m { height: 100%; overflow: auto; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; }
-  .m h1 { font-size: 22px; }
-  .m-hero { margin: -22px -18px 4px; padding: 26px 18px 20px; background: radial-gradient(300px 200px at 0% 0%, color-mix(in oklab, var(--accent) 25%, transparent), transparent 70%), var(--surface); border-bottom: 1px solid var(--border); }
-  .m-hero.lime { background: var(--accent); color: var(--bg); border: 0; }
-  .m-hero.lime .logo i { background: var(--bg); color: var(--accent); }
-  .m-hero.lime p { color: color-mix(in oklab, var(--bg) 70%, transparent); }
-
-  @media (max-width: 900px) { .a, .c { grid-template-columns: 1fr; } .a-brand, .c-hero { display: none; } .a-form, .c-form { padding: 28px 20px; } .desk { height: auto; min-height: 560px; } }
+  /* C: ช่องเดียวรู้เองว่าเป็นใคร */
+  .c-wrap { flex: 1; display: grid; place-items: center; padding: 28px 16px; background: radial-gradient(600px 300px at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%); }
+  .c-box { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 22px; align-items: stretch; }
+  .c-box .brand { justify-content: center; flex-direction: column; text-align: center; gap: 8px; }
+  .c-box .brand .logo { width: 52px; height: 52px; border-radius: 15px; }
+  .who { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .who div { border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; background: var(--surface); font-size: 12px; color: var(--muted); display: flex; gap: 10px; align-items: center; transition: border-color .2s, background .2s; }
+  .who div b { display: block; color: var(--text); font-size: 13px; }
+  .who div.on { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--surface)); }
+  .who div.on svg { color: var(--accent); }
+  .steps { display: flex; justify-content: center; gap: 6px; }
+  .steps i { width: 26px; height: 4px; border-radius: 4px; background: var(--border); }
+  .steps i.on { background: var(--accent); }
+  .phone .screen-in { position: absolute; inset: 0; overflow: hidden; }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute">
   <symbol id="bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
-  <symbol id="mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
   <symbol id="lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
   <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
-  <symbol id="phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
-  <symbol id="badge" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2"/><path d="M15 10h3M15 14h3"/></symbol>
-  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
-  <symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
-  <symbol id="flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4 20a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 20L14 9V3"/></symbol>
-  <symbol id="shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
-  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="badge" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M15 9h3M15 13h3M6 16h6"/></symbol>
+  <symbol id="card" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></symbol>
 </svg>
 
 <div class="wrap">
   <header class="top">
     <p class="kicker">FitFlow · ตัวเลือกดีไซน์หน้าเข้าสู่ระบบ</p>
     <h1>หน้าเข้าสู่ระบบ — เลือกแบบที่ชอบ</h1>
-    <p>ทุกแบบมี 2 ทาง: <b>พนักงาน</b> เข้าด้วยอีเมล/เบอร์ + รหัสผ่าน และ <b>สมาชิก</b> เข้าด้วยเบอร์มือถือ + รหัส OTP (ไม่ต้องจำรหัสผ่าน) · มีปุ่ม "บัญชีทดลอง" สำหรับโหมดเดโม · แสดงตัวอย่าง error ที่บอกวิธีแก้ · กดสลับแท็บและช่องต่าง ๆ ได้จริง</p>
+    <p>ทุกแบบ <b>ไม่มีให้เลือกบทบาท</b> ผู้ใช้กรอกแค่อีเมลหรือเบอร์มือถือ + รหัสผ่าน แล้วระบบรู้เองจากบัญชีในหลังบ้านว่าเป็น เจ้าของ / ผู้จัดการ / เคาน์เตอร์ / เทรนเนอร์ / สมาชิก และพาไปหน้าแรกของตำแหน่งนั้น กดลองได้จริง: พิมพ์อีเมลหรือเบอร์ ดูช่องเปลี่ยนตาม และกด "ลองใส่รหัสผิด"</p>
+    <div class="rules"><span>ใส่ผิด <b>5 ครั้งล็อก 15 นาที</b></span><span>แจ้ง error <b>ไม่บอกว่าผิดที่อีเมลหรือรหัส</b></span><span>จดจำฉัน <b>30 วัน</b></span><span>ลืมรหัส → <b>ติดต่อผู้จัดการ</b></span></div>
   </header>
 
   <!-- A -->
   <section class="opt">
-    <div class="opt-h"><span class="tag">A</span><h2>แบ่งครึ่งจอ: แบรนด์ + ฟอร์ม</h2><p>ฝั่งซ้ายเล่าเรื่องระบบด้วยตัวเลขจริงของวันนี้ ฝั่งขวาเป็นฟอร์ม เหมาะกับจอคอม/แท็บเล็ตที่เคาน์เตอร์ มือถือเหลือแค่ฟอร์ม</p></div>
-    <div class="row">
-      <div class="desk">
-        <div class="a">
-          <aside class="a-brand">
-            <div class="logo"><i><svg class="i"><use href="#bolt"/></svg></i>FITFLOW</div>
-            <div>
-              <h2>ยิมของคุณ<br><em>ในมือเดียว</em></h2>
-              <p>สมาชิก เช็กอิน คลาส การเงิน และการตลาด อยู่ในระบบเดียว ใช้ได้ทุกอุปกรณ์</p>
-            </div>
-            <div class="a-cards">
-              <div class="a-card hl"><small>คนในยิมตอนนี้</small><b>47 คน</b></div>
-              <div class="a-card"><small>เช็กอินวันนี้</small><b>186</b></div>
-              <div class="a-card"><small>สมาชิกใช้งาน</small><b>1,248</b></div>
-              <div class="a-card"><small>รายได้เดือนนี้</small><b>฿412K</b></div>
-            </div>
-          </aside>
-          <div class="a-form" data-tabs>
-            <div><h1>เข้าสู่ระบบ</h1><p class="muted">สาขาอารีย์ · เลือกประเภทบัญชี</p></div>
-            <div class="seg"><button class="on" data-tab="staff"><svg class="i"><use href="#badge"/></svg>พนักงาน</button><button data-tab="member"><svg class="i"><use href="#user"/></svg>สมาชิก</button></div>
-            <div class="stack" data-panel="staff">
-              <div class="field"><label>อีเมลหรือเบอร์โทร</label><div class="input"><svg class="i"><use href="#mail"/></svg><input value="manee@fitflow.app"></div></div>
-              <div class="field"><label>รหัสผ่าน</label><div class="input"><svg class="i"><use href="#lock"/></svg><input type="password" value="12345678" data-pw><button class="eye" data-eye aria-label="แสดงรหัสผ่าน"><svg class="i"><use href="#eye"/></svg></button></div></div>
-              <div class="between"><label class="check"><input type="checkbox" checked>จำฉันไว้ 30 วัน</label><a class="link" href="#">ลืมรหัสผ่าน?</a></div>
-              <button class="btn p">เข้าสู่ระบบ<svg class="i"><use href="#arrow"/></svg></button>
-            </div>
-            <div class="stack" data-panel="member" hidden>
-              <div class="field"><label>เบอร์มือถือที่สมัครไว้</label><div class="input"><svg class="i"><use href="#phone"/></svg><input value="080-000-0101"></div></div>
-              <button class="btn p">ส่งรหัส OTP</button>
-              <p class="muted">ไม่มีรหัสผ่านให้จำ ระบบส่งรหัส 6 หลักทาง SMS</p>
-            </div>
-            <div class="divider">บัญชีทดลอง (โหมดเดโม)</div>
-            <div class="demo">
-              <button><span class="av" style="background:var(--accent)">กต</span>เจ้าของ</button>
-              <button><span class="av" style="background:var(--cyan)">มน</span>ผู้จัดการ</button>
-              <button><span class="av" style="background:var(--warn)">ปริ</span>เคาน์เตอร์</button>
-              <button><span class="av" style="background:var(--violet)">บอส</span>เทรนเนอร์</button>
-            </div>
+    <div class="opt-h"><span class="tag">A</span><h2>แบ่งครึ่งจอ: แบรนด์ + ฟอร์ม</h2><p>ฝั่งซ้ายเล่าเรื่องยิมด้วยตัวเลขของวันนี้ ฝั่งขวาเป็นฟอร์มเรียบ ๆ เหมาะกับจอคอม/แท็บเล็ตที่เคาน์เตอร์ · มือถือเหลือแค่ฟอร์ม</p></div>
+    <div class="views">
+      <div><p class="label">เดสก์ท็อป / แท็บเล็ต</p>
+        <div class="screen">
+          <div class="a-left">
+            <div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>สาขาอารีย์</small></span></div>
+            <div><h2>ยิมของคุณ<em>อยู่ในมือเดียว</em></h2><p>สมาชิก เช็กอิน คลาส การเงิน และการตลาด เข้าสู่ระบบแล้วไปหน้าที่ตรงกับงานของคุณทันที</p></div>
+            <div class="stats"><div class="stat"><span>อยู่ในยิมตอนนี้</span><b class="l">47</b></div><div class="stat"><span>เช็กอินวันนี้</span><b>186</b></div><div class="stat"><span>สมาชิก</span><b>1,248</b></div></div>
           </div>
+          <div class="a-right" data-form></div>
         </div>
       </div>
-      <div class="phone">
-        <div class="m">
-          <div class="m-hero"><div class="logo"><i><svg class="i"><use href="#bolt"/></svg></i>FITFLOW</div><p class="muted" style="margin-top:10px">ยิมของคุณในมือเดียว</p></div>
-          <h1>เข้าสู่ระบบ</h1>
-          <div class="seg"><button class="on">พนักงาน</button><button>สมาชิก</button></div>
-          <div class="field"><label>อีเมลหรือเบอร์โทร</label><div class="input"><svg class="i"><use href="#mail"/></svg><input value="manee@fitflow.app"></div></div>
-          <div class="field"><label>รหัสผ่าน</label><div class="input err"><svg class="i"><use href="#lock"/></svg><input type="password" value="1234"></div></div>
-          <div class="alert"><svg class="i"><use href="#alert"/></svg>อีเมลหรือรหัสผ่านไม่ถูกต้อง ลองอีกครั้ง (เหลือ 4 ครั้งก่อนล็อก 15 นาที)</div>
-          <button class="btn p">เข้าสู่ระบบ</button>
-        </div>
-      </div>
+      <div><p class="label">มือถือ</p><div class="phone"><div class="screen-in" style="display:grid;place-items:center;padding:22px 18px" data-form data-mobile></div></div></div>
     </div>
-    <ul class="pros"><li>ดูเป็นมืออาชีพ เปิดเครื่องที่เคาน์เตอร์แล้วดูดีทันที</li><li>ใช้พื้นที่ซ้ายโชว์ตัวเลข/ข่าวสารของยิมได้</li><li class="con">มือถือไม่เห็นฝั่งแบรนด์</li></ul>
+    <ul class="pros"><li>ดูเป็นมืออาชีพ เปิดเครื่องที่เคาน์เตอร์แล้วดูดีทันที</li><li>ใช้พื้นที่ซ้ายโชว์ตัวเลขหรือประกาศของยิมได้</li><li class="con">มือถือไม่เห็นฝั่งแบรนด์</li></ul>
   </section>
 
   <!-- B -->
   <section class="opt">
-    <div class="opt-h"><span class="tag">B</span><h2>การ์ดกลางจอ</h2><p>เรียบ ชัด ตรงไปตรงมา การ์ดเดียวบนพื้นลายตาราง บัญชีทดลองแสดงเป็นรายการพร้อมบทบาท เหมาะใช้ร่วมกับทุกธีม (มืด/สว่าง)</p></div>
-    <div class="row">
-      <div class="desk">
-        <div class="b">
-          <div class="b-card" data-tabs>
-            <div class="top"><div class="logo"><i><svg class="i"><use href="#bolt"/></svg></i>FITFLOW</div><h1>ยินดีต้อนรับกลับมา</h1><p class="muted">เข้าสู่ระบบเพื่อจัดการสาขาอารีย์</p></div>
-            <div class="seg"><button class="on" data-tab="staff">พนักงาน</button><button data-tab="member">สมาชิก</button></div>
-            <div class="stack" data-panel="staff">
-              <div class="field"><label>อีเมลหรือเบอร์โทร</label><div class="input"><svg class="i"><use href="#mail"/></svg><input placeholder="name@fitflow.app"></div></div>
-              <div class="field"><div class="between"><label>รหัสผ่าน</label><a class="link" href="#">ลืมรหัสผ่าน?</a></div><div class="input"><svg class="i"><use href="#lock"/></svg><input type="password" placeholder="อย่างน้อย 8 ตัว" data-pw><button class="eye" data-eye aria-label="แสดงรหัสผ่าน"><svg class="i"><use href="#eye"/></svg></button></div></div>
-              <label class="check"><input type="checkbox">จำฉันไว้ 30 วัน</label>
-              <button class="btn p">เข้าสู่ระบบ</button>
-            </div>
-            <div class="stack" data-panel="member" hidden>
-              <div class="field"><label>รหัส OTP ที่ส่งไป 080-xxx-0101</label><div class="otp"><input value="4"><input value="8"><input value="2"><input><input><input></div></div>
-              <div class="between muted"><span>ส่งใหม่ได้ใน 0:42</span><a class="link" href="#">เปลี่ยนเบอร์</a></div>
-              <button class="btn p">ยืนยันและเข้าสู่ระบบ</button>
-            </div>
-            <div class="divider">หรือใช้บัญชีทดลอง</div>
-            <div class="demo" style="grid-template-columns:1fr 1fr">
-              <button><span class="av" style="background:var(--accent)">กต</span>เจ้าของ</button>
-              <button><span class="av" style="background:var(--cyan)">มน</span>ผู้จัดการ</button>
-              <button><span class="av" style="background:var(--warn)">ปริ</span>เคาน์เตอร์</button>
-              <button><span class="av" style="background:var(--violet)">บอส</span>เทรนเนอร์</button>
-            </div>
-            <p class="muted" style="text-align:center;display:flex;gap:6px;justify-content:center;align-items:center"><svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#shield"/></svg>เชื่อมต่อแบบเข้ารหัส · ยืนยัน 2 ขั้นสำหรับเจ้าของ/ผู้จัดการ</p>
-          </div>
-        </div>
+    <div class="opt-h"><span class="tag">B</span><h2>การ์ดกลางจอ</h2><p>การ์ดเดียวบนพื้นลายตาราง เรียบ ชัด ตรงไปตรงมา หน้าตาเหมือนกันทุกขนาดจอ เข้ากับทุกธีม (มืด/สว่าง/น้ำเงิน/ส้ม)</p></div>
+    <div class="views">
+      <div><p class="label">เดสก์ท็อป / แท็บเล็ต</p>
+        <div class="screen"><div class="b-bg"></div><div class="b-glow"></div><div class="b-center"><div class="card" data-form data-card></div></div></div>
       </div>
-      <div class="phone">
-        <div class="m">
-          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;margin-top:20px"><div class="logo"><i><svg class="i"><use href="#bolt"/></svg></i>FITFLOW</div><h1>ยินดีต้อนรับกลับมา</h1></div>
-          <div class="seg"><button>พนักงาน</button><button class="on">สมาชิก</button></div>
-          <div class="field"><label>รหัส OTP ที่ส่งไป 080-xxx-0101</label><div class="otp"><input value="4"><input value="8"><input value="2"><input value="9"><input><input></div></div>
-          <p class="muted">ส่งใหม่ได้ใน 0:42</p>
-          <button class="btn p">ยืนยันและเข้าสู่ระบบ</button>
-          <span class="badge" style="align-self:center"><svg class="i" style="width:14px;height:14px"><use href="#flask"/></svg>โหมดทดลอง: OTP คือ 123456</span>
-        </div>
-      </div>
+      <div><p class="label">มือถือ</p><div class="phone"><div class="screen-in" style="display:grid;place-items:center;padding:18px 12px"><div class="b-bg"></div><div class="card" style="position:relative;padding:20px" data-form data-card data-mobile></div></div></div></div>
     </div>
-    <ul class="pros"><li>เรียบที่สุด โหลดเร็ว ใช้ได้ทุกธีม</li><li>มือถือกับคอมหน้าตาเหมือนกัน คนใช้ไม่สับสน</li><li class="con">ไม่ได้ใช้พื้นที่โชว์แบรนด์มากนัก</li></ul>
+    <ul class="pros"><li>เรียบที่สุด โหลดเร็ว ใช้ได้ทุกธีม</li><li>มือถือกับคอมหน้าตาเหมือนกัน คนใช้ไม่สับสน</li><li class="con">พื้นที่โชว์แบรนด์น้อย</li></ul>
   </section>
 
   <!-- C -->
   <section class="opt">
-    <div class="opt-h"><span class="tag">C</span><h2>สมาชิกมาก่อน (Member-first)</h2><p>ออกแบบให้สมาชิกที่เปิดจากลิงก์ LINE เข้าง่ายที่สุด: เบอร์ → OTP 2 ขั้น มีแถบบอกขั้นตอน ฝั่งซ้ายโชว์บัตรสมาชิก QR ส่วนพนักงานกดลิงก์ "เข้าสู่ระบบพนักงาน" ด้านล่าง</p></div>
-    <div class="row">
-      <div class="desk">
-        <div class="c">
-          <aside class="c-hero">
-            <div class="logo"><i><svg class="i"><use href="#bolt"/></svg></i>FITFLOW</div>
-            <div><h2>บัตรสมาชิก<br>อยู่ในมือถือแล้ว</h2><p>เช็กอินด้วย QR จองคลาส ต่ออายุ และดูวันหมดอายุได้เอง</p></div>
-            <div class="c-card"><div class="between"><b class="k">FITFLOW</b><small>FF-002318</small></div><div class="qr" data-qr></div><p style="text-align:center;font-weight:600">ณัฐพล ศรีสุข</p><p class="muted" style="text-align:center;font-size:12px">Gold 12 เดือน · ใช้ได้ถึง 12 ส.ค. 2570</p></div>
-          </aside>
-          <div class="c-form">
-            <div class="steps"><span class="on"></span><span></span></div>
-            <div><h1>เข้าใช้บัตรสมาชิก</h1><p class="muted">ใส่เบอร์ที่สมัครไว้ เราจะส่งรหัส 6 หลักให้ทาง SMS</p></div>
-            <div class="field"><label>เบอร์มือถือ</label><div class="input"><svg class="i"><use href="#phone"/></svg><input value="080-000-0101" inputmode="tel"></div></div>
-            <label class="check"><input type="checkbox" checked>จำเครื่องนี้ไว้ ไม่ต้องใส่รหัสอีก 30 วัน</label>
-            <button class="btn p">ส่งรหัส OTP<svg class="i"><use href="#arrow"/></svg></button>
-            <div class="divider">เป็นพนักงาน?</div>
-            <button class="btn s"><svg class="i"><use href="#badge"/></svg>เข้าสู่ระบบพนักงาน</button>
-          </div>
-        </div>
+    <div class="opt-h"><span class="tag">C</span><h2>ช่องเดียว ระบบรู้เองว่าเป็นใคร</h2><p>พิมพ์อีเมล → การ์ด "พนักงาน" สว่างขึ้น · พิมพ์เบอร์มือถือ → การ์ด "สมาชิก" สว่างขึ้น ให้ผู้ใช้มั่นใจว่ากรอกถูกช่อง (เป็นแค่การบอกสถานะ ไม่ใช่ปุ่มเลือก ระบบยังใช้บทบาทจากบัญชีจริง)</p></div>
+    <div class="views">
+      <div><p class="label">เดสก์ท็อป / แท็บเล็ต</p>
+        <div class="screen"><div class="c-wrap"><div class="c-box" data-form data-c></div></div></div>
       </div>
-      <div class="phone">
-        <div class="m">
-          <div class="m-hero lime"><div class="logo"><i><svg class="i"><use href="#bolt"/></svg></i>FITFLOW</div><h1 style="margin-top:14px">บัตรสมาชิกอยู่ในมือถือแล้ว</h1><p style="font-size:13px">เช็กอิน จองคลาส ต่ออายุได้เอง</p></div>
-          <div class="steps"><span class="on"></span><span class="on"></span></div>
-          <h1 style="font-size:19px">ใส่รหัสที่ได้รับ</h1>
-          <div class="otp"><input value="1"><input value="2"><input value="3"><input value="4"><input value="5"><input></div>
-          <button class="btn p">เข้าใช้บัตรสมาชิก</button>
-          <p class="muted" style="text-align:center">ไม่ได้รับรหัส? <a class="link" href="#">ส่งอีกครั้ง</a></p>
-        </div>
-      </div>
+      <div><p class="label">มือถือ</p><div class="phone"><div class="screen-in"><div class="c-wrap" style="height:100%;padding:18px"><div class="c-box" data-form data-c data-mobile></div></div></div></div></div>
     </div>
-    <ul class="pros"><li>สมาชิกเข้าง่ายที่สุด (ลิงก์ LINE → เบอร์ → OTP)</li><li>โชว์บัตร QR ตั้งแต่หน้าแรก น่าใช้</li><li class="con">พนักงานต้องกดเพิ่ม 1 ครั้ง</li></ul>
+    <ul class="pros"><li>สมาชิกที่กดลิงก์จาก LINE รู้ทันทีว่ากรอกเบอร์ได้</li><li>เป็นมิตรที่สุด บอกผู้ใช้ตลอดว่าระบบเข้าใจอะไร</li><li class="con">มีองค์ประกอบมากกว่าแบบ B เล็กน้อย</li></ul>
   </section>
 </div>
 
 <script>
-  document.querySelectorAll('[data-tabs]').forEach(root => {
-    root.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
-      root.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('on', x === b));
-      root.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== b.dataset.tab; });
-    }));
+const isEmail = v => v.includes('@');
+const isPhone = v => v.replace(/\D/g, '').length >= 9 && !isEmail(v);
+function formHtml(opts) {
+  const head = opts.card || opts.mobile && !opts.c ? `<div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>ระบบจัดการฟิตเนส</small></span></div>` : '';
+  const cHead = opts.c ? `<div class="brand"><span class="logo"><svg class="i" style="width:26px;height:26px"><use href="#bolt"/></svg></span><span><b style="font-size:22px">FITFLOW</b><small>ยินดีต้อนรับกลับมา</small></span></div>
+    <div class="who"><div data-who="staff"><svg class="i"><use href="#badge"/></svg><span><b>พนักงาน</b>เข้าด้วยอีเมล</span></div><div data-who="member"><svg class="i"><use href="#card"/></svg><span><b>สมาชิก</b>เข้าด้วยเบอร์มือถือ</span></div></div>` : '';
+  return `${head}${cHead}
+  <form class="form" onsubmit="return false">
+    ${opts.c ? '' : `<div><h3>เข้าสู่ระบบ</h3><p class="lead" style="margin-top:2px">ระบบจะพาไปหน้าที่ตรงกับตำแหน่งของคุณเอง</p></div>`}
+    <div class="field"><label>อีเมลหรือเบอร์มือถือ</label><div class="input"><svg class="i"><use href="#user"/></svg><input data-id placeholder="name@gym.com หรือ 08X-XXX-XXXX" autocomplete="off"></div><p class="hint" data-hint>พนักงานใช้อีเมล · สมาชิกใช้เบอร์มือถือที่สมัครไว้</p></div>
+    <div class="field"><label>รหัสผ่าน</label><div class="input"><svg class="i"><use href="#lock"/></svg><input type="password" data-pw value="••••••••"><button class="eye" type="button" data-eye aria-label="แสดงรหัสผ่าน"><svg class="i"><use href="#eye"/></svg></button></div></div>
+    <div class="row"><label><input type="checkbox">จดจำฉัน 30 วัน</label><span class="muted" style="color:var(--muted)">ลืมรหัส? <span class="link">ติดต่อผู้จัดการ</span></span></div>
+    <p class="err" data-err>อีเมล/เบอร์มือถือ หรือรหัสผ่านไม่ถูกต้อง</p>
+    <button class="submit" type="button" data-submit>เข้าสู่ระบบ</button>
+    <button class="demo-btn" type="button" data-wrong>ลองใส่รหัสผิด (ดูข้อความ error)</button>
+  </form>
+  <p class="foot"><svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#shield"/></svg>เชื่อมต่อแบบเข้ารหัส · ระยะที่ 2 ยืนยัน 2 ขั้นสำหรับเจ้าของ/ผู้จัดการ</p>`;
+}
+document.querySelectorAll('[data-form]').forEach(el => {
+  const opts = { card: el.hasAttribute('data-card'), mobile: el.hasAttribute('data-mobile'), c: el.hasAttribute('data-c') };
+  el.innerHTML = formHtml(opts);
+  if (el.classList.contains('a-right')) { const f = el.querySelector('.form'); f.style.maxWidth = '360px'; f.style.width = '100%'; const w = document.createElement('div'); w.style.cssText = 'width:100%;max-width:360px;display:flex;flex-direction:column;gap:18px'; while (el.firstChild) w.append(el.firstChild); el.append(w); }
+  const id = el.querySelector('[data-id]'), hint = el.querySelector('[data-hint]'), err = el.querySelector('[data-err]'), pw = el.querySelector('[data-pw]');
+  id.addEventListener('input', () => {
+    const v = id.value;
+    hint.innerHTML = isEmail(v) ? '<span class="chip staff">พนักงาน</span> ระบบจะพาไปหน้าตามตำแหน่งในบัญชี' : isPhone(v) ? '<span class="chip member">สมาชิก</span> ระบบจะพาไปหน้าบัตรสมาชิก' : 'พนักงานใช้อีเมล · สมาชิกใช้เบอร์มือถือที่สมัครไว้';
+    el.querySelectorAll('[data-who]').forEach(w => w.classList.toggle('on', (w.dataset.who === 'staff' && isEmail(v)) || (w.dataset.who === 'member' && isPhone(v))));
+    err.classList.remove('on');
   });
-  document.querySelectorAll('[data-eye]').forEach(b => b.addEventListener('click', () => { const i = b.parentElement.querySelector('[data-pw]'); i.type = i.type === 'password' ? 'text' : 'password'; }));
-  document.querySelectorAll('.otp').forEach(box => box.querySelectorAll('input').forEach((inp, i, all) => { inp.maxLength = 1; inp.inputMode = 'numeric'; inp.addEventListener('input', () => { if (inp.value && all[i + 1]) all[i + 1].focus(); }); }));
-  const qr = document.querySelector('[data-qr]');
-  const pattern = '1111111100000110111011011101101110110000011111111';
-  for (const c of pattern) { const s = document.createElement('span'); if (c === '0') s.className = 'w'; qr.append(s); }
+  el.querySelector('[data-eye]').onclick = () => { pw.type = pw.type === 'password' ? 'text' : 'password'; };
+  el.querySelector('[data-wrong]').onclick = () => { err.classList.add('on'); pw.value = ''; };
+  el.querySelector('[data-submit]').onclick = () => { err.classList.remove('on'); el.querySelector('[data-submit]').textContent = 'กำลังเข้าสู่ระบบ…'; setTimeout(() => { el.querySelector('[data-submit]').textContent = 'เข้าสู่ระบบ'; }, 1200); };
+});
 </script>
 </body>
 </html>
