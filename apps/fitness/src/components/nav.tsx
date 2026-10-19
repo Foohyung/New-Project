@@ -1,9 +1,9 @@
 'use client';
 
-import { BellRing, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, RefreshCw, ScanLine, Store, TicketPercent, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
+import { BellRing, ChevronDown, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, RefreshCw, ScanLine, Store, TicketPercent, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { hasPermission, ROLE_LABEL, type Permission, type Role } from '@/features/auth/roles';
 
 interface NavItem {
@@ -82,101 +82,80 @@ export interface ShellUser {
 }
 
 /**
- * แบบ B — Rail + แผงเมนูย่อย
- * - rail ซ้ายสุดแสดงเฉพาะโซน (ไอคอน + ชื่อสั้น) · กดโซนแล้วแผงข้าง ๆ แสดงเมนูย่อยของโซนนั้น
- * - เดสก์ท็อป (≥ lg): แผงแสดงค้างไว้ · แท็บเล็ต (md): แผงเปิดเป็น overlay เมื่อกดโซน (§15.2.4)
+ * แบบ A — Accordion มีไอคอนกล่อง
+ * - เดสก์ท็อป (≥ lg): กดโซนแล้วกางเมนูย่อย · โซนของหน้าปัจจุบันกางไว้และไอคอนเป็นสีเขียว
+ * - แท็บเล็ต (md): แสดงไอคอนเมนูย่อยทั้งหมด แบ่งโซนด้วยเส้นคั่น (§15.2.4)
  */
 export function Sidebar({ user }: { user: ShellUser }) {
   const groups = groupsFor(user.role);
   const activeHref = useActiveHref(groups.flatMap(g => g.items));
-  const activeGroup = groups.find(g => g.items.some(i => i.href === activeHref))?.id ?? groups[0]?.id;
-  // โซนที่ผู้ใช้กดดู (ค่าเริ่มต้น = โซนของหน้าปัจจุบัน) และ overlay ของแท็บเล็ต
-  const [picked, setPicked] = useState<{ id: string; from: string | undefined } | null>(null);
-  const [overlay, setOverlay] = useState(false);
-  const pathname = usePathname();
-  const selectedId = picked && picked.from === pathname ? picked.id : activeGroup;
-  const selected = groups.find(g => g.id === selectedId) ?? groups[0];
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!overlay) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOverlay(false);
-    };
-    const onDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement;
-      if (!panelRef.current?.contains(target) && !target.closest('[data-rail]')) setOverlay(false);
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onDown);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onDown);
-    };
-  }, [overlay]);
+  const activeGroup = groups.find(g => g.items.some(i => i.href === activeHref))?.id;
+  // ค่าเริ่มต้น: กางเฉพาะโซนของหน้าปัจจุบัน · ผู้ใช้กดกาง/พับเองได้ทุกโซน
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const isOpen = (id: string) => toggled[id] ?? (id === activeGroup || groups.length === 1);
+  const toggle = (id: string) => {
+    setToggled(t => ({ ...t, [id]: !isOpen(id) }));
+  };
 
   return (
-    <nav aria-label="เมนูหลัก" className="sticky top-0 z-40 hidden h-dvh md:flex">
-      <div data-rail className="scrollbar-none flex w-[76px] shrink-0 flex-col items-center gap-1.5 overflow-y-auto border-r border-line bg-surface px-2 py-4">
-        <Link href={groups[0]?.items[0]?.href ?? '/'} aria-label="FitFlow หน้าแรก" className="mb-3 grid size-10 shrink-0 place-items-center rounded-xl bg-lime text-bg">
+    <aside className="scrollbar-none sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto border-r border-line bg-surface px-3 py-5 md:flex lg:px-3 lg:py-6">
+      <Link href={groups[0]?.items[0]?.href ?? '/'} className="flex min-h-11 items-center justify-center gap-2.5 font-display text-xl font-bold tracking-[.08em] lg:justify-start lg:px-2">
+        <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-lime text-bg">
           <Zap aria-hidden className="size-5" />
-        </Link>
-        {groups.map(g => {
-          const isSelected = g.id === selected?.id;
-          const isActive = g.id === activeGroup;
+        </span>
+        <span className="sr-only lg:not-sr-only">FITFLOW</span>
+      </Link>
+      <nav aria-label="เมนูหลัก" className="flex flex-col gap-1">
+        {groups.map((g, gi) => {
+          const open = isOpen(g.id);
+          const current = g.id === activeGroup;
+          const listId = `nav-${g.id}`;
           return (
-            <button
-              key={g.id}
-              type="button"
-              aria-pressed={isSelected}
-              aria-controls="nav-panel"
-              onClick={() => {
-                setPicked({ id: g.id, from: pathname });
-                setOverlay(o => (g.id === selected?.id ? !o : true));
-              }}
-              className={`flex min-h-14 w-[60px] flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] leading-tight font-semibold transition-colors ${isSelected ? 'bg-lime/12 text-lime' : 'text-muted hover:bg-surface-2 hover:text-ink'}`}
-            >
-              <span className="relative">
-                <g.icon aria-hidden className="size-5" />
-                {isActive && !isSelected && <span aria-hidden className="absolute -top-0.5 -right-1.5 size-1.5 rounded-full bg-lime" />}
-              </span>
-              {g.short ?? g.label}
-            </button>
+            <div key={g.id} className={gi > 0 ? 'border-t border-line pt-1.5 lg:border-0 lg:pt-0' : ''}>
+              <button
+                type="button"
+                onClick={() => { toggle(g.id); }}
+                aria-expanded={open}
+                aria-controls={listId}
+                className={`hidden min-h-11 w-full items-center gap-2.5 rounded-xl px-2 font-semibold whitespace-nowrap hover:bg-surface-2 hover:text-ink lg:flex ${current ? 'text-ink' : 'text-muted'}`}
+              >
+                <span aria-hidden className={`grid size-[30px] shrink-0 place-items-center rounded-[9px] ${current ? 'bg-lime/15 text-lime' : 'bg-surface-2'}`}>
+                  <g.icon className="size-4" />
+                </span>
+                <span className="flex-1 text-left">{g.short ?? g.label}</span>
+                <ChevronDown aria-hidden className={`size-4 shrink-0 text-faint transition-transform ${open ? 'rotate-180' : ''}`} />
+              </button>
+              <ul id={listId} className={`flex flex-col gap-0.5 lg:pt-1 lg:pb-1.5 lg:pl-12 ${open ? '' : 'lg:hidden'}`}>
+                {g.items.map(({ href, label, icon: Icon }) => {
+                  const here = href === activeHref;
+                  return (
+                    <li key={href}>
+                      <Link
+                        href={href}
+                        title={`${g.label} › ${label}`}
+                        aria-current={here ? 'page' : undefined}
+                        className="relative flex min-h-11 items-center justify-center rounded-xl text-muted hover:bg-surface-2 hover:text-ink aria-[current=page]:bg-lime/10 aria-[current=page]:text-lime lg:min-h-10 lg:justify-start lg:px-2.5 lg:text-[14.5px] lg:aria-[current=page]:font-semibold"
+                      >
+                        <Icon aria-hidden className="size-5 lg:hidden" />
+                        <span className="sr-only lg:not-sr-only">{label}</span>
+                        {here && <span aria-hidden className="absolute top-1/2 -left-3.5 hidden size-1.5 -translate-y-1/2 rounded-full bg-lime lg:block" />}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           );
         })}
-        <span title={`${user.name} · ${ROLE_LABEL[user.role]}`} className="mt-auto grid size-9 shrink-0 place-items-center rounded-full bg-lime text-xs font-semibold text-bg">{user.nickname.slice(0, 3)}</span>
-      </div>
-
-      {selected && (
-        <div
-          ref={panelRef}
-          id="nav-panel"
-          className={`w-[188px] shrink-0 flex-col gap-1 border-r border-line bg-surface px-2.5 py-5 lg:flex ${overlay ? 'fixed inset-y-0 left-[76px] z-50 flex shadow-[24px_0_48px_-24px_#000] lg:static lg:shadow-none' : 'hidden'}`}
-        >
-          <h2 className="px-2.5 font-display text-base font-semibold">{selected.label}</h2>
-          <p className="px-2.5 pb-3 text-xs text-faint">{selected.hint}</p>
-          <ul className="flex flex-col gap-1">
-            {selected.items.map(({ href, label, icon: Icon }) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  onClick={() => { setOverlay(false); }}
-                  aria-current={href === activeHref ? 'page' : undefined}
-                  className="flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 font-medium text-muted hover:bg-surface-2 hover:text-ink aria-[current=page]:bg-surface-2 aria-[current=page]:text-ink aria-[current=page]:shadow-[inset_3px_0_0_var(--color-lime)] [&[aria-current=page]_svg]:text-lime"
-                >
-                  <Icon aria-hidden className="size-[18px] shrink-0" />
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-auto rounded-xl bg-surface-2 p-3 leading-tight">
-            <b className="block truncate text-sm font-semibold">{user.name}</b>
-            <small className="text-xs text-muted">{ROLE_LABEL[user.role]} · {user.branch}</small>
-          </div>
+      </nav>
+      <div className="mt-auto flex items-center justify-center gap-2.5 rounded-xl lg:justify-start lg:bg-surface-2 lg:p-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-lime text-xs font-semibold text-bg">{user.nickname.slice(0, 3)}</span>
+        <div className="hidden min-w-0 leading-tight lg:block">
+          <b className="block truncate font-semibold">{user.name}</b>
+          <small className="text-xs text-muted">{ROLE_LABEL[user.role]} · {user.branch}</small>
         </div>
-      )}
-    </nav>
+      </div>
+    </aside>
   );
 }
 

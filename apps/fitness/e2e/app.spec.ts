@@ -36,12 +36,12 @@ test.describe('แดชบอร์ด', () => {
     const navs = page.getByRole('navigation', { name: 'เมนูหลัก' });
     await expect(navs.filter({ visible: true })).toHaveCount(1);
     const nav = navs.filter({ visible: true });
-    // แท็บเล็ต/เดสก์ท็อป: กดโซน "หน้าร้าน" บน rail ก่อน แผงจึงแสดงเมนูย่อยของโซนนั้น
+    // เดสก์ท็อป: กดโซน "หน้าร้าน" ก่อนจึงกางเมนูย่อย (แท็บเล็ตแสดงไอคอนเมนูย่อยทั้งหมดอยู่แล้ว)
     const zone = nav.getByRole('button', { name: 'หน้าร้าน' });
     if (await zone.isVisible()) {
-      await expect(zone).toHaveAttribute('aria-pressed', 'false');
+      await expect(zone).toHaveAttribute('aria-expanded', 'false');
       await zone.click();
-      await expect(zone).toHaveAttribute('aria-pressed', 'true');
+      await expect(zone).toHaveAttribute('aria-expanded', 'true');
     }
     await nav.getByRole('link', { name: 'สมาชิก', exact: true }).click();
     await expect(page).toHaveURL(/\/members$/);
