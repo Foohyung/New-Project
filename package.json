@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e --concurrency=1",
-    "check": "turbo run lint typecheck test"
+    "check": "turbo run lint typecheck test",
+    "stop": "node scripts/stop-dev.mjs"
   },
   "devDependencies": {
     "turbo": "^2.11.8"
