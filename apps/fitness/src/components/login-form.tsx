@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound } from 'lucide-react';
 import { useActionState, useState } from 'react';
 import type { ActionResult } from '@/features/shared/action-result';
 import { btn, inputClass } from './ui';
@@ -64,7 +64,7 @@ export function LoginForm({ action, next }: { action: Action; next?: string }) {
         <span className="text-muted">ลืมรหัส? <b className="font-semibold text-lime">ติดต่อผู้จัดการ</b></span>
       </div>
       {state && !state.ok && !state.fieldErrors && <p role="alert" className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{state.message}</p>}
-      <button type="submit" disabled={pending} className={`${btn.primary} min-h-12 w-full text-base`}>{pending ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}</button>
+      <button type="submit" disabled={pending} className={`${btn.primary} min-h-12 w-full font-display text-lg tracking-wide`}>{pending ? 'กำลังเข้าสู่ระบบ…' : <>เข้าสู่ระบบ<ArrowRight aria-hidden className="size-5" /></>}</button>
       <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted"><ShieldCheck aria-hidden className="size-4 text-lime" />เชื่อมต่อแบบเข้ารหัส · ห้ามใช้ &ldquo;จดจำฉัน&rdquo; บนเครื่องส่วนกลาง</p>
     </form>
   );
