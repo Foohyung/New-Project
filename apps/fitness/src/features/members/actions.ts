@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireSession } from '@/server/auth';
 import { audit } from '@/server/audit';
+import { sendManualReminder } from '@/server/dal/reminders';
 import { createMember, freezeMember, getMemberDetail, renewMember, unfreezeMember, updateMember } from '@/server/dal/members';
 import { formObject, knownFailure, validationFailure, type ActionResult } from '../shared/action-result';
 import { FreezeSchema, MemberCreateSchema, MemberFieldsSchema, RenewSchema } from './schema';
@@ -23,11 +24,11 @@ export async function createMemberAction(_prev: ActionResult, formData: FormData
   // 2. Validate
   const parsed = MemberCreateSchema.safeParse(formObject(formData));
   if (!parsed.success) return validationFailure(parsed.error);
-  const { packageId, method, name, phone, email, note } = parsed.data;
+  const { packageId, method, name, phone, email, note, couponCode, marketingConsent } = parsed.data;
   // 3–4. Authorize + Execute (DAL ตรวจสิทธิ์ members.manage และ payments.collect)
   let created: Awaited<ReturnType<typeof createMember>>;
   try {
-    created = await createMember(session, { name, phone, email, note, packageId, method });
+    created = await createMember(session, { name, phone, email, note, packageId, method, couponCode, marketingConsent });
   } catch (error) {
     return knownFailure(error);
   }
@@ -56,7 +57,7 @@ export async function renewMemberAction(memberId: string, _prev: ActionResult, f
   const parsed = RenewSchema.safeParse(formObject(formData));
   if (!parsed.success) return validationFailure(parsed.error);
   try {
-    const result = await renewMember(session, memberId, parsed.data.packageId, parsed.data.method);
+    const result = await renewMember(session, memberId, parsed.data.packageId, parsed.data.method, parsed.data.couponCode);
     await audit(session, 'member.renew', 'payment', result.paymentId);
     refreshMember(memberId);
     if (!result.paid) return { ok: true, message: 'สร้างรายการรอชำระแล้ว ให้สมาชิกสแกน QR แล้วกดยืนยันเมื่อเงินเข้า', href: `/payments/${result.paymentId}` };
@@ -98,10 +99,9 @@ export async function unfreezeMemberAction(memberId: string, _prev: ActionResult
 export async function remindMemberAction(memberId: string, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
   try {
-    const member = await getMemberDetail(session, memberId);
-    if (!member) return { ok: false, message: 'ไม่พบสมาชิกนี้แล้ว' };
+    const { name } = await sendManualReminder(session, memberId);
     await audit(session, 'member.remind', 'member', memberId);
-    return { ok: true, message: `ส่งเตือนถึง ${member.name} แล้ว (จำลอง)` };
+    return { ok: true, message: `ส่งเตือนถึง ${name} แล้ว (จำลอง)` };
   } catch (error) {
     return knownFailure(error);
   }

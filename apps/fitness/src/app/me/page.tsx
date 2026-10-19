@@ -1,25 +1,38 @@
 import { formatBaht, formatThaiDate, formatThaiDateOf, formatThaiTime } from '@repo/utils';
-import { CalendarPlus } from 'lucide-react';
+import { CalendarPlus, Gift, TicketPercent } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ActionButton } from '@/components/action-button';
 import { PaymentStatusBadge } from '@/components/payments';
+import { AutoRenewCard, CopyButton } from '@/components/portal-cards';
 import { QrCode } from '@/components/qr-code';
-import { Badge, btn, Card, EmptyState, Forbidden, StatusBadge } from '@/components/ui';
+import { Badge, btn, Card, EmptyState, Forbidden, inputClass, StatusBadge } from '@/components/ui';
+import { REFERRAL } from '@/features/coupons/service';
 import { cancelBookingAction } from '@/features/classes/actions';
 import { CANCEL_CUTOFF_MINUTES } from '@/features/classes/service';
 import { buyPackageAction } from '@/features/payments/actions';
+import { setAutoRenewAction } from '@/features/subscriptions/actions';
+import { myReferral, previewCoupon } from '@/server/dal/coupons';
+import { getMyAutoRenew } from '@/server/dal/subscriptions';
 import { getPortal } from '@/server/dal/portal';
 import { listPackages } from '@/server/dal/packages';
 import { pageGuard } from '@/server/guard';
 
 export const metadata: Metadata = { title: 'บัตรสมาชิก' };
 
-export default async function MyCardPage() {
+export default async function MyCardPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('portal.use');
   if (!allowed) return <Forbidden message="หน้านี้สำหรับสมาชิก — สลับเป็นบทบาทสมาชิกเพื่อดูตัวอย่าง" />;
-  const [me, packages] = await Promise.all([getPortal(session), listPackages(session, { activeOnly: true })]);
+  const [me, packages, autoRenew, referral] = await Promise.all([getPortal(session), listPackages(session, { activeOnly: true }), getMyAutoRenew(session), myReferral(session)]);
   if (!me) return <EmptyState>ไม่พบข้อมูลสมาชิกของบัญชีนี้ ติดต่อเคาน์เตอร์</EmptyState>;
+  // ?coupon=RENEW10&from=reminder มาจากลิงก์ในข้อความเตือน — ตรวจโค้ดกับทุกแพ็กเกจเพื่อแสดงราคาหลังหักส่วนลด
+  const query = await searchParams;
+  const couponInput = typeof query.coupon === 'string' ? query.coupon.slice(0, 24) : '';
+  const fromReminder = query.from === 'reminder';
+  const offers = couponInput ? await Promise.all(packages.map(async p => ({ id: p.id, r: await previewCoupon(session, { code: couponInput, packageId: p.id, memberId: null }) }))) : [];
+  const offerFor = (id: string) => offers.find(o => o.id === id)?.r;
+  const anyValid = offers.some(o => o.r.ok);
+  const firstError = offers.find(o => !o.r.ok)?.r;
   const pending = me.payments.find(p => p.status !== 'paid');
   const m = me.member;
 
@@ -82,16 +95,60 @@ export default async function MyCardPage() {
       </div>
 
       <Card title="ต่ออายุ / ซื้อแพ็กเกจ" subtitle="ชำระด้วย PromptPay · ยังไม่หมดอายุจะต่อจากวันหมดอายุเดิม">
+        <form method="get" className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+          {fromReminder && <input type="hidden" name="from" value="reminder" />}
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor="coupon" className="text-sm font-semibold">โค้ดส่วนลด</label>
+            <div className="relative">
+              <TicketPercent aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted" />
+              <input id="coupon" name="coupon" defaultValue={couponInput} placeholder="เช่น RENEW10" autoComplete="off" className={`${inputClass} pl-11 uppercase`} />
+            </div>
+          </div>
+          <button type="submit" className={`${btn.secondary} min-h-12`}>ใช้โค้ด</button>
+        </form>
+        {couponInput && (anyValid
+          ? <p role="status" className="mb-4 rounded-xl border border-lime/40 bg-lime/10 p-3 text-sm text-lime">ใช้โค้ด {couponInput.toUpperCase()} แล้ว ราคาด้านล่างหักส่วนลดให้แล้ว (เฉพาะแพ็กเกจที่ร่วมรายการ)</p>
+          : <p role="alert" className="mb-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{firstError && !firstError.ok ? firstError.message : 'ใช้โค้ดนี้ไม่ได้'}</p>)}
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {packages.map(p => (
-            <li key={p.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-bg p-4">
-              <div className="flex items-baseline justify-between gap-3"><b className="font-semibold">{p.name}</b><b className="font-display text-lg text-lime">{formatBaht(p.priceSatang)}</b></div>
-              <p className="flex-1 text-sm text-muted">{p.durationLabel} · {p.description}</p>
-              <ActionButton action={buyPackageAction.bind(null, p.id)} label={p.kind === 'pt' ? 'ซื้อแพ็กเกจ PT' : 'ต่ออายุด้วยแพ็กเกจนี้'} pendingLabel="กำลังสร้าง QR…" />
-            </li>
-          ))}
+          {packages.map(p => {
+            const offer = offerFor(p.id);
+            const deal = offer?.ok ? offer : null;
+            return (
+              <li key={p.id} className={`flex flex-col gap-2 rounded-2xl border bg-bg p-4 ${deal ? 'border-lime/50' : 'border-line'}`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <b className="font-semibold">{p.name}</b>
+                  <span className="flex items-baseline gap-2">
+                    {deal?.discountSatang ? <s className="text-sm text-muted">{formatBaht(p.priceSatang)}</s> : null}
+                    <b className="font-display text-lg text-lime">{formatBaht(p.priceSatang - (deal?.discountSatang ?? 0))}</b>
+                  </span>
+                </div>
+                <p className="flex-1 text-sm text-muted">{p.durationLabel} · {p.description}</p>
+                {deal && <Badge tone="lime">{deal.code} · {deal.label}</Badge>}
+                <ActionButton action={buyPackageAction.bind(null, p.id, deal?.code ?? null, fromReminder)} label={p.kind === 'pt' ? 'ซื้อแพ็กเกจ PT' : 'ต่ออายุด้วยแพ็กเกจนี้'} pendingLabel="กำลังสร้าง QR…" />
+              </li>
+            );
+          })}
         </ul>
       </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+        <Card title="ต่ออายุอัตโนมัติ" subtitle="ไม่ต้องจำวันจ่าย สิทธิ์ไม่ขาดช่วง">
+          <AutoRenewCard data={autoRenew} action={setAutoRenewAction} />
+        </Card>
+        <section aria-labelledby="refer-title" className="flex flex-col gap-3 rounded-2xl border border-violet/40 bg-gradient-to-br from-violet/15 to-surface p-4 sm:p-5">
+          <h2 id="refer-title" className="flex items-center gap-2 font-display text-lg font-semibold"><Gift aria-hidden className="size-5 text-violet" />ชวนเพื่อนมาเล่น</h2>
+          <p className="text-sm text-muted">เพื่อนสมัครด้วยโค้ดนี้ได้ส่วนลด {formatBaht(REFERRAL.friendDiscountSatang)} คุณได้วันใช้งานเพิ่ม {REFERRAL.referrerBonusDays} วันต่อเพื่อน 1 คน</p>
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-violet/60 bg-bg p-3">
+            <b className="font-mono text-lg tracking-wide text-violet">{referral.code}</b>
+            <CopyButton text={referral.code} />
+          </div>
+          <dl className="grid grid-cols-3 gap-2 text-center text-xs text-muted">
+            <div><dt>เพื่อนสมัคร</dt><dd className="font-display text-xl text-ink">{referral.friends}</dd></div>
+            <div><dt>วันที่ได้เพิ่ม</dt><dd className="font-display text-xl text-ink">{referral.bonusDays}</dd></div>
+            <div><dt>สิทธิ์ที่เหลือ</dt><dd className="font-display text-xl text-ink">{referral.remaining}</dd></div>
+          </dl>
+        </section>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
         <Card title="ประวัติเข้ายิม">

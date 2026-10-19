@@ -81,7 +81,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
 
           {manage && (
             <Card title="ต่ออายุ / ซื้อแพ็กเกจเพิ่ม" subtitle="ยังไม่หมดอายุจะต่อจากวันหมดอายุเดิม ไม่เสียวันที่เหลือ">
-              <RenewForm packages={packages} action={renewMemberAction.bind(null, member.id)} currentExpiresOn={member.expiresOn} today={date} />
+              <RenewForm packages={packages} action={renewMemberAction.bind(null, member.id)} currentExpiresOn={member.expiresOn} today={date} memberId={member.id} />
             </Card>
           )}
 

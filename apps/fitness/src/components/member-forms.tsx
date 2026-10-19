@@ -7,6 +7,7 @@ import { FREEZE_MAX_DAYS, membershipPeriod, type PackageLike } from '@/features/
 import { METHOD_LABEL, type PaymentMethod } from '@/features/payments/service';
 import type { ActionResult } from '@/features/shared/action-result';
 import { ResultMessage } from './action-button';
+import { CouponField, type AppliedCoupon } from './coupon-field';
 import { Dropdown } from './dropdown';
 import { ChoiceCard, FieldError, TextField } from './field';
 import { btn } from './ui';
@@ -61,9 +62,11 @@ export function MemberCreateForm({ packages, action, today }: { packages: Packag
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
   const [packageId, setPackageId] = useState(packages[0]?.id ?? '');
   const [method, setMethod] = useState<PaymentMethod>('cash');
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const errors = errorsOf(state);
   const pkg = packages.find(p => p.id === packageId);
   const period = pkg && membershipPeriod(pkg, null, today);
+  const expiresOn = period && coupon?.bonusDays ? addDays(period.expiresOn, coupon.bonusDays) : period?.expiresOn;
 
   return (
     <form action={formAction} className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]" noValidate>
@@ -77,16 +80,18 @@ export function MemberCreateForm({ packages, action, today }: { packages: Packag
         </div>
         <PackagePicker packages={packages} value={packageId} onChange={setPackageId} error={errors.packageId} />
         <MethodPicker value={method} onChange={setMethod} error={errors.method} />
+        <CouponField packageId={packageId} memberId={null} applied={coupon} onApplied={setCoupon} error={errors.couponCode} />
       </div>
 
       <aside className="flex flex-col gap-4 self-start rounded-2xl border border-line bg-surface p-4 sm:p-5 lg:sticky lg:top-6">
         <h2 className="font-display text-lg font-semibold">สรุปรายการ</h2>
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-3"><dt className="text-muted">แพ็กเกจ</dt><dd>{pkg?.name ?? '—'}</dd></div>
-          {period && <div className="flex justify-between gap-3"><dt className="text-muted">ใช้ได้</dt><dd className="text-right">{formatThaiDate(period.startsOn)} – {formatThaiDate(period.expiresOn)}</dd></div>}
+          {period && expiresOn && <div className="flex justify-between gap-3"><dt className="text-muted">ใช้ได้</dt><dd className="text-right">{formatThaiDate(period.startsOn)} – {formatThaiDate(expiresOn)}</dd></div>}
           {pkg?.kind === 'pt' && <div className="flex justify-between gap-3"><dt className="text-muted">ครั้ง PT</dt><dd>{pkg.sessions} ครั้ง</dd></div>}
           <div className="flex justify-between gap-3"><dt className="text-muted">ชำระด้วย</dt><dd>{METHOD_LABEL[method]}</dd></div>
-          <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-line pt-3"><dt className="font-semibold">ยอดชำระ</dt><dd className="font-display text-2xl font-semibold text-lime">{pkg ? formatBaht(pkg.priceSatang) : '—'}</dd></div>
+          {coupon && pkg && <div className="flex justify-between gap-3 text-lime"><dt>{coupon.code} · {coupon.label}</dt><dd>{coupon.discountSatang ? `−${formatBaht(coupon.discountSatang)}` : `+${String(coupon.bonusDays)} วัน`}</dd></div>}
+          <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-line pt-3"><dt className="font-semibold">ยอดชำระ</dt><dd className="font-display text-2xl font-semibold text-lime">{pkg ? formatBaht(pkg.priceSatang - (coupon?.discountSatang ?? 0)) : '—'}</dd></div>
         </dl>
         {pkg?.kind === 'pt' && <p className="rounded-xl bg-warn/10 p-3 text-sm text-warn">แพ็กเกจ PT ไม่รวมสิทธิ์เข้ายิม ควรสมัครคู่กับแพ็กเกจรายเดือน</p>}
         <label className="flex min-h-11 items-start gap-3 text-sm">
@@ -94,6 +99,10 @@ export function MemberCreateForm({ packages, action, today }: { packages: Packag
           <span>สมาชิกยินยอมให้เก็บชื่อ เบอร์โทร และประวัติการใช้บริการ เพื่อใช้สิทธิ์สมาชิกและรับแจ้งเตือน ตามนโยบายความเป็นส่วนตัว</span>
         </label>
         <FieldError id="consent-error" error={errors.consent} />
+        <label className="flex min-h-11 items-start gap-3 text-sm text-muted">
+          <input type="checkbox" name="marketingConsent" defaultChecked className="mt-1 size-5 shrink-0 accent-lime" />
+          <span>รับแจ้งเตือนต่ออายุและโปรโมชันทาง LINE/SMS (ไม่บังคับ ยกเลิกได้ทุกเมื่อ)</span>
+        </label>
         <button type="submit" disabled={pending} className={`${btn.primary} min-h-12 w-full`}>
           {pending ? 'กำลังบันทึก…' : method === 'cash' || method === 'card' ? 'รับเงินและสมัครสมาชิก' : 'สมัครและสร้าง QR ชำระเงิน'}
         </button>
@@ -124,20 +133,28 @@ export function MemberEditForm({ member, action }: { member: { name: string; pho
 }
 
 /** ต่ออายุ / ซื้อแพ็กเกจเพิ่ม */
-export function RenewForm({ packages, action, currentExpiresOn, today }: { packages: PackageOption[]; action: Action; currentExpiresOn: string; today: string }) {
+export function RenewForm({ packages, action, currentExpiresOn, today, memberId }: { packages: PackageOption[]; action: Action; currentExpiresOn: string; today: string; memberId: string }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
   const [packageId, setPackageId] = useState(packages[0]?.id ?? '');
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const errors = errorsOf(state);
   const pkg = packages.find(p => p.id === packageId);
   const period = pkg && membershipPeriod(pkg, currentExpiresOn, today);
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
+  const expiresOn = period && addDays(period.expiresOn, coupon?.bonusDays ?? 0);
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <PackagePicker packages={packages} value={packageId} onChange={setPackageId} error={errors.packageId} />
       <MethodPicker value={method} onChange={setMethod} error={errors.method} />
-      <p className="rounded-xl bg-surface-2 p-3 text-sm">
-        {pkg?.kind === 'pt' ? `เพิ่มครั้ง PT อีก ${String(pkg.sessions ?? 0)} ครั้ง` : period ? `หลังชำระ ใช้ได้ถึง ${formatThaiDate(period.expiresOn, 'long')}${currentExpiresOn >= today ? ' (ต่อจากวันหมดอายุเดิม)' : ''}` : 'เลือกแพ็กเกจ'}
-        {pkg && <b className="float-right font-display text-lime">{formatBaht(pkg.priceSatang)}</b>}
+      <CouponField packageId={packageId} memberId={memberId} applied={coupon} onApplied={setCoupon} error={errors.couponCode} />
+      <p className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl bg-surface-2 p-3 text-sm">
+        <span>{pkg?.kind === 'pt' ? `เพิ่มครั้ง PT อีก ${String(pkg.sessions ?? 0)} ครั้ง` : expiresOn ? `หลังชำระ ใช้ได้ถึง ${formatThaiDate(expiresOn, 'long')}${currentExpiresOn >= today ? ' (ต่อจากวันหมดอายุเดิม)' : ''}` : 'เลือกแพ็กเกจ'}</span>
+        {pkg && (
+          <span className="flex items-baseline gap-2">
+            {coupon?.discountSatang ? <s className="text-muted">{formatBaht(pkg.priceSatang)}</s> : null}
+            <b className="font-display text-lime">{formatBaht(pkg.priceSatang - (coupon?.discountSatang ?? 0))}</b>
+          </span>
+        )}
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={btn.primary}>{pending ? 'กำลังบันทึก…' : 'ยืนยันการต่ออายุ'}</button>

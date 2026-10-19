@@ -1,12 +1,12 @@
 import { bangkokDate, formatBaht, formatThaiDate, formatThaiDateOf, formatThaiTime } from '@repo/utils';
-import { Banknote, CalendarDays, CreditCard, Landmark, LayoutGrid, QrCode, Table2, Wallet } from 'lucide-react';
+import { Banknote, CalendarDays, CreditCard, Landmark, LayoutGrid, QrCode, RefreshCw, Table2, Wallet } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
 import { ActionButton } from '@/components/action-button';
 import { PaymentStatusBadge } from '@/components/payments';
-import { EmptyState, Forbidden, PageHeader, Stat } from '@/components/ui';
+import { btn, EmptyState, Forbidden, PageHeader, Stat } from '@/components/ui';
 import { UrlDropdown } from '@/components/url-dropdown';
 import { hrefWith, Toolbar, ViewSwitch } from '@/components/view-switch';
 import { confirmPaymentAction } from '@/features/payments/actions';
@@ -62,7 +62,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader kicker={session.branch} title="การเงิน" />
+      <PageHeader kicker={session.branch} title="การเงิน" actions={<Link href="/payments/subscriptions" className={btn.secondary}><RefreshCw aria-hidden className="size-5" />ตัดบัตรอัตโนมัติ</Link>} />
       <section aria-label="สรุปวันนี้" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Stat tone="lime" label="รับเงินวันนี้" value={formatBaht(summary.todaySatang)} hint={`${String(summary.todayCount)} รายการ`} />
         <Stat label="รอตรวจสลิป" value={summary.review} hint="ตรวจยอดแล้วกดยืนยัน" />

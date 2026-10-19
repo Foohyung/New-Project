@@ -7,6 +7,7 @@ import type { Session } from '../auth';
 import { now, today } from '../clock';
 import { db, nextId, type MemberRecord, type Store } from '../db';
 import { authorize, can } from '../rbac';
+import { kindFor, resolveCoupon } from './coupons';
 import { createPaymentRecord, toPaymentDto } from './payments';
 
 export type { MemberDto };
@@ -157,11 +158,15 @@ export interface MemberInput {
   note: string | null;
 }
 
-export async function createMember(session: Session, input: MemberInput & { packageId: string; method: PaymentMethod }): Promise<{ memberId: string; paymentId: string; paid: boolean }> {
+export async function createMember(session: Session, input: MemberInput & { packageId: string; method: PaymentMethod; couponCode: string | null; marketingConsent: boolean }): Promise<{ memberId: string; paymentId: string; paid: boolean }> {
   await authorize(session, 'members.manage');
   await authorize(session, 'payments.collect');
   const store = db();
   if (store.members.some(m => m.phone === input.phone)) throw new PhoneTakenError();
+  const pkg = store.packages.find(p => p.id === input.packageId);
+  const kind = kindFor(pkg?.kind, true);
+  // ตรวจคูปองก่อนสร้างสมาชิก เพื่อไม่ให้มีสมาชิกค้างเมื่อโค้ดใช้ไม่ได้
+  const coupon = input.couponCode ? resolveCoupon(store, input.couponCode, { memberId: null, packageId: input.packageId, kind }) : null;
   store.sequence.member += 1;
   const member: MemberRecord = {
     id: nextId('m'),
@@ -177,11 +182,11 @@ export async function createMember(session: Session, input: MemberInput & { pack
     ptSessionsLeft: 0,
     lastCheckInAt: null,
     note: input.note,
+    marketingConsent: input.marketingConsent,
+    autoRenew: null,
   };
   store.members.push(member);
-  const pkg = store.packages.find(p => p.id === input.packageId);
-  const kind = pkg?.kind === 'daypass' ? 'daypass' : pkg?.kind === 'pt' ? 'pt' : 'signup';
-  const payment = createPaymentRecord(store, { memberId: member.id, packageId: input.packageId, kind, method: input.method, receivedBy: session.name });
+  const payment = createPaymentRecord(store, { memberId: member.id, packageId: input.packageId, kind, method: input.method, receivedBy: session.name, coupon });
   return { memberId: member.id, paymentId: payment.id, paid: payment.status === 'paid' };
 }
 
@@ -194,15 +199,16 @@ export async function updateMember(session: Session, id: string, input: MemberIn
   Object.assign(m, input);
 }
 
-export async function renewMember(session: Session, id: string, packageId: string, method: PaymentMethod): Promise<{ paymentId: string; paid: boolean }> {
+export async function renewMember(session: Session, id: string, packageId: string, method: PaymentMethod, couponCode: string | null = null): Promise<{ paymentId: string; paid: boolean }> {
   await authorize(session, 'members.manage');
   await authorize(session, 'payments.collect');
   const store = db();
   const m = store.members.find(x => x.id === id);
   const pkg = store.packages.find(p => p.id === packageId && p.active);
   if (!m || !pkg) throw new Error('NOT_FOUND');
-  const kind = pkg.kind === 'pt' ? 'pt' : pkg.kind === 'daypass' ? 'daypass' : 'renew';
-  const payment = createPaymentRecord(store, { memberId: m.id, packageId: pkg.id, kind, method, receivedBy: session.name });
+  const kind = kindFor(pkg.kind, false);
+  const coupon = couponCode ? resolveCoupon(store, couponCode, { memberId: m.id, packageId: pkg.id, kind }) : null;
+  const payment = createPaymentRecord(store, { memberId: m.id, packageId: pkg.id, kind, method, receivedBy: session.name, coupon });
   return { paymentId: payment.id, paid: payment.status === 'paid' };
 }
 

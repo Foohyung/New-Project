@@ -42,11 +42,11 @@ export async function submitSlipAction(paymentId: string, _prev: ActionResult, _
 }
 
 /** สมาชิกซื้อ/ต่อแพ็กเกจเองด้วย PromptPay */
-export async function buyPackageAction(packageId: string, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
+export async function buyPackageAction(packageId: string, couponCode: string | null, fromReminder: boolean, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
   let paymentId: string;
   try {
-    const p = await createSelfPayment(session, packageId);
+    const p = await createSelfPayment(session, packageId, couponCode, fromReminder);
     paymentId = p.id;
   } catch (error) {
     return knownFailure(error);

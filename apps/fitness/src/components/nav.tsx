@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, CalendarPlus, ChartColumn, Dumbbell, House, IdCard, LayoutGrid, Package, ScanLine, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
+import { CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutGrid, Megaphone, Package, ScanLine, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { hasPermission, ROLE_LABEL, type Permission, type Role } from '@/features/auth/roles';
@@ -20,6 +20,8 @@ const NAV: NavItem[] = [
   { href: '/classes', label: 'ตารางคลาส', short: 'คลาส', icon: CalendarDays, permission: 'classes.view' },
   { href: '/trainers', label: 'เทรนเนอร์', icon: Dumbbell, permission: 'trainers.view' },
   { href: '/payments', label: 'การเงิน', icon: Wallet, permission: 'payments.view' },
+  { href: '/retention', label: 'ติดตามสมาชิก', short: 'ติดตาม', icon: HeartPulse, permission: 'retention.view' },
+  { href: '/marketing', label: 'การตลาด', icon: Megaphone, permission: 'marketing.manage' },
   { href: '/reports', label: 'รายงาน', icon: ChartColumn, permission: 'reports.view' },
   { href: '/packages', label: 'แพ็กเกจ', icon: Package, permission: 'packages.manage' },
   { href: '/me', label: 'บัตรสมาชิก', short: 'บัตร', icon: IdCard, permission: 'portal.use' },

@@ -1,5 +1,9 @@
 import 'server-only';
 import { addDays } from '@repo/utils';
+import type { CouponLike } from '@/features/coupons/service';
+import type { Channel, ReminderRound, RoundId } from '@/features/reminders/service';
+import type { FollowUpStage } from '@/features/retention/service';
+import type { SavedCard } from '@/features/subscriptions/service';
 
 /*
  * Backend จำลอง (mock) — เก็บข้อมูลในหน่วยความจำของ server
@@ -38,6 +42,10 @@ export interface MemberRecord {
   ptSessionsLeft: number;
   lastCheckInAt: string | null;
   note: string | null;
+  /** ยินยอมรับข่าวสาร/โปรโมชัน แยกจากความยินยอมใช้บริการ (PDPA) — ไม่ยินยอม = ไม่ส่งแจ้งเตือนการตลาด */
+  marketingConsent: boolean;
+  /** ต่ออายุอัตโนมัติด้วยบัตร (เก็บแค่ยี่ห้อ/4 หลักท้าย — ระยะที่ 2 เก็บ token จาก gateway) */
+  autoRenew: { card: SavedCard; since: string } | null;
 }
 
 export interface CheckInRecord {
@@ -107,8 +115,49 @@ export interface PaymentRecord {
   coverage: { from: string; to: string } | null;
   /** เจ้าหน้าที่ที่รับเงิน/ยืนยันสลิป */
   receivedBy: string | null;
+  /** ราคาเต็มก่อนส่วนลด (amountSatang = ยอดหลังหักส่วนลด) */
+  listPriceSatang: number;
+  discountSatang: number;
+  couponCode: string | null;
+  /** วันใช้งานที่แถมจากคูปอง */
+  bonusDays: number;
   /** ข้อมูลตั้งต้น — รวมอยู่ในยอดสรุปของแดชบอร์ดแล้ว */
   seeded: boolean;
+}
+
+export interface CouponRecord extends CouponLike {
+  description: string;
+  createdAt: string;
+}
+
+export interface ReminderLogRecord {
+  id: string;
+  memberId: string;
+  roundId: RoundId | 'manual';
+  channels: Channel[];
+  sentAt: string;
+  clicked: boolean;
+  /** รายการชำระที่เกิดจากลิงก์ในข้อความ */
+  paymentId: string | null;
+}
+
+export interface ChargeRecord {
+  id: string;
+  memberId: string;
+  packageId: string;
+  amountSatang: number;
+  dueOn: string;
+  attempts: { on: string; ok: boolean; reason: string | null }[];
+  status: 'retrying' | 'failed' | 'paid';
+  paymentId: string | null;
+}
+
+export interface FollowUpRecord {
+  memberId: string;
+  stage: FollowUpStage;
+  note: string;
+  by: string;
+  updatedAt: string;
 }
 
 export interface Store {
@@ -120,6 +169,11 @@ export interface Store {
   bookings: BookingRecord[];
   ptSessions: PtSessionRecord[];
   payments: PaymentRecord[];
+  coupons: CouponRecord[];
+  reminderRounds: ReminderRound[];
+  reminderLogs: ReminderLogRecord[];
+  charges: ChargeRecord[];
+  followUps: FollowUpRecord[];
   sequence: { member: number; receipt: number };
 }
 
@@ -134,7 +188,7 @@ const PACKAGES: PackageRecord[] = [
   { id: 'daypass', name: 'Day pass', kind: 'daypass', days: 1, priceSatang: 20_000, description: 'เข้าใช้ได้ 1 วัน', active: true },
 ];
 
-const MEMBERS: MemberRecord[] = [
+const BASE_MEMBERS: Omit<MemberRecord, 'marketingConsent' | 'autoRenew'>[] = [
   { id: '01', code: 'FF-002318', name: 'ณัฐพล ศรีสุข', phone: '0800000101', email: 'nattapol@example.com', joinedOn: '2024-08-13', packageId: 'gold12', expiresOn: '2027-08-12', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-15T11:42:00Z', note: null },
   { id: '02', code: 'FF-001842', name: 'พิมพ์ชนก วงศ์ดี', phone: '0800000102', email: null, joinedOn: '2025-06-19', packageId: 'monthly', expiresOn: '2026-10-18', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-14T12:10:00Z', note: null },
   { id: '03', code: 'FF-002107', name: 'ธนกร แก้วมณี', phone: '0800000103', email: 'thanakorn@example.com', joinedOn: '2025-12-01', packageId: '3m', expiresOn: '2026-11-30', freeze: null, ptSessionsLeft: 3, lastCheckInAt: '2026-10-15T11:36:00Z', note: 'เป้าหมาย: ลดไขมัน 5 กก.' },
@@ -143,11 +197,25 @@ const MEMBERS: MemberRecord[] = [
   { id: '06', code: 'FF-000958', name: 'ศิริพร ทองคำ', phone: '0800000106', email: 'siriporn@example.com', joinedOn: '2023-03-22', packageId: 'gold12', expiresOn: '2027-03-21', freeze: null, ptSessionsLeft: 5, lastCheckInAt: '2026-10-14T23:48:00Z', note: null },
   { id: '07', code: 'FF-001603', name: 'สุรเชษฐ์ นาคสวัสดิ์', phone: '0800000107', email: null, joinedOn: '2025-10-20', packageId: '3m', expiresOn: '2026-10-19', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-13T11:00:00Z', note: null },
   { id: '08', code: 'FF-002034', name: 'จิราภรณ์ แสงทอง', phone: '0800000108', email: null, joinedOn: '2026-01-21', packageId: 'monthly', expiresOn: '2026-10-20', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-15T00:15:00Z', note: null },
-  { id: '09', code: 'FF-001128', name: 'ภาคิน รัตนวงศ์', phone: '0800000109', email: null, joinedOn: '2025-04-22', packageId: '6m', expiresOn: '2026-10-21', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-11T10:30:00Z', note: null },
+  { id: '09', code: 'FF-001128', name: 'ภาคิน รัตนวงศ์', phone: '0800000109', email: null, joinedOn: '2025-04-22', packageId: '6m', expiresOn: '2026-10-17', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-11T10:30:00Z', note: null },
   { id: '10', code: 'FF-002290', name: 'อรวรรณ มีสุข', phone: '0800000110', email: null, joinedOn: '2026-07-11', packageId: 'monthly', expiresOn: '2026-11-10', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-15T11:40:00Z', note: null },
   { id: '11', code: 'FF-001955', name: 'ปวีณา ชัยมงคล', phone: '0800000111', email: 'paweena@example.com', joinedOn: '2025-08-15', packageId: '6m', expiresOn: '2027-02-14', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-15T11:33:00Z', note: null },
   { id: '12', code: 'FF-002330', name: 'เอกชัย บุญมา', phone: '0800000112', email: null, joinedOn: '2026-10-15', packageId: 'daypass', expiresOn: '2026-10-15', freeze: null, ptSessionsLeft: 0, lastCheckInAt: '2026-10-15T11:31:00Z', note: null },
 ];
+
+const VISA_4242: SavedCard = { brand: 'visa', last4: '4242', exp: '08/28' };
+const VISA_0002: SavedCard = { brand: 'visa', last4: '0002', exp: '02/27' };
+const AUTO_RENEW: Record<string, MemberRecord['autoRenew']> = {
+  '01': { card: VISA_4242, since: '2025-08-13' },
+  '07': { card: VISA_4242, since: '2025-10-20' },
+  '09': { card: VISA_0002, since: '2025-04-22' },
+  '05': { card: VISA_0002, since: '2026-03-10' },
+  '06': { card: { brand: 'mastercard', last4: '5454', exp: '11/27' }, since: '2024-03-22' },
+  '10': { card: VISA_4242, since: '2026-08-11' },
+  '11': { card: VISA_4242, since: '2026-02-15' },
+};
+
+const MEMBERS: MemberRecord[] = BASE_MEMBERS.map(m => ({ ...m, marketingConsent: m.id !== '08', autoRenew: AUTO_RENEW[m.id] ?? null }));
 
 const TRAINERS: TrainerRecord[] = [
   { id: 't1', name: 'ณัฐวุฒิ บุญเลิศ', nickname: 'โค้ชบอส', specialties: ['HIIT', 'Functional'], bio: 'อดีตนักกีฬาฟุตบอล เน้นความฟิตและการเผาผลาญ', color: 'var(--color-lime)' },
@@ -193,6 +261,22 @@ function seedClasses(): ClassRecord[] {
   return result;
 }
 
+/** จำนวนครั้งที่เข้ายิมต่อสัปดาห์ นับย้อนจากครั้งล่าสุด [สัปดาห์ล่าสุด, …, 8 สัปดาห์ก่อน] */
+const WEEKLY_VISITS: Record<string, number[]> = {
+  '01': [4, 4, 5, 4, 4, 5, 4, 4],
+  '02': [1, 1, 1, 2, 2, 3, 3, 3],
+  '03': [3, 3, 4, 3, 3, 4, 3, 3],
+  '04': [0, 2, 3, 3, 3, 3, 3, 3],
+  '05': [1, 0, 1, 1, 2, 2, 3, 3],
+  '06': [5, 5, 5, 6, 5, 5, 5, 5],
+  '07': [1, 1, 1, 2, 3, 3, 4, 4],
+  '08': [2, 1, 2, 2, 2, 2, 2, 2],
+  '09': [1, 1, 1, 2, 3, 4, 4, 4],
+  '10': [3, 4, 3, 3, 4, 3, 3, 3],
+  '11': [4, 4, 4, 4, 4, 4, 4, 4],
+  '12': [1],
+};
+
 function seedCheckIns(): CheckInRecord[] {
   const today: CheckInRecord[] = [
     { id: 'c-1', memberId: '12', at: '2026-10-15T11:31:00Z', allowed: true },
@@ -202,16 +286,19 @@ function seedCheckIns(): CheckInRecord[] {
     { id: 'c-5', memberId: '10', at: '2026-10-15T11:40:00Z', allowed: true },
     { id: 'c-6', memberId: '01', at: '2026-10-15T11:42:00Z', allowed: true },
   ];
-  // ประวัติย้อนหลังของสมาชิกแต่ละคน (ทุก 2–3 วันจากการเข้ายิมครั้งล่าสุด)
+  // ประวัติย้อนหลัง 8 สัปดาห์ของแต่ละคน ตามรูปแบบใน WEEKLY_VISITS (ใช้คิดความเสี่ยงหลุด)
   const history: CheckInRecord[] = [];
-  for (const m of MEMBERS) {
+  for (const m of BASE_MEMBERS) {
     if (!m.lastCheckInAt) continue;
-    const last = new Date(m.lastCheckInAt);
+    const last = new Date(m.lastCheckInAt).getTime();
     const isToday = today.some(c => c.memberId === m.id);
-    for (let k = isToday ? 1 : 0; k < 8; k++) {
-      const at = new Date(last.getTime() - k * (2 + (Number(m.id) % 2)) * 86_400_000);
-      history.push({ id: `c-${m.id}-${String(k)}`, memberId: m.id, at: at.toISOString(), allowed: true });
-    }
+    (WEEKLY_VISITS[m.id] ?? []).forEach((count, w) => {
+      for (let k = 0; k < count; k++) {
+        if (w === 0 && k === 0 && isToday) continue;
+        const at = new Date(last - (w * 7 + Math.floor((k * 7) / count)) * 86_400_000);
+        history.push({ id: `c-${m.id}-${String(w)}-${String(k)}`, memberId: m.id, at: at.toISOString(), allowed: true });
+      }
+    });
   }
   return [...history, ...today];
 }
@@ -234,7 +321,7 @@ const PT_SESSIONS: PtSessionRecord[] = [
 ];
 
 function payment(seq: number, memberId: string, packageId: string, kind: PaymentRecord['kind'], amountSatang: number, method: PaymentMethod, status: PaymentStatus, createdAt: string, coverage: PaymentRecord['coverage'] = null): PaymentRecord {
-  return { id: `p-${String(seq)}`, receiptNo: `RC-6910-${String(seq).padStart(4, '0')}`, memberId, packageId, kind, amountSatang, method, status, createdAt, paidAt: status === 'paid' ? createdAt : null, applied: status === 'paid', coverage, receivedBy: status === 'paid' ? 'มนัสนันท์ ร.' : null, seeded: true };
+  return { id: `p-${String(seq)}`, receiptNo: `RC-6910-${String(seq).padStart(4, '0')}`, memberId, packageId, kind, amountSatang, method, status, createdAt, paidAt: status === 'paid' ? createdAt : null, applied: status === 'paid', coverage, receivedBy: status === 'paid' ? 'มนัสนันท์ ร.' : null, listPriceSatang: amountSatang, discountSatang: 0, couponCode: null, bonusDays: 0, seeded: true };
 }
 
 const PAYMENTS: PaymentRecord[] = [
@@ -249,6 +336,45 @@ const PAYMENTS: PaymentRecord[] = [
   payment(109, '05', 'monthly', 'renew', 120_000, 'promptpay', 'pending', '2026-10-15T11:39:30Z'),
 ];
 
+const COUPONS: CouponRecord[] = [
+  { code: 'RENEW10', description: 'ต่ออายุก่อนหมด', type: 'percent', value: 10, kind: 'promo', packageIds: ['monthly', '3m', '6m'], renewOnly: true, newOnly: false, limit: 100, used: 46, perMember: 1, expiresOn: '2026-12-31', active: true, ownerMemberId: null, createdAt: '2026-09-01T02:00:00Z' },
+  { code: 'STUDENT', description: 'แสดงบัตรนักศึกษา', type: 'baht', value: 20_000, kind: 'promo', packageIds: null, renewOnly: false, newOnly: false, limit: 50, used: 36, perMember: 1, expiresOn: '2027-03-31', active: true, ownerMemberId: null, createdAt: '2026-06-01T02:00:00Z' },
+  { code: 'WELCOME7', description: 'สมาชิกใหม่ แถม 7 วัน', type: 'days', value: 7, kind: 'promo', packageIds: ['monthly', '3m', '6m', 'gold12'], renewOnly: false, newOnly: true, limit: null, used: 12, perMember: 1, expiresOn: null, active: true, ownerMemberId: null, createdAt: '2026-08-01T02:00:00Z' },
+  { code: 'OCT-FLASH', description: 'โปรสุดสัปดาห์', type: 'percent', value: 15, kind: 'promo', packageIds: null, renewOnly: false, newOnly: false, limit: 20, used: 20, perMember: 1, expiresOn: '2026-10-12', active: true, ownerMemberId: null, createdAt: '2026-10-09T02:00:00Z' },
+  { code: 'FRIEND-1842', description: 'ชวนเพื่อนของ พิมพ์ชนก ว.', type: 'baht', value: 20_000, kind: 'referral', packageIds: null, renewOnly: false, newOnly: true, limit: 10, used: 3, perMember: 1, expiresOn: null, active: true, ownerMemberId: '02', createdAt: '2026-07-01T02:00:00Z' },
+];
+
+const TEMPLATE_BEFORE = 'สวัสดีคุณ{ชื่อ} สมาชิก{แพ็กเกจ}จะหมดอายุ {วันหมดอายุ} ต่ออายุได้เลยที่ {ลิงก์ชำระ}';
+const REMINDER_ROUNDS: ReminderRound[] = [
+  { id: 'before-7', offsetDays: -7, enabled: true, channels: ['line'], template: TEMPLATE_BEFORE, couponCode: null },
+  { id: 'before-3', offsetDays: -3, enabled: true, channels: ['line', 'sms'], template: 'สวัสดีคุณ{ชื่อ} สมาชิก{แพ็กเกจ}จะหมดอายุ {วันหมดอายุ} ต่ออายุตอนนี้ใช้โค้ด {คูปอง} ลด 10% กดจ่ายได้เลย {ลิงก์ชำระ}', couponCode: 'RENEW10' },
+  { id: 'on-day', offsetDays: 0, enabled: true, channels: ['line', 'sms'], template: 'คุณ{ชื่อ} สมาชิกหมดอายุวันนี้ ({วันหมดอายุ}) ต่ออายุก่อนเข้ายิมครั้งถัดไปได้ที่ {ลิงก์ชำระ}', couponCode: null },
+  { id: 'after-7', offsetDays: 7, enabled: false, channels: ['line'], template: 'คิดถึงคุณ{ชื่อ}นะ กลับมาเล่นกันเถอะ ใช้โค้ด {คูปอง} ได้ที่ {ลิงก์ชำระ}', couponCode: 'RENEW10' },
+];
+
+const log = (id: string, memberId: string, roundId: ReminderLogRecord['roundId'], sentAt: string, clicked: boolean, paymentId: string | null = null): ReminderLogRecord => ({ id, memberId, roundId, channels: roundId === 'before-7' ? ['line'] : ['line', 'sms'], sentAt, clicked, paymentId });
+const REMINDER_LOGS: ReminderLogRecord[] = [
+  log('r-1', '10', 'before-3', '2026-10-07T02:00:00Z', true, 'p-101'),
+  log('r-2', '05', 'before-3', '2026-10-06T02:00:00Z', false),
+  log('r-3', '05', 'on-day', '2026-10-09T02:00:00Z', false),
+  log('r-4', '08', 'before-7', '2026-10-13T02:00:00Z', true),
+  log('r-5', '07', 'before-7', '2026-10-12T02:00:00Z', true, 'p-107'),
+  log('r-6', '09', 'before-7', '2026-10-14T02:00:00Z', false),
+  log('r-7', '02', 'before-7', '2026-10-11T02:00:00Z', false),
+];
+
+const CHARGES: ChargeRecord[] = [
+  // ตัดบัตรไม่ผ่านครบทุกรอบ จนหมดอายุ (ตัวอย่างสมาชิกที่หลุดเพราะบัตร)
+  // ตัดไม่ผ่านรอบแรก รอลองใหม่วันนี้
+  { id: 'ch-2', memberId: '09', packageId: '6m', amountSatang: 600_000, dueOn: '2026-10-14', attempts: [{ on: '2026-10-14', ok: false, reason: 'บัตรถูกปฏิเสธ (วงเงินไม่พอ)' }], status: 'retrying', paymentId: null },
+  { id: 'ch-1', memberId: '05', packageId: 'monthly', amountSatang: 120_000, dueOn: '2026-10-06', attempts: [{ on: '2026-10-06', ok: false, reason: 'บัตรถูกปฏิเสธ (วงเงินไม่พอ)' }, { on: '2026-10-07', ok: false, reason: 'บัตรถูกปฏิเสธ (วงเงินไม่พอ)' }, { on: '2026-10-09', ok: false, reason: 'บัตรถูกปฏิเสธ (วงเงินไม่พอ)' }, { on: '2026-10-11', ok: false, reason: 'บัตรถูกปฏิเสธ (วงเงินไม่พอ)' }], status: 'failed', paymentId: null },
+];
+
+const FOLLOW_UPS: FollowUpRecord[] = [
+  { memberId: '05', stage: 'contacted', note: 'ติดงานต่างจังหวัด นัดกลับ 1 พ.ย.', by: 'ปริญญา ส.', updatedAt: '2026-10-12T05:00:00Z' },
+  { memberId: '10', stage: 'won', note: 'ต่ออายุรายเดือนจากลิงก์เตือน', by: 'มนัสนันท์ ร.', updatedAt: '2026-10-10T04:12:00Z' },
+];
+
 function createStore(): Store {
   return {
     packages: structuredClone(PACKAGES),
@@ -259,6 +385,11 @@ function createStore(): Store {
     bookings: structuredClone(BOOKINGS),
     ptSessions: structuredClone(PT_SESSIONS),
     payments: structuredClone(PAYMENTS),
+    coupons: structuredClone(COUPONS),
+    reminderRounds: structuredClone(REMINDER_ROUNDS),
+    reminderLogs: structuredClone(REMINDER_LOGS),
+    charges: structuredClone(CHARGES),
+    followUps: structuredClone(FOLLOW_UPS),
     sequence: { member: 2331, receipt: 109 },
   };
 }

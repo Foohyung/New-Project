@@ -72,7 +72,7 @@ describe('ค้นหาสมาชิก', () => {
 });
 
 describe('สมัครและต่ออายุ', () => {
-  const newbie = { name: 'ทดสอบ ระบบ', phone: '0899999999', email: null, note: null };
+  const newbie = { name: 'ทดสอบ ระบบ', phone: '0899999999', email: null, note: null, couponCode: null, marketingConsent: true };
 
   it('จ่ายเงินสดแล้วสมาชิกใช้งานได้ทันที', async () => {
     const { memberId, paid } = await createMember(frontDesk, { ...newbie, packageId: 'monthly', method: 'cash' });

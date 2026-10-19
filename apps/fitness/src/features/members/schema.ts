@@ -23,9 +23,15 @@ export const MemberFieldsSchema = z.object({
   note: optionalText(200, 'หมายเหตุ'),
 });
 
+/** ช่องคูปอง (ไม่บังคับ) — ตรวจความถูกต้องจริงใน DAL */
+export const CouponCodeSchema = z.string().trim().max(24, 'โค้ดยาวเกินไป').optional().transform(v => (v ? v : null));
+
 export const MemberCreateSchema = MemberFieldsSchema.extend({
   packageId: z.string().min(1, 'เลือกแพ็กเกจ'),
   method: PaymentMethodSchema,
+  couponCode: CouponCodeSchema,
+  // ยินยอมรับข่าวสาร/โปรโมชัน แยกจากความยินยอมหลัก และไม่บังคับ (PDPA)
+  marketingConsent: z.literal('on').optional().transform(v => v === 'on'),
   // ต้องได้รับความยินยอมก่อนเก็บข้อมูลส่วนบุคคล (PDPA §11)
   consent: z.literal('on', { error: 'ต้องได้รับความยินยอมจากสมาชิกก่อนบันทึกข้อมูล' }),
 });
@@ -33,6 +39,7 @@ export const MemberCreateSchema = MemberFieldsSchema.extend({
 export const RenewSchema = z.object({
   packageId: z.string().min(1, 'เลือกแพ็กเกจ'),
   method: PaymentMethodSchema,
+  couponCode: CouponCodeSchema,
 });
 
 export const FreezeSchema = z.object({

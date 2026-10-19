@@ -35,7 +35,7 @@ test.describe('แดชบอร์ด', () => {
     await page.goto('/');
     const navs = page.getByRole('navigation', { name: 'เมนูหลัก' });
     await expect(navs.filter({ visible: true })).toHaveCount(1);
-    await navs.filter({ visible: true }).getByRole('link', { name: 'สมาชิก' }).click();
+    await navs.filter({ visible: true }).getByRole('link', { name: 'สมาชิก', exact: true }).click();
     await expect(page).toHaveURL(/\/members$/);
   });
 });
@@ -295,6 +295,77 @@ test.describe('ธีม', () => {
     await expect.poll(bg).not.toBe(before);
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expectNoHorizontalScroll(page);
+  });
+});
+
+test.describe('ชุดหาเงินและรักษาสมาชิก', () => {
+  test('ต่ออายุที่เคาน์เตอร์ด้วยคูปอง เห็นส่วนลดก่อนกด และอยู่ในใบเสร็จ', async ({ page }) => {
+    await signUp(page);
+    await expect(page.getByRole('button', { name: 'ยืนยันการต่ออายุ' })).toBeVisible(); // รอให้ไปหน้าโปรไฟล์ก่อน
+    await page.getByLabel('โค้ดส่วนลด').fill('nope');
+    await page.getByRole('button', { name: 'ใช้โค้ด' }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'ไม่พบโค้ดนี้' })).toBeVisible();
+    await page.getByLabel('โค้ดส่วนลด').fill('STUDENT');
+    await page.getByRole('button', { name: 'ใช้โค้ด' }).click();
+    await expect(page.getByText('ใช้โค้ด STUDENT แล้ว · ลด ฿200')).toBeVisible();
+    await page.getByRole('button', { name: 'ยืนยันการต่ออายุ' }).click();
+    await page.getByRole('link', { name: 'ดูรายการชำระ' }).click();
+    const receipt = page.getByRole('article', { name: /ใบเสร็จ/ });
+    await expect(receipt.getByText('ส่วนลดคูปอง STUDENT')).toBeVisible();
+    await expect(receipt.getByText('หักส่วนลด')).toBeVisible();
+  });
+
+  test('ผู้จัดการตั้งรอบแจ้งเตือน ส่งรอบวันนี้ และสร้างคูปองได้', async ({ page }) => {
+    await page.goto('/marketing');
+    await expect(page.getByRole('heading', { name: 'วันนี้ต้องส่ง' })).toBeVisible();
+    await page.getByRole('button', { name: 'ส่งรอบวันนี้เลย' }).click();
+    await expect(page.getByText(/ส่งแล้ว \d+ คน|วันนี้ไม่มีใครถึงรอบ/)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    await page.goto('/marketing/coupons');
+    const code = `E2E${String(Date.now()).slice(-6)}`;
+    await page.getByLabel('โค้ด', { exact: true }).fill(code);
+    await page.getByLabel('คำอธิบาย').fill('ทดสอบอัตโนมัติ');
+    await page.getByLabel(/มูลค่า/).fill('5');
+    await page.getByRole('button', { name: 'สร้างคูปอง' }).click();
+    await expect(page.getByText(`สร้างคูปอง ${code} (ลด 5%) แล้ว`)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('ข้อความเตือนผิดตัวแปรบันทึกไม่ได้ และบอกวิธีแก้', async ({ page }) => {
+    await page.goto('/marketing');
+    await page.getByText('ก่อน 7 วัน', { exact: true }).click();
+    const box = page.getByLabel('ข้อความ').first();
+    await box.fill('สวัสดี {ชือ} จ่ายที่ {ลิงก์ชำระ}');
+    await page.getByRole('button', { name: 'บันทึกรอบนี้' }).first().click();
+    await expect(page.getByText('ไม่รู้จักตัวแปร {ชือ}')).toBeVisible();
+  });
+
+  test('เคาน์เตอร์เห็นหน้าติดตามสมาชิก แต่เข้าหน้าการตลาดไม่ได้', async ({ page }) => {
+    await asRole(page, 'front-desk');
+    await page.goto('/retention');
+    await expect(page.getByRole('heading', { name: 'ต้องติดตาม' })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await page.goto('/marketing');
+    await expect(page.getByRole('heading', { name: 'ไม่มีสิทธิ์เข้าถึง' })).toBeVisible();
+  });
+
+  test('ตัดบัตรอัตโนมัติ: เห็นรายการตัดไม่ผ่านและส่งลิงก์จ่ายได้', async ({ page }) => {
+    await page.goto('/payments/subscriptions');
+    await expect(page.getByRole('heading', { name: 'ตัดไม่ผ่าน' })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await page.getByRole('button', { name: 'ตัดบัตรรอบวันนี้' }).click();
+    await expect(page.getByText(/ตัดผ่าน \d+ · ไม่ผ่าน \d+|ไม่มีรายการถึงกำหนดวันนี้/)).toBeVisible();
+  });
+
+  test('สมาชิกเปิดลิงก์จากข้อความเตือน เห็นราคาหลังลด และมีโค้ดชวนเพื่อน', async ({ page }) => {
+    await asRole(page, 'member');
+    await page.goto('/me?coupon=RENEW10&from=reminder');
+    await expect(page.getByText(/ใช้โค้ด RENEW10 แล้ว/)).toBeVisible();
+    await expect(page.getByText('฿1,080')).toBeVisible();
+    await expect(page.getByText('FRIEND-2318')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'ต่ออายุอัตโนมัติ' })).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 });

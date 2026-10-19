@@ -32,14 +32,16 @@ export type Permission =
   | 'reports.view'
   | 'packages.manage'
   | 'portal.use'
+  | 'marketing.manage'
+  | 'retention.view'
   | 'demo.reset';
 
 const STAFF_COMMON: Permission[] = ['members.view', 'classes.view', 'trainers.view'];
 
 export const PERMISSIONS: Record<Role, readonly Permission[]> = {
-  owner: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'packages.manage', 'demo.reset'],
-  manager: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'demo.reset'],
-  'front-desk': [...STAFF_COMMON, 'dashboard.view', 'members.manage', 'checkin.use', 'classes.book', 'pt.manage', 'payments.view', 'payments.collect'],
+  owner: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'packages.manage', 'marketing.manage', 'retention.view', 'demo.reset'],
+  manager: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'marketing.manage', 'retention.view', 'demo.reset'],
+  'front-desk': [...STAFF_COMMON, 'dashboard.view', 'members.manage', 'checkin.use', 'classes.book', 'pt.manage', 'payments.view', 'payments.collect', 'retention.view'],
   // เทรนเนอร์จัดการได้เฉพาะ PT ของตัวเอง (ตรวจ ownership ใน DAL)
   trainer: [...STAFF_COMMON, 'classes.book', 'pt.manage'],
   member: ['portal.use'],

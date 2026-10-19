@@ -17,6 +17,10 @@ export interface PaymentDto {
   packageDuration: string;
   coverage: { from: string; to: string } | null;
   receivedBy: string | null;
+  listPriceSatang: number;
+  discountSatang: number;
+  couponCode: string | null;
+  bonusDays: number;
 }
 
 export const KIND_LABEL: Record<PaymentDto['kind'], string> = {

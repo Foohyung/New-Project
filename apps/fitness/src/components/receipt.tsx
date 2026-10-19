@@ -85,9 +85,21 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
                 </p>
               </td>
               <td className="hidden px-2 py-3 text-right sm:table-cell print:table-cell">1</td>
-              <td className="hidden px-2 py-3 text-right tabular-nums sm:table-cell print:table-cell">{amount(p.amountSatang)}</td>
-              <td className="px-2 py-3 text-right tabular-nums">{amount(p.amountSatang)}</td>
+              <td className="hidden px-2 py-3 text-right tabular-nums sm:table-cell print:table-cell">{amount(p.listPriceSatang)}</td>
+              <td className="px-2 py-3 text-right tabular-nums">{amount(p.listPriceSatang)}</td>
             </tr>
+            {p.couponCode && (
+              <tr className={`border-b ${LINE} align-top`}>
+                <td className="px-2 py-3">2</td>
+                <td className="px-2 py-3">
+                  <p className="font-medium">ส่วนลดคูปอง {p.couponCode}</p>
+                  {p.bonusDays > 0 && <p className={`text-xs ${MUTED}`}>แถมวันใช้งาน {p.bonusDays} วัน (รวมในช่วงสิทธิ์แล้ว)</p>}
+                </td>
+                <td className="hidden px-2 py-3 text-right sm:table-cell print:table-cell">1</td>
+                <td className="hidden px-2 py-3 text-right tabular-nums sm:table-cell print:table-cell">{p.discountSatang ? `−${amount(p.discountSatang)}` : '0.00'}</td>
+                <td className="px-2 py-3 text-right tabular-nums">{p.discountSatang ? `−${amount(p.discountSatang)}` : '0.00'}</td>
+              </tr>
+            )}
           </tbody>
         </table>
 
@@ -98,6 +110,12 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
             <p className="font-semibold">({bahtText(p.amountSatang)})</p>
           </div>
           <dl className="flex flex-col gap-1 text-sm">
+            {p.discountSatang > 0 && (
+              <>
+                <div className="flex justify-between gap-4"><dt className={MUTED}>รวมเป็นเงิน</dt><dd className="tabular-nums">{amount(p.listPriceSatang)}</dd></div>
+                <div className="flex justify-between gap-4"><dt className={MUTED}>หักส่วนลด</dt><dd className="tabular-nums">−{amount(p.discountSatang)}</dd></div>
+              </>
+            )}
             <div className="flex justify-between gap-4"><dt className={MUTED}>มูลค่าก่อนภาษี</dt><dd className="tabular-nums">{amount(baseSatang)}</dd></div>
             <div className="flex justify-between gap-4"><dt className={MUTED}>ภาษีมูลค่าเพิ่ม {VAT_RATE_PCT}%</dt><dd className="tabular-nums">{amount(vatSatang)}</dd></div>
             <div className={`mt-1 flex items-baseline justify-between gap-4 border-t ${LINE} pt-2`}>
