@@ -12,8 +12,6 @@
 |---|---|---|
 | 1 | [`designs/design-1-pulse.html`](designs/design-1-pulse.html) | Dark + เขียวนีออน, ดูสปอร์ต, sidebar |
 
-ภาพโปรโมท: [`promo/FitFlow-แบบ-1-pulse.pdf`](promo/FitFlow-แบบ-1-pulse.pdf)
-
 ภาพโปรโมทจากหน้าจอเว็บจริง (PDF 1 หน้า A4 มีราคา รายเดือน / รายปี / ซื้อขาด) มี 3 สไตล์: [`showcase`](promo/FitFlow-โปรโมท-1-showcase.pdf) · [`spotlight`](promo/FitFlow-โปรโมท-2-spotlight.pdf) · [`editorial`](promo/FitFlow-โปรโมท-3-editorial.pdf)
 
 ## หน้าเว็บ

@@ -71,14 +71,6 @@ function applyPayment(store: Store, p: PaymentRecord, date: string): void {
   if (followUp && followUp.stage !== 'won') Object.assign(followUp, { stage: 'won', note: `ต่ออายุ ${pkg.name}`, updatedAt: now().toISOString() });
 }
 
-/** ใช้ตอนตัดบัตรอัตโนมัติสำเร็จ */
-export function markPaid(store: Store, p: PaymentRecord, receivedBy: string): void {
-  p.status = 'paid';
-  p.paidAt = now().toISOString();
-  p.receivedBy = receivedBy;
-  applyPayment(store, p, today());
-}
-
 /** สร้างรายการชำระ (เรียกจาก DAL สมาชิก) — เงินสด/บัตรถือว่าชำระทันที ส่วน PromptPay/โอนรอตรวจ */
 export function createPaymentRecord(store: Store, input: { memberId: string; packageId: string; kind: PaymentRecord['kind']; method: PaymentMethod; receivedBy: string | null; coupon?: ResolvedCoupon | null; instant?: boolean }): PaymentRecord {
   const pkg = store.packages.find(x => x.id === input.packageId);

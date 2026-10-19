@@ -21,7 +21,6 @@ export interface NavGroup {
   label: string;
   /** ชื่อสั้นบน rail */
   short?: string;
-  hint: string;
   icon: LucideIcon;
   /** หัวข้อหมวดที่โซนนี้อยู่ (แสดงเป็นเส้นคั่นพร้อมชื่อบนเดสก์ท็อป) */
   section: string;
@@ -40,29 +39,29 @@ const TONE: Record<NavGroup['tone'], string> = {
 
 /** เมนูแบ่งเป็นโซนตามงาน — กดเมนูหลักแล้วกางเมนูย่อย */
 const GROUPS: NavGroup[] = [
-  { id: 'overview', label: 'ภาพรวม', hint: 'ตัวเลขทั้งยิม', section: 'ภาพรวม · รายงาน', tone: 'lime', icon: LayoutDashboard, items: [
+  { id: 'overview', label: 'ภาพรวม', section: 'ภาพรวม · รายงาน', tone: 'lime', icon: LayoutDashboard, items: [
     { href: '/', label: 'แดชบอร์ด', icon: House, permission: 'dashboard.view', primary: true },
     { href: '/reports', label: 'รายงาน', icon: ChartColumn, permission: 'reports.view' },
   ] },
-  { id: 'front', label: 'หน้าร้าน', hint: 'งานเคาน์เตอร์ประจำวัน', section: 'หน้าร้าน · คลาส', tone: 'cyan', icon: Store, items: [
+  { id: 'front', label: 'หน้าร้าน', section: 'หน้าร้าน · คลาส', tone: 'cyan', icon: Store, items: [
     { href: '/checkin', label: 'เช็กอิน', icon: ScanLine, permission: 'checkin.use', primary: true },
     { href: '/members', label: 'สมาชิก', icon: Users, permission: 'members.view', primary: true },
     { href: '/retention', label: 'ติดตามสมาชิก', short: 'ติดตาม', icon: HeartPulse, permission: 'retention.view' },
   ] },
-  { id: 'classes', label: 'คลาสและเทรนเนอร์', short: 'คลาส', hint: 'ตารางคลาสและคิว PT', section: 'หน้าร้าน · คลาส', tone: 'violet', icon: CalendarDays, items: [
+  { id: 'classes', label: 'คลาสและเทรนเนอร์', short: 'คลาส', section: 'หน้าร้าน · คลาส', tone: 'violet', icon: CalendarDays, items: [
     { href: '/classes', label: 'ตารางคลาส', short: 'คลาส', icon: CalendarDays, permission: 'classes.view', primary: true },
     { href: '/trainers', label: 'เทรนเนอร์', icon: Dumbbell, permission: 'trainers.view' },
   ] },
-  { id: 'money', label: 'การเงิน', hint: 'รับเงินและรายได้ประจำ', section: 'การเงิน · การตลาด', tone: 'warn', icon: Wallet, items: [
+  { id: 'money', label: 'การเงิน', section: 'การเงิน · การตลาด', tone: 'warn', icon: Wallet, items: [
     { href: '/payments', label: 'รายการชำระ', short: 'การเงิน', icon: Wallet, permission: 'payments.view' },
     { href: '/payments/subscriptions', label: 'ตัดบัตรอัตโนมัติ', icon: RefreshCw, permission: 'payments.view' },
     { href: '/packages', label: 'แพ็กเกจ', icon: Package, permission: 'packages.manage' },
   ] },
-  { id: 'marketing', label: 'การตลาด', hint: 'หาเงิน + รักษาสมาชิก', section: 'การเงิน · การตลาด', tone: 'danger', icon: Megaphone, items: [
+  { id: 'marketing', label: 'การตลาด', section: 'การเงิน · การตลาด', tone: 'danger', icon: Megaphone, items: [
     { href: '/marketing', label: 'แจ้งเตือนต่ออายุ', icon: BellRing, permission: 'marketing.manage' },
     { href: '/marketing/coupons', label: 'คูปอง & ชวนเพื่อน', icon: TicketPercent, permission: 'marketing.manage' },
   ] },
-  { id: 'portal', label: 'สมาชิก', short: 'ของฉัน', hint: 'บัตรและการจองของฉัน', section: 'สมาชิก', tone: 'lime', icon: IdCard, items: [
+  { id: 'portal', label: 'สมาชิก', short: 'ของฉัน', section: 'สมาชิก', tone: 'lime', icon: IdCard, items: [
     { href: '/me', label: 'บัตรสมาชิก', short: 'บัตร', icon: IdCard, permission: 'portal.use', primary: true },
     { href: '/me/classes', label: 'จองคลาส', icon: CalendarPlus, permission: 'portal.use', primary: true },
   ] },

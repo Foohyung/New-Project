@@ -125,10 +125,6 @@ export const MEMBER_SORT_LABEL: Record<MemberSort, string> = {
   newest: 'สมัครล่าสุด',
 };
 
-export function isMemberSort(value: unknown): value is MemberSort {
-  return typeof value === 'string' && value in MEMBER_SORT_LABEL;
-}
-
 const thaiCollator = new Intl.Collator('th');
 
 /** ตัวเปรียบเทียบสำหรับเรียงรายชื่อ — ค่าเท่ากันเรียงตามชื่อเสมอ เพื่อให้ลำดับคงที่ */
