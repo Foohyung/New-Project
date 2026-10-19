@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitFlow · ตัวเลือกปฏิทิน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0B0D10; --surface:#13161B; --surface-2:#1A1E25; --border:#252A33; --text:#ECEFF3; --muted:#8B94A3; --faint:#5D6573; --accent:#C6FF3D; --cyan:#3DDCFF; --warn:#FFB547; --danger:#FF5C7A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+  h1, h2, h3, .k { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.3; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 16px 56px; }
+  .kicker { color: var(--accent); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; }
+  header.top h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 4px 0 6px; }
+  header.top p { color: var(--muted); max-width: 780px; }
+  .opt { margin-top: 40px; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  .opt-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .tag { font-family: 'Kanit'; font-weight: 700; color: var(--bg); background: var(--accent); border-radius: 8px; padding: 0 8px; }
+  .opt-h h2 { font-size: 20px; }
+  .opt-h p { color: var(--muted); font-size: 13px; flex-basis: 100%; }
+  .stage { background: radial-gradient(1200px 300px at 20% -10%, #1a2210 0, transparent 60%), var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 20px; display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .note { color: var(--faint); font-size: 12px; }
+
+  /* trigger */
+  .trigger { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; }
+  .trigger svg { color: var(--accent); }
+  .trigger small { color: var(--muted); font-weight: 400; }
+
+  /* shared calendar */
+  .pop { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 30px 60px -30px #000; }
+  .cal { width: 280px; }
+  .cal-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .cal-h .k { font-size: 15px; }
+  .nav { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--muted); border: 1px solid var(--border); }
+  .nav:hover { color: var(--text); background: var(--surface-2); }
+  .dow, .days { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .dow span { text-align: center; font-size: 11px; color: var(--faint); padding: 4px 0 6px; font-weight: 600; }
+  .dow span:first-child, .dow span:last-child { color: color-mix(in oklab, var(--danger) 70%, var(--faint)); }
+  .d { position: relative; height: 40px; display: grid; place-items: center; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .d button { width: 38px; height: 38px; border-radius: 12px; position: relative; z-index: 1; }
+  .d button:hover { background: var(--surface-2); }
+  .d.out button { color: var(--faint); opacity: .45; }
+  .d.dis button { color: var(--faint); opacity: .35; cursor: not-allowed; text-decoration: line-through; }
+  .d.today button { box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent); }
+  .d.inr::before { content: ''; position: absolute; inset: 3px 0; background: color-mix(in oklab, var(--accent) 12%, transparent); }
+  .d.start::before { left: 50%; } .d.end::before { right: 50%; }
+  .d.start.end::before { display: none; }
+  .d.start button, .d.end button { background: var(--accent); color: var(--bg); font-weight: 700; box-shadow: none; }
+  .d .dot { position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--cyan); z-index: 2; }
+
+  /* A */
+  .a { display: flex; overflow: hidden; }
+  .a-presets { width: 170px; border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; background: color-mix(in oklab, var(--surface) 60%, var(--bg)); }
+  .a-presets p { font-size: 11px; color: var(--faint); letter-spacing: .12em; padding: 0 10px 6px; font-weight: 600; }
+  .a-presets button { text-align: left; min-height: 40px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500; }
+  .a-presets button:hover { background: var(--surface-2); color: var(--text); }
+  .a-presets button.on { background: color-mix(in oklab, var(--accent) 12%, transparent); color: var(--accent); font-weight: 600; }
+  .a-main { padding: 16px 18px 14px; }
+  .a-months { display: flex; gap: 24px; }
+  .a-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; flex-wrap: wrap; }
+  .fields { display: flex; align-items: center; gap: 8px; }
+  .field { min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; justify-content: center; min-width: 128px; }
+  .field small { font-size: 10.5px; color: var(--faint); line-height: 1.1; }
+  .field b { font-weight: 600; font-size: 13.5px; line-height: 1.3; }
+  .field.focus { border-color: var(--accent); }
+  .btn { min-height: 40px; padding: 0 16px; border-radius: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2); }
+  .btn.p { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn.g { border-color: transparent; background: none; color: var(--muted); }
+
+  /* B */
+  .b { width: 320px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 13px; font-weight: 500; }
+  .chip.on { border-color: var(--accent); color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+  .b .cal { width: 100%; }
+  .b .summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); font-size: 13px; }
+  .b .summary b { font-family: 'Kanit'; }
+  .b .summary span { color: var(--muted); }
+  .b .foot { display: flex; gap: 8px; justify-content: flex-end; }
+  .sheet { width: 320px; border-radius: 26px 26px 18px 18px; }
+  .sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--border); margin: -4px auto 4px; }
+
+  /* C */
+  .c { width: 340px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .c-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .c-h .big { font-family: 'Kanit'; font-size: 22px; font-weight: 600; line-height: 1.2; }
+  .c-h small { color: var(--muted); }
+  .c .d button { border-radius: 10px; width: 40px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; line-height: 1.1; }
+  .c .d button i { font-style: normal; font-size: 9.5px; color: var(--faint); font-weight: 500; }
+  .heat-1 button { background: color-mix(in oklab, var(--cyan) 10%, transparent); }
+  .heat-2 button { background: color-mix(in oklab, var(--cyan) 22%, transparent); }
+  .heat-3 button { background: color-mix(in oklab, var(--cyan) 38%, transparent); }
+  .c .d.start button i, .c .d.end button i { color: color-mix(in oklab, var(--bg) 70%, transparent); }
+  .legend { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--faint); }
+  .legend span { width: 14px; height: 14px; border-radius: 4px; }
+  .months-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+  .months-strip button { min-height: 32px; border-radius: 8px; font-size: 12px; color: var(--muted); border: 1px solid transparent; }
+  .months-strip button.on { border-color: var(--accent); color: var(--accent); }
+  .months-strip button:hover { background: var(--surface-2); }
+
+  .pros { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+  .pros li { list-style: none; display: flex; gap: 8px; }
+  .pros li::before { content: '✓'; color: var(--accent); font-weight: 700; }
+  .pros li.con::before { content: '–'; color: var(--faint); }
+  .pop { max-width: 100%; }
+  .d button, .c .d button { width: min(38px, 100%); }
+  @media (max-width: 760px) { .stage { padding: 12px; } .a { width: 100%; } .a-main { min-width: 0; padding: 14px 12px; } .fields { width: 100%; } .field { flex: 1; min-width: 0; } .a-foot > div:last-child { width: 100%; justify-content: flex-end; } .b, .c, .sheet { width: 100%; } .cal { width: 100%; } .a { flex-direction: column; } .a-presets { width: auto; border-right: 0; border-bottom: 1px solid var(--border); flex-direction: row; overflow-x: auto; scrollbar-width: none; } .a-presets p { display: none; } .a-presets button { flex: none; } .a-months { flex-direction: column; } .a-months .cal:nth-child(2) { display: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="l" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <p class="kicker">FitFlow · ตัวเลือกดีไซน์ปฏิทิน</p>
+    <h1>ปฏิทินเลือกวันที่ / ช่วงวันที่ — เลือกแบบที่ชอบ</h1>
+    <p>แทนปฏิทินของเบราว์เซอร์ (ปี ค.ศ. หน้าตาไม่เข้ากับระบบ) ด้วยปฏิทินของเราเอง: ชื่อเดือนไทย ปี พ.ศ. เสาร์-อาทิตย์สีต่าง วันนี้มีกรอบเขียว ใช้คีย์บอร์ดได้ ทุกแบบกดเลือกช่วงได้จริงในหน้านี้ (คลิกวันแรก แล้วคลิกวันสุดท้าย)</p>
+  </header>
+
+  <!-- A -->
+  <section class="opt">
+    <div class="opt-h"><span class="tag">A</span><h2>2 เดือนคู่ + ช่วงด่วนด้านซ้าย</h2><p>แบบ Airbnb / Google Analytics เหมาะกับรายงานและการเงินที่เลือกช่วงยาว ๆ บ่อย มือถือเหลือ 1 เดือนและช่วงด่วนเลื่อนแนวนอน</p></div>
+    <div class="stage">
+      <button class="trigger"><svg class="i"><use href="#cal"/></svg><span data-a-label>1 ต.ค. – 15 ต.ค. 2569</span><small>· 15 วัน</small></button>
+      <div class="pop a">
+        <div class="a-presets" data-a-presets>
+          <p>ช่วงด่วน</p>
+          <button data-p="today">วันนี้</button><button data-p="7">7 วันล่าสุด</button><button data-p="30">30 วันล่าสุด</button><button data-p="month" class="on">เดือนนี้</button><button data-p="last">เดือนก่อน</button><button data-p="q">ไตรมาสนี้</button>
+        </div>
+        <div class="a-main">
+          <div class="a-months" data-a-months></div>
+          <div class="a-foot">
+            <div class="fields"><div class="field"><small>ตั้งแต่</small><b data-a-from>1 ต.ค. 2569</b></div><svg class="i" style="color:var(--faint)"><use href="#arrow"/></svg><div class="field focus"><small>ถึง</small><b data-a-to>15 ต.ค. 2569</b></div></div>
+            <div style="display:flex;gap:8px"><button class="btn g">ล้าง</button><button class="btn p">ใช้ช่วงนี้</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul class="pros"><li>เห็น 2 เดือนพร้อมกัน เลือกช่วงข้ามเดือนง่าย</li><li>ช่วงด่วนกดครั้งเดียวจบ</li><li class="con">กินพื้นที่กว้าง (มือถือย่อเหลือ 1 เดือน)</li></ul>
+  </section>
+
+  <!-- B -->
+  <section class="opt">
+    <div class="opt-h"><span class="tag">B</span><h2>ป๊อปอัปกะทัดรัด 1 เดือน</h2><p>ช่วงด่วนเป็นชิปด้านบน ปฏิทินเดือนเดียว และสรุปช่วงที่เลือกด้านล่าง ใช้แบบเดียวกันทั้งเลือกวันเดียว (ฟอร์ม) และเลือกช่วง (ตัวกรอง) บนมือถือเปิดเป็นแผ่นจากด้านล่าง</p></div>
+    <div class="stage">
+      <button class="trigger"><svg class="i"><use href="#cal"/></svg><span data-b-label>9 ต.ค. – 15 ต.ค. 2569</span></button>
+      <div class="pop b">
+        <div class="chips" data-b-chips><button class="chip" data-p="today">วันนี้</button><button class="chip on" data-p="7">7 วัน</button><button class="chip" data-p="30">30 วัน</button><button class="chip" data-p="month">เดือนนี้</button><button class="chip" data-p="last">เดือนก่อน</button></div>
+        <div data-b-month></div>
+        <div class="summary"><span>ช่วงที่เลือก</span><b data-b-sum>9 – 15 ต.ค. 2569 · 7 วัน</b></div>
+        <div class="foot"><button class="btn g">ยกเลิก</button><button class="btn p">ใช้ช่วงนี้</button></div>
+      </div>
+      <div class="pop b sheet">
+        <div class="grab"></div>
+        <p class="k" style="font-size:15px">วันที่จัดคลาส <span class="note">(เลือกวันเดียว · มือถือ)</span></p>
+        <div data-b-single></div>
+        <div class="foot"><button class="btn p" style="width:100%">เลือก 18 ต.ค. 2569</button></div>
+      </div>
+    </div>
+    <ul class="pros"><li>กะทัดรัด ใช้ได้ทุกที่ในระบบด้วยหน้าตาเดียว</li><li>มือถือใช้ง่าย (แผ่นจากด้านล่าง ปุ่มใหญ่)</li><li class="con">ช่วงข้ามเดือนต้องกดเลื่อนเดือน</li></ul>
+  </section>
+
+  <!-- C -->
+  <section class="opt">
+    <div class="opt-h"><span class="tag">C</span><h2>ปฏิทินมีข้อมูล (heatmap)</h2><p>ในแต่ละวันโชว์ตัวเลขย่อ เช่น รายได้ (พันบาท) และสีเข้มตามยอด เลือกช่วงไปพร้อมเห็นว่าวันไหนขายดี มีแถบเลือกเดือนลัดด้านบน เหมาะกับหน้ารายงาน/การเงิน</p></div>
+    <div class="stage">
+      <div class="pop c">
+        <div class="c-h"><div><small>รายได้ในช่วงที่เลือก</small><div class="big" data-c-total>฿187,400</div><small data-c-label>9 – 15 ต.ค. 2569</small></div><span class="legend">น้อย<span style="background:color-mix(in oklab,var(--cyan) 10%,transparent)"></span><span style="background:color-mix(in oklab,var(--cyan) 22%,transparent)"></span><span style="background:color-mix(in oklab,var(--cyan) 38%,transparent)"></span>มาก</span></div>
+        <div class="months-strip" data-c-strip></div>
+        <div data-c-month></div>
+        <div class="foot" style="display:flex;justify-content:flex-end;gap:8px"><button class="btn g">ล้าง</button><button class="btn p">ใช้ช่วงนี้</button></div>
+      </div>
+    </div>
+    <ul class="pros"><li>ได้ทั้งตัวเลือกวันและภาพรวมยอดในตัว</li><li>ดูแปลกใหม่ เป็นจุดขายของระบบ</li><li class="con">เหมาะเฉพาะหน้าที่มีข้อมูลรายวัน (ที่อื่นใช้แบบ B แทน)</li></ul>
+  </section>
+
+  <p class="note" style="margin-top:32px">ทุกแบบใช้สีจากธีม (รองรับ Daylight / Ocean / Sunset) · วันในอนาคตปิดได้สำหรับตัวกรองย้อนหลัง (ตัวอย่างแบบ A ขีดฆ่าวันหลัง 15 ต.ค.)</p>
+</div>
+
+<script>
+const MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const TODAY = '2026-10-15';
+const iso = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+const parts = s => s.split('-').map(Number);
+const add = (s, n) => { const [y, m, d] = parts(s); const t = new Date(Date.UTC(y, m - 1, d + n)); return t.toISOString().slice(0, 10); };
+const diff = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+const th = s => { const [y, m, d] = parts(s); return `${d} ${SHORT[m - 1]} ${y + 543}`; };
+const rangeText = (a, b) => { if (a === b) return th(a); const [ya, ma] = parts(a), [yb, mb] = parts(b); return ya === yb && ma === mb ? `${parts(a)[2]} – ${th(b)}` : `${th(a).replace(` ${ya + 543}`, ya === yb ? '' : ` ${ya + 543}`)} – ${th(b)}`; };
+const preset = k => ({ today: [TODAY, TODAY], 7: [add(TODAY, -6), TODAY], 30: [add(TODAY, -29), TODAY], month: ['2026-10-01', TODAY], last: ['2026-09-01', '2026-09-30'], q: ['2026-10-01', TODAY] })[k];
+// รายได้ตัวอย่าง (พันบาท)
+const rev = s => { const [, m, d] = parts(s); return s > TODAY ? null : Math.round(14 + ((d * 37 + m * 11) % 23) + ([0, 6].includes(new Date(s).getUTCDay()) ? 9 : 0)); };
+
+function monthEl({ y, m, range, onPick, nav = true, onNav, disableFuture = false, heat = false, single = false }) {
+  const el = document.createElement('div'); el.className = 'cal';
+  el.innerHTML = `<div class="cal-h">${nav ? '<button class="nav" data-n="-1" aria-label="เดือนก่อน"><svg class="i"><use href="#l"/></svg></button>' : '<span></span>'}<span class="k">${MONTHS[m]} ${y + 543}</span>${nav ? '<button class="nav" data-n="1" aria-label="เดือนถัดไป"><svg class="i"><use href="#r"/></svg></button>' : '<span></span>'}</div><div class="dow">${DOW.map(d => `<span>${d}</span>`).join('')}</div>`;
+  const grid = document.createElement('div'); grid.className = 'days';
+  const first = new Date(Date.UTC(y, m, 1)).getUTCDay();
+  const start = add(iso(y, m, 1), -first);
+  for (let i = 0; i < 42; i++) {
+    const day = add(start, i); const [, dm, dd] = parts(day);
+    const cell = document.createElement('div'); cell.className = 'd';
+    const out = dm - 1 !== m; if (out) cell.classList.add('out');
+    if (i >= 35 && out) { cell.style.visibility = 'hidden'; }
+    if (day === TODAY) cell.classList.add('today');
+    if (disableFuture && day > TODAY) cell.classList.add('dis');
+    if (range && range[0] && day >= range[0] && day <= (range[1] ?? range[0]) && !out) { cell.classList.add('inr'); if (day === range[0]) cell.classList.add('start'); if (day === (range[1] ?? range[0])) cell.classList.add('end'); }
+    if (single && range[0] === day) cell.classList.add('start', 'end');
+    if (heat && !out) { const v = rev(day); if (v) cell.classList.add(v > 30 ? 'heat-3' : v > 22 ? 'heat-2' : 'heat-1'); }
+    const b = document.createElement('button');
+    b.innerHTML = heat && !out && rev(day) ? `${dd}<i>${rev(day)}k</i>` : String(dd);
+    b.setAttribute('aria-label', th(day));
+    b.onclick = () => { if (!cell.classList.contains('dis') && !out) onPick(day); };
+    cell.append(b);
+    if (!heat && !out && ['2026-10-17', '2026-10-24', '2026-10-31'].includes(day)) { const dot = document.createElement('span'); dot.className = 'dot'; cell.append(dot); }
+    grid.append(cell);
+  }
+  el.append(grid);
+  el.querySelectorAll('[data-n]').forEach(b => b.onclick = () => onNav(Number(b.dataset.n)));
+  return el;
+}
+
+function rangeController(initial, render) {
+  const st = { range: initial, picking: false };
+  st.pick = day => { if (!st.picking) { st.range = [day, null]; st.picking = true; } else { const a = st.range[0]; st.range = day < a ? [day, a] : [a, day]; st.picking = false; } render(); };
+  st.set = r => { st.range = r; st.picking = false; render(); };
+  return st;
+}
+
+// A
+(() => {
+  let view = [2026, 8];
+  const box = document.querySelector('[data-a-months]');
+  const st = rangeController(preset('month'), draw);
+  function draw() {
+    box.innerHTML = '';
+    const r = [st.range[0], st.range[1] ?? st.range[0]];
+    for (let k = 0; k < 2; k++) {
+      const y = view[0] + Math.floor((view[1] + k) / 12), m = (view[1] + k) % 12;
+      box.append(monthEl({ y, m, range: st.range, onPick: st.pick, nav: true, disableFuture: true, onNav: n => { const t = view[0] * 12 + view[1] + n; view = [Math.floor(t / 12), t % 12]; draw(); } }));
+    }
+    box.querySelectorAll('.cal')[0].querySelector('[data-n="1"]').style.visibility = 'hidden';
+    box.querySelectorAll('.cal')[1].querySelector('[data-n="-1"]').style.visibility = 'hidden';
+    document.querySelector('[data-a-from]').textContent = th(r[0]);
+    document.querySelector('[data-a-to]').textContent = st.range[1] ? th(r[1]) : 'เลือกวันสุดท้าย';
+    document.querySelector('[data-a-label]').textContent = rangeText(r[0], r[1]);
+  }
+  document.querySelectorAll('[data-a-presets] button').forEach(b => b.onclick = () => { document.querySelectorAll('[data-a-presets] button').forEach(x => x.classList.toggle('on', x === b)); st.set(preset(b.dataset.p)); });
+  draw();
+})();
+
+// B
+(() => {
+  let view = [2026, 9];
+  const box = document.querySelector('[data-b-month]');
+  const st = rangeController(preset(7), draw);
+  function draw() {
+    box.innerHTML = '';
+    box.append(monthEl({ y: view[0], m: view[1], range: st.range, onPick: st.pick, onNav: n => { const t = view[0] * 12 + view[1] + n; view = [Math.floor(t / 12), t % 12]; draw(); } }));
+    const r = [st.range[0], st.range[1] ?? st.range[0]];
+    document.querySelector('[data-b-sum]').textContent = st.range[1] ? `${rangeText(r[0], r[1])} · ${diff(r[0], r[1]) + 1} วัน` : `${th(r[0])} · เลือกวันสุดท้าย`;
+    document.querySelector('[data-b-label]').textContent = rangeText(r[0], r[1]);
+  }
+  document.querySelectorAll('[data-b-chips] button').forEach(b => b.onclick = () => { document.querySelectorAll('[data-b-chips] button').forEach(x => x.classList.toggle('on', x === b)); st.set(preset(b.dataset.p)); });
+  draw();
+  let sv = [2026, 9]; let sel = '2026-10-18';
+  const sbox = document.querySelector('[data-b-single]');
+  const sdraw = () => { sbox.innerHTML = ''; sbox.append(monthEl({ y: sv[0], m: sv[1], range: [sel, sel], single: true, onPick: d => { sel = d; sdraw(); sbox.parentElement.querySelector('.btn.p').textContent = `เลือก ${th(d)}`; }, onNav: n => { const t = sv[0] * 12 + sv[1] + n; sv = [Math.floor(t / 12), t % 12]; sdraw(); } })); };
+  sdraw();
+})();
+
+// C
+(() => {
+  let view = [2026, 9];
+  const box = document.querySelector('[data-c-month]');
+  const strip = document.querySelector('[data-c-strip]');
+  const st = rangeController(preset(7), draw);
+  function draw() {
+    box.innerHTML = '';
+    box.append(monthEl({ y: view[0], m: view[1], range: st.range, onPick: st.pick, heat: true, disableFuture: true, onNav: n => { const t = view[0] * 12 + view[1] + n; view = [Math.floor(t / 12), t % 12]; draw(); } }));
+    strip.innerHTML = '';
+    for (let k = 5; k >= 0; k--) { const t = 2026 * 12 + 9 - k; const y = Math.floor(t / 12), m = t % 12; const b = document.createElement('button'); b.textContent = SHORT[m]; b.classList.toggle('on', y === view[0] && m === view[1]); b.onclick = () => { view = [y, m]; draw(); }; strip.append(b); }
+    const r = [st.range[0], st.range[1] ?? st.range[0]];
+    let total = 0; for (let d = r[0]; d <= r[1]; d = add(d, 1)) total += (rev(d) ?? 0) * 1000;
+    document.querySelector('[data-c-total]').textContent = `฿${total.toLocaleString('th-TH')}`;
+    document.querySelector('[data-c-label]').textContent = st.range[1] ? rangeText(r[0], r[1]) : `${th(r[0])} · เลือกวันสุดท้าย`;
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
