@@ -11,17 +11,15 @@
   :root { --bg:#0B0D10; --surface:#13161B; --surface-2:#1A1E25; --border:#252A33; --text:#ECEFF3; --muted:#8B94A3; --faint:#5D6573; --accent:#C6FF3D; --cyan:#3DDCFF; --violet:#A78BFA; --warn:#FFB547; --danger:#FF5C7A; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
-  h1, h2, h3, .k { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.3; }
+  h1, h2, h3, .k { font-family: 'Kanit', sans-serif; font-weight: 600; line-height: 1.25; }
   button, input { font: inherit; color: inherit; }
   button { background: none; border: 0; cursor: pointer; }
+  ul { list-style: none; }
   svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 16px 56px; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 32px 16px 56px; }
   .kicker { color: var(--accent); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; }
   header.top h1 { font-size: clamp(24px, 3.4vw, 34px); margin: 4px 0 6px; }
   header.top p { color: var(--muted); max-width: 820px; }
-  .rules { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .rules span { border: 1px solid var(--border); background: var(--surface); padding: 5px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); }
-  .rules b { color: var(--text); }
 
   .opt { margin-top: 44px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
   .opt-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -29,79 +27,120 @@
   .opt-h h2 { font-size: 20px; }
   .opt-h p { color: var(--muted); font-size: 13px; flex-basis: 100%; }
   .views { display: grid; gap: 16px; align-items: start; }
-  @media (min-width: 1000px) { .views { grid-template-columns: minmax(0, 1fr) 300px; } }
-  .screen { border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: var(--bg); min-height: 560px; display: flex; position: relative; }
+  @media (min-width: 1040px) { .views { grid-template-columns: minmax(0, 1fr) 300px; } }
   .label { font-size: 11px; letter-spacing: .12em; color: var(--faint); margin-bottom: 6px; text-transform: uppercase; }
-  .phone { width: 300px; max-width: 100%; height: 600px; border: 8px solid #20242c; border-radius: 36px; overflow: hidden; background: var(--bg); position: relative; margin: 0 auto; }
-  .pros { display: grid; gap: 6px; font-size: 13px; color: var(--muted); list-style: none; }
+  .screen { border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: var(--bg); min-height: 580px; display: flex; }
+  .phone { width: 300px; max-width: 100%; height: 620px; border: 8px solid #20242c; border-radius: 36px; overflow: hidden; background: var(--bg); position: relative; margin: 0 auto; }
+  .phone .in { position: absolute; inset: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .ctrl { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ctrl button { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
+  .ctrl button:hover { color: var(--text); }
+  .pros { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
   .pros li { display: flex; gap: 8px; }
   .pros li::before { content: '✓'; color: var(--accent); font-weight: 700; }
   .pros li.con::before { content: '–'; color: var(--faint); }
 
-  /* ฟอร์มใช้ร่วมทุกแบบ */
+  /* ---------- ฟอร์ม (ใช้ร่วมกันทุกแบบ) ---------- */
+  .side-form { flex: 1; display: grid; place-items: center; padding: 32px 28px; }
+  .side-form > div { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 18px; }
   .brand { display: flex; align-items: center; gap: 10px; }
   .logo { width: 40px; height: 40px; border-radius: 11px; background: var(--accent); color: var(--bg); display: grid; place-items: center; flex: none; }
   .brand b { font-family: 'Kanit'; font-weight: 700; letter-spacing: .08em; font-size: 18px; display: block; line-height: 1.1; }
   .brand small { color: var(--muted); font-size: 12px; }
   .form { display: flex; flex-direction: column; gap: 14px; }
-  .form h3 { font-size: 24px; }
-  .form .lead { color: var(--muted); font-size: 13px; margin-top: -8px; }
+  .form h3 { font-size: 25px; }
+  .lead { color: var(--muted); font-size: 13px; }
   .field { display: flex; flex-direction: column; gap: 6px; }
   .field label { font-size: 13px; font-weight: 600; }
   .input { position: relative; }
-  .input svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .input > svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); }
   .input input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); padding: 0 44px; font-size: 16px; outline: none; }
   .input input:focus { border-color: var(--accent); }
-  .input .eye { position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; display: grid; place-items: center; color: var(--muted); }
-  .input .eye svg { position: static; transform: none; }
-  .hint { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; min-height: 18px; }
-  .chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 9px; font-size: 11.5px; font-weight: 600; }
+  .eye { position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; display: grid; place-items: center; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; min-height: 18px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 0 9px; font-size: 11.5px; font-weight: 600; }
   .chip.staff { background: color-mix(in oklab, var(--cyan) 15%, transparent); color: var(--cyan); }
   .chip.member { background: color-mix(in oklab, var(--accent) 14%, transparent); color: var(--accent); }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; flex-wrap: wrap; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 6px 10px; font-size: 13px; flex-wrap: wrap; }
   .row label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
   .row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
   .link { color: var(--accent); font-weight: 600; }
   .submit { min-height: 50px; border-radius: 12px; background: var(--accent); color: var(--bg); font-weight: 700; font-size: 16px; }
   .err { display: none; border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--danger); border-radius: 12px; padding: 10px 12px; font-size: 13px; }
   .err.on { display: block; }
-  .foot { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: center; text-align: center; }
-  .demo-btn { font-size: 12px; color: var(--faint); text-decoration: underline; align-self: center; }
+  .secure { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: center; text-align: center; }
 
-  /* A: แบ่งครึ่ง */
-  .a-left { flex: 1.1; padding: 32px; display: none; flex-direction: column; justify-content: space-between; background: radial-gradient(500px 400px at 0% 0%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), var(--surface); border-right: 1px solid var(--border); }
-  @media (min-width: 760px) { .a-left { display: flex; } }
-  .a-left h2 { font-size: 34px; margin-top: 26px; }
-  .a-left h2 em { font-style: normal; color: var(--accent); display: block; }
-  .a-left p { color: var(--muted); margin-top: 8px; max-width: 360px; }
+  /* ---------- A1 ตัวเลขยิมวันนี้ ---------- */
+  .a1 { flex: 1.1; padding: 32px; display: none; flex-direction: column; justify-content: space-between; gap: 24px; background: radial-gradient(520px 420px at 0% 0%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%), var(--surface); border-right: 1px solid var(--border); }
+  .a1 h2 { font-size: 36px; }
+  .a1 h2 em { font-style: normal; color: var(--accent); display: block; }
+  .a1 p.d { color: var(--muted); margin-top: 8px; max-width: 380px; }
+  .live { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 22%, transparent); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .stat { border: 1px solid var(--border); background: var(--bg); border-radius: 14px; padding: 12px; }
   .stat span { color: var(--muted); font-size: 11.5px; }
-  .stat b { display: block; font-family: 'Kanit'; font-size: 22px; }
+  .stat b { display: block; font-family: 'Kanit'; font-size: 24px; line-height: 1.2; }
   .stat b.l { color: var(--accent); }
-  .a-right { flex: 1; display: grid; place-items: center; padding: 32px 24px; }
-  .a-right .form { width: 100%; max-width: 360px; }
+  .spark { display: flex; align-items: flex-end; gap: 4px; height: 70px; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); }
+  .spark i { flex: 1; border-radius: 4px 4px 1px 1px; background: color-mix(in oklab, var(--muted) 35%, transparent); }
+  .spark i.now { background: var(--accent); }
 
-  /* B: การ์ดกลาง */
-  .b-bg { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 44px 44px; -webkit-mask-image: radial-gradient(closest-side, #000, transparent); mask-image: radial-gradient(closest-side, #000, transparent); opacity: .7; }
-  .b-glow { position: absolute; right: -10%; top: -30%; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 16%, transparent), transparent); }
-  .b-center { position: relative; flex: 1; display: grid; place-items: center; padding: 28px 16px; }
-  .card { width: 100%; max-width: 410px; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+  /* ---------- A2 โชว์หน้าจอระบบ ---------- */
+  .a2 { flex: 1.15; position: relative; overflow: hidden; display: none; flex-direction: column; padding: 32px; gap: 18px; background: linear-gradient(160deg, #1B2410 0%, var(--surface) 55%); border-right: 1px solid var(--border); }
+  .a2 h2 { font-size: 30px; max-width: 420px; }
+  .a2 h2 em { font-style: normal; color: var(--accent); }
+  .a2 .feat { display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(100% - 150px); }
+  .a2 h2 { max-width: calc(100% - 150px); }
+  .a2 .feat span { font-size: 12px; border: 1px solid var(--border); background: var(--bg); border-radius: 999px; padding: 3px 11px; color: var(--muted); }
+  .mock { position: absolute; left: 32px; right: -60px; bottom: -40px; height: 300px; border-radius: 16px 16px 0 0; border: 1px solid #2E3440; background: var(--bg); display: grid; grid-template-columns: 120px 1fr; overflow: hidden; }
+  .mock .sb { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .mock .sb i { display: block; height: 10px; border-radius: 4px; background: var(--surface-2); }
+  .mock .sb i.on { background: color-mix(in oklab, var(--accent) 40%, transparent); }
+  .mock .main { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .mock .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .mock .kpis div { height: 56px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); padding: 8px; }
+  .mock .kpis div:first-child { background: var(--accent); border-color: var(--accent); }
+  .mock .kpis b { display: block; height: 8px; width: 50%; border-radius: 4px; background: color-mix(in oklab, var(--muted) 40%, transparent); }
+  .mock .kpis div:first-child b { background: rgba(0,0,0,.25); }
+  .mock .kpis s { display: block; margin-top: 10px; height: 14px; width: 70%; border-radius: 4px; background: color-mix(in oklab, var(--text) 70%, transparent); text-decoration: none; }
+  .mock .kpis div:first-child s { background: rgba(0,0,0,.6); }
+  .mock .chart { flex: 1; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: flex-end; gap: 6px; padding: 14px; }
+  .mock .chart i { flex: 1; border-radius: 4px 4px 0 0; background: color-mix(in oklab, var(--muted) 30%, transparent); }
+  .mock .chart i.now { background: var(--accent); }
+  .qr-float { position: absolute; right: 26px; top: 120px; width: 120px; padding: 10px; border-radius: 16px; background: var(--accent); color: var(--bg); text-align: center; font-size: 10px; font-weight: 700; transform: rotate(6deg); border: 4px solid #0B0D10; }
+  .qr-float div { margin: 6px auto 4px; width: 78px; height: 78px; border-radius: 8px; background: #fff; padding: 6px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+  .qr-float div i { background: #0B0D10; border-radius: 1px; }
+  .qr-float div i.w { background: transparent; }
 
-  /* C: ช่องเดียวรู้เองว่าเป็นใคร */
-  .c-wrap { flex: 1; display: grid; place-items: center; padding: 28px 16px; background: radial-gradient(600px 300px at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%); }
-  .c-box { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 22px; align-items: stretch; }
-  .c-box .brand { justify-content: center; flex-direction: column; text-align: center; gap: 8px; }
-  .c-box .brand .logo { width: 52px; height: 52px; border-radius: 15px; }
-  .who { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .who div { border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; background: var(--surface); font-size: 12px; color: var(--muted); display: flex; gap: 10px; align-items: center; transition: border-color .2s, background .2s; }
-  .who div b { display: block; color: var(--text); font-size: 13px; }
-  .who div.on { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--surface)); }
-  .who div.on svg { color: var(--accent); }
-  .steps { display: flex; justify-content: center; gap: 6px; }
-  .steps i { width: 26px; height: 4px; border-radius: 4px; background: var(--border); }
-  .steps i.on { background: var(--accent); }
-  .phone .screen-in { position: absolute; inset: 0; overflow: hidden; }
+  /* ---------- A3 สลับข้าง + ประกาศหน้าเคาน์เตอร์ ---------- */
+  .a3 { flex: 1.1; display: none; flex-direction: column; justify-content: space-between; gap: 18px; padding: 32px; background: var(--accent); color: var(--bg); position: relative; overflow: hidden; }
+  .a3::after { content: ''; position: absolute; right: -90px; bottom: -110px; width: 360px; height: 360px; border-radius: 50%; border: 50px solid rgba(0,0,0,.07); }
+  .a3 > * { position: relative; z-index: 1; }
+  .a3 .brand b, .a3 .brand small { color: var(--bg); }
+  .a3 .brand small { opacity: .7; }
+  .a3 .logo { background: var(--bg); color: var(--accent); }
+  .a3 h2 { font-size: 40px; line-height: 1.12; }
+  .a3 p.d { opacity: .75; margin-top: 8px; max-width: 360px; }
+  .today { background: var(--bg); color: var(--text); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .today h4 { font-family: 'Kanit'; font-size: 14px; display: flex; justify-content: space-between; color: var(--muted); font-weight: 500; }
+  .today li { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--border); }
+  .today li:first-child { border-top: 0; }
+  .today time { font-family: 'Kanit'; color: var(--accent); }
+  .today small { color: var(--muted); display: block; font-size: 11.5px; }
+  .today .b { font-size: 11px; border-radius: 999px; padding: 0 8px; font-weight: 600; }
+  .today .b.full { background: color-mix(in oklab, var(--danger) 18%, transparent); color: var(--danger); }
+  .today .b.ok { background: color-mix(in oklab, var(--accent) 14%, transparent); color: var(--accent); }
+  .order-rev { flex-direction: row-reverse; }
+  .order-rev .side-form { border-right: 1px solid var(--border); }
+
+  @media (min-width: 820px) { .a1, .a2, .a3 { display: flex; } }
+
+  /* มือถือ: แถบแบรนด์บนสุด */
+  .m-top { padding: 18px 18px 8px; display: flex; flex-direction: column; gap: 14px; }
+  .m-banner { border-radius: 16px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
+  .m-banner b { font-family: 'Kanit'; font-size: 20px; display: block; line-height: 1.1; }
+  .m-form { padding: 6px 18px 18px; flex: 1; display: flex; flex-direction: column; gap: 14px; }
 </style>
 </head>
 <body>
@@ -111,96 +150,126 @@
   <symbol id="lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
   <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
-  <symbol id="badge" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M15 9h3M15 13h3M6 16h6"/></symbol>
-  <symbol id="card" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></symbol>
 </svg>
 
 <div class="wrap">
   <header class="top">
-    <p class="kicker">FitFlow · ตัวเลือกดีไซน์หน้าเข้าสู่ระบบ</p>
-    <h1>หน้าเข้าสู่ระบบ — เลือกแบบที่ชอบ</h1>
-    <p>ทุกแบบ <b>ไม่มีให้เลือกบทบาท</b> ผู้ใช้กรอกแค่อีเมลหรือเบอร์มือถือ + รหัสผ่าน แล้วระบบรู้เองจากบัญชีในหลังบ้านว่าเป็น เจ้าของ / ผู้จัดการ / เคาน์เตอร์ / เทรนเนอร์ / สมาชิก และพาไปหน้าแรกของตำแหน่งนั้น กดลองได้จริง: พิมพ์อีเมลหรือเบอร์ ดูช่องเปลี่ยนตาม และกด "ลองใส่รหัสผิด"</p>
-    <div class="rules"><span>ใส่ผิด <b>5 ครั้งล็อก 15 นาที</b></span><span>แจ้ง error <b>ไม่บอกว่าผิดที่อีเมลหรือรหัส</b></span><span>จดจำฉัน <b>30 วัน</b></span><span>ลืมรหัส → <b>ติดต่อผู้จัดการ</b></span></div>
+    <p class="kicker">FitFlow · หน้าเข้าสู่ระบบ แนวแบ่งครึ่งจอ</p>
+    <h1>แบ่งครึ่งจอ 3 แบบ — เลือกแบบที่ชอบ</h1>
+    <p>ทุกแบบใช้ฟอร์มเดียวกัน: อีเมลหรือเบอร์มือถือ + รหัสผ่าน <b>ไม่มีให้เลือกบทบาท</b> ระบบรู้จากบัญชีเองแล้วพาไปหน้าแรกของตำแหน่งนั้น ต่างกันที่ฝั่งแบรนด์ ลองพิมพ์อีเมลหรือเบอร์ในช่อง แล้วกดปุ่มใต้แต่ละแบบเพื่อดูข้อความ error</p>
   </header>
 
-  <!-- A -->
+  <!-- A1 -->
   <section class="opt">
-    <div class="opt-h"><span class="tag">A</span><h2>แบ่งครึ่งจอ: แบรนด์ + ฟอร์ม</h2><p>ฝั่งซ้ายเล่าเรื่องยิมด้วยตัวเลขของวันนี้ ฝั่งขวาเป็นฟอร์มเรียบ ๆ เหมาะกับจอคอม/แท็บเล็ตที่เคาน์เตอร์ · มือถือเหลือแค่ฟอร์ม</p></div>
+    <div class="opt-h"><span class="tag">A1</span><h2>ตัวเลขยิมวันนี้</h2><p>ฝั่งซ้ายโชว์ตัวเลขจริงของยิมแบบเรียลไทม์ + กราฟคนเข้ายิมรายชั่วโมง (แบบที่คุณชอบ เติมกราฟให้ดูมีชีวิต)</p></div>
     <div class="views">
       <div><p class="label">เดสก์ท็อป / แท็บเล็ต</p>
         <div class="screen">
-          <div class="a-left">
+          <div class="a1">
             <div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>สาขาอารีย์</small></span></div>
-            <div><h2>ยิมของคุณ<em>อยู่ในมือเดียว</em></h2><p>สมาชิก เช็กอิน คลาส การเงิน และการตลาด เข้าสู่ระบบแล้วไปหน้าที่ตรงกับงานของคุณทันที</p></div>
-            <div class="stats"><div class="stat"><span>อยู่ในยิมตอนนี้</span><b class="l">47</b></div><div class="stat"><span>เช็กอินวันนี้</span><b>186</b></div><div class="stat"><span>สมาชิก</span><b>1,248</b></div></div>
+            <div><span class="live"><i></i>อัปเดตสด · 18:42 น.</span><h2 style="margin-top:12px">ยิมของคุณ<em>อยู่ในมือเดียว</em></h2><p class="d">สมาชิก เช็กอิน คลาส การเงิน และการตลาด เข้าสู่ระบบแล้วไปหน้าที่ตรงกับงานของคุณทันที</p></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="spark" aria-hidden="true"><i style="height:20%"></i><i style="height:45%"></i><i style="height:38%"></i><i style="height:25%"></i><i style="height:22%"></i><i style="height:30%"></i><i style="height:28%"></i><i style="height:42%"></i><i style="height:35%"></i><i style="height:60%"></i><i style="height:95%"></i><i class="now" style="height:72%"></i><i style="height:55%"></i></div>
+              <div class="stats"><div class="stat"><span>อยู่ในยิมตอนนี้</span><b class="l">47</b></div><div class="stat"><span>เช็กอินวันนี้</span><b>186</b></div><div class="stat"><span>สมาชิก</span><b>1,248</b></div></div>
+            </div>
           </div>
-          <div class="a-right" data-form></div>
+          <div class="side-form"><div data-form></div></div>
         </div>
       </div>
-      <div><p class="label">มือถือ</p><div class="phone"><div class="screen-in" style="display:grid;place-items:center;padding:22px 18px" data-form data-mobile></div></div></div>
+      <div><p class="label">มือถือ</p><div class="phone"><div class="in"><div class="m-top"><div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>สาขาอารีย์</small></span></div><div class="m-banner" style="background:var(--surface);border:1px solid var(--border)"><span><span class="live"><i></i>อยู่ในยิมตอนนี้</span></span><b style="color:var(--accent)">47 คน</b></div></div><div class="m-form" data-form data-m></div></div></div></div>
     </div>
-    <ul class="pros"><li>ดูเป็นมืออาชีพ เปิดเครื่องที่เคาน์เตอร์แล้วดูดีทันที</li><li>ใช้พื้นที่ซ้ายโชว์ตัวเลขหรือประกาศของยิมได้</li><li class="con">มือถือไม่เห็นฝั่งแบรนด์</li></ul>
+    <div class="ctrl" data-ctrl="0"></div>
+    <ul class="pros"><li>ดูเป็นมืออาชีพ เปิดเครื่องที่เคาน์เตอร์แล้วเห็นตัวเลขยิมทันที</li><li>มือถือยังมีแถบ "อยู่ในยิมตอนนี้" เล็ก ๆ</li><li class="con">ตัวเลขยิมเห็นได้ก่อนเข้าสู่ระบบ (ปิดได้ถ้าไม่อยากเปิดเผย)</li></ul>
   </section>
 
-  <!-- B -->
+  <!-- A2 -->
   <section class="opt">
-    <div class="opt-h"><span class="tag">B</span><h2>การ์ดกลางจอ</h2><p>การ์ดเดียวบนพื้นลายตาราง เรียบ ชัด ตรงไปตรงมา หน้าตาเหมือนกันทุกขนาดจอ เข้ากับทุกธีม (มืด/สว่าง/น้ำเงิน/ส้ม)</p></div>
+    <div class="opt-h"><span class="tag">A2</span><h2>โชว์หน้าจอระบบ</h2><p>ฝั่งซ้ายเป็นภาพตัวอย่างหน้าระบบ + บัตรสมาชิก QR ลอยอยู่ เหมือนหน้าเข้าสู่ระบบของ SaaS ไม่เปิดเผยตัวเลขจริงของยิม</p></div>
     <div class="views">
       <div><p class="label">เดสก์ท็อป / แท็บเล็ต</p>
-        <div class="screen"><div class="b-bg"></div><div class="b-glow"></div><div class="b-center"><div class="card" data-form data-card></div></div></div>
+        <div class="screen">
+          <div class="a2">
+            <div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>ระบบจัดการฟิตเนส</small></span></div>
+            <h2>ทุกงานของยิม <em>เริ่มจากตรงนี้</em></h2>
+            <div class="feat"><span>สมาชิก</span><span>เช็กอิน QR</span><span>ตารางคลาส</span><span>การเงิน</span><span>การตลาด</span></div>
+            <div class="mock" aria-hidden="true">
+              <div class="sb"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="main"><div class="kpis"><div><b></b><s></s></div><div><b></b><s></s></div><div><b></b><s></s></div><div><b></b><s></s></div></div>
+                <div class="chart"><i style="height:30%"></i><i style="height:55%"></i><i style="height:40%"></i><i style="height:35%"></i><i style="height:48%"></i><i style="height:70%"></i><i style="height:100%"></i><i class="now" style="height:80%"></i><i style="height:60%"></i><i style="height:45%"></i></div></div>
+            </div>
+            <div class="qr-float" aria-hidden="true">บัตรสมาชิก<div></div>FF-002318</div>
+          </div>
+          <div class="side-form"><div data-form></div></div>
+        </div>
       </div>
-      <div><p class="label">มือถือ</p><div class="phone"><div class="screen-in" style="display:grid;place-items:center;padding:18px 12px"><div class="b-bg"></div><div class="card" style="position:relative;padding:20px" data-form data-card data-mobile></div></div></div></div>
+      <div><p class="label">มือถือ</p><div class="phone"><div class="in"><div class="m-top"><div class="m-banner" style="background:linear-gradient(135deg,#1B2410,var(--surface));border:1px solid var(--border)"><span class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b style="font-size:16px">FITFLOW</b><small>ทุกงานของยิมเริ่มจากตรงนี้</small></span></span></div></div><div class="m-form" data-form data-m></div></div></div></div>
     </div>
-    <ul class="pros"><li>เรียบที่สุด โหลดเร็ว ใช้ได้ทุกธีม</li><li>มือถือกับคอมหน้าตาเหมือนกัน คนใช้ไม่สับสน</li><li class="con">พื้นที่โชว์แบรนด์น้อย</li></ul>
+    <div class="ctrl" data-ctrl="1"></div>
+    <ul class="pros"><li>ดูทันสมัยแบบแอป SaaS ใช้เป็นภาพขายได้ด้วย</li><li>ไม่เปิดเผยข้อมูลจริงของยิมก่อนเข้าสู่ระบบ</li><li class="con">ภาพตัวอย่างต้องอัปเดตเมื่อหน้าระบบเปลี่ยนมาก</li></ul>
   </section>
 
-  <!-- C -->
+  <!-- A3 -->
   <section class="opt">
-    <div class="opt-h"><span class="tag">C</span><h2>ช่องเดียว ระบบรู้เองว่าเป็นใคร</h2><p>พิมพ์อีเมล → การ์ด "พนักงาน" สว่างขึ้น · พิมพ์เบอร์มือถือ → การ์ด "สมาชิก" สว่างขึ้น ให้ผู้ใช้มั่นใจว่ากรอกถูกช่อง (เป็นแค่การบอกสถานะ ไม่ใช่ปุ่มเลือก ระบบยังใช้บทบาทจากบัญชีจริง)</p></div>
+    <div class="opt-h"><span class="tag">A3</span><h2>ฟอร์มซ้าย · แผงสีหลักขวา</h2><p>สลับข้าง ฝั่งขวาเป็นบล็อกสีเขียวนีออนเต็ม พร้อม "คลาสวันนี้" ให้พนักงานเห็นงานถัดไปตั้งแต่ยังไม่เข้าสู่ระบบ ดูเป็นแบรนด์แรงที่สุด</p></div>
     <div class="views">
       <div><p class="label">เดสก์ท็อป / แท็บเล็ต</p>
-        <div class="screen"><div class="c-wrap"><div class="c-box" data-form data-c></div></div></div>
+        <div class="screen order-rev">
+          <div class="a3">
+            <div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>สาขาอารีย์</small></span></div>
+            <div><h2>พร้อมลุย<br>อีกวันแล้ว</h2><p class="d">เข้าสู่ระบบเพื่อเช็กอินสมาชิก จัดคลาส และดูยอดของวันนี้</p></div>
+            <div class="today"><h4>คลาสถัดไปวันนี้<span>พฤ. 15 ต.ค.</span></h4><ul>
+              <li><time>18:00</time><span>HIIT Burn<small>โค้ชบอส · ห้อง A</small></span><span class="b ok">24/25</span></li>
+              <li><time>19:00</time><span>Yoga Flow<small>ครูแพร · ห้อง B</small></span><span class="b ok">12/20</span></li>
+              <li><time>20:00</time><span>Spin Power<small>โค้ชเจ · ห้อง Spin</small></span><span class="b full">เต็ม</span></li>
+            </ul></div>
+          </div>
+          <div class="side-form"><div data-form data-brand></div></div>
+        </div>
       </div>
-      <div><p class="label">มือถือ</p><div class="phone"><div class="screen-in"><div class="c-wrap" style="height:100%;padding:18px"><div class="c-box" data-form data-c data-mobile></div></div></div></div></div>
+      <div><p class="label">มือถือ</p><div class="phone"><div class="in"><div class="m-top"><div class="m-banner" style="background:var(--accent);color:var(--bg)"><span><b>พร้อมลุยอีกวันแล้ว</b>FitFlow · สาขาอารีย์</span><span class="logo" style="background:var(--bg);color:var(--accent)"><svg class="i"><use href="#bolt"/></svg></span></div></div><div class="m-form" data-form data-m></div></div></div></div>
     </div>
-    <ul class="pros"><li>สมาชิกที่กดลิงก์จาก LINE รู้ทันทีว่ากรอกเบอร์ได้</li><li>เป็นมิตรที่สุด บอกผู้ใช้ตลอดว่าระบบเข้าใจอะไร</li><li class="con">มีองค์ประกอบมากกว่าแบบ B เล็กน้อย</li></ul>
+    <div class="ctrl" data-ctrl="2"></div>
+    <ul class="pros"><li>แบรนด์ชัดที่สุด จำได้ทันทีว่าเป็น FitFlow</li><li>พนักงานเห็นคลาสถัดไปได้เลย เหมาะกับจอเคาน์เตอร์</li><li class="con">สีเขียวเต็มบล็อกเด่นมาก ถ้าเลือกธีมอื่นจะเปลี่ยนตามสีหลักของธีม</li></ul>
   </section>
 </div>
 
 <script>
 const isEmail = v => v.includes('@');
 const isPhone = v => v.replace(/\D/g, '').length >= 9 && !isEmail(v);
-function formHtml(opts) {
-  const head = opts.card || opts.mobile && !opts.c ? `<div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>ระบบจัดการฟิตเนส</small></span></div>` : '';
-  const cHead = opts.c ? `<div class="brand"><span class="logo"><svg class="i" style="width:26px;height:26px"><use href="#bolt"/></svg></span><span><b style="font-size:22px">FITFLOW</b><small>ยินดีต้อนรับกลับมา</small></span></div>
-    <div class="who"><div data-who="staff"><svg class="i"><use href="#badge"/></svg><span><b>พนักงาน</b>เข้าด้วยอีเมล</span></div><div data-who="member"><svg class="i"><use href="#card"/></svg><span><b>สมาชิก</b>เข้าด้วยเบอร์มือถือ</span></div></div>` : '';
-  return `${head}${cHead}
-  <form class="form" onsubmit="return false">
-    ${opts.c ? '' : `<div><h3>เข้าสู่ระบบ</h3><p class="lead" style="margin-top:2px">ระบบจะพาไปหน้าที่ตรงกับตำแหน่งของคุณเอง</p></div>`}
+const form = (opts) => `
+  ${opts.brand ? `<div class="brand"><span class="logo"><svg class="i"><use href="#bolt"/></svg></span><span><b>FITFLOW</b><small>ระบบจัดการฟิตเนส</small></span></div>` : ''}
+  <div><h3>เข้าสู่ระบบ</h3><p class="lead">ระบบจะพาไปหน้าที่ตรงกับตำแหน่งของคุณเอง</p></div>
+  <div class="form">
     <div class="field"><label>อีเมลหรือเบอร์มือถือ</label><div class="input"><svg class="i"><use href="#user"/></svg><input data-id placeholder="name@gym.com หรือ 08X-XXX-XXXX" autocomplete="off"></div><p class="hint" data-hint>พนักงานใช้อีเมล · สมาชิกใช้เบอร์มือถือที่สมัครไว้</p></div>
     <div class="field"><label>รหัสผ่าน</label><div class="input"><svg class="i"><use href="#lock"/></svg><input type="password" data-pw value="••••••••"><button class="eye" type="button" data-eye aria-label="แสดงรหัสผ่าน"><svg class="i"><use href="#eye"/></svg></button></div></div>
-    <div class="row"><label><input type="checkbox">จดจำฉัน 30 วัน</label><span class="muted" style="color:var(--muted)">ลืมรหัส? <span class="link">ติดต่อผู้จัดการ</span></span></div>
+    <div class="row"><label><input type="checkbox">จดจำฉัน 30 วัน</label><span style="color:var(--muted)">ลืมรหัส? <span class="link">ติดต่อผู้จัดการ</span></span></div>
     <p class="err" data-err>อีเมล/เบอร์มือถือ หรือรหัสผ่านไม่ถูกต้อง</p>
     <button class="submit" type="button" data-submit>เข้าสู่ระบบ</button>
-    <button class="demo-btn" type="button" data-wrong>ลองใส่รหัสผิด (ดูข้อความ error)</button>
-  </form>
-  <p class="foot"><svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#shield"/></svg>เชื่อมต่อแบบเข้ารหัส · ระยะที่ 2 ยืนยัน 2 ขั้นสำหรับเจ้าของ/ผู้จัดการ</p>`;
-}
-document.querySelectorAll('[data-form]').forEach(el => {
-  const opts = { card: el.hasAttribute('data-card'), mobile: el.hasAttribute('data-mobile'), c: el.hasAttribute('data-c') };
-  el.innerHTML = formHtml(opts);
-  if (el.classList.contains('a-right')) { const f = el.querySelector('.form'); f.style.maxWidth = '360px'; f.style.width = '100%'; const w = document.createElement('div'); w.style.cssText = 'width:100%;max-width:360px;display:flex;flex-direction:column;gap:18px'; while (el.firstChild) w.append(el.firstChild); el.append(w); }
+  </div>
+  <p class="secure"><svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#shield"/></svg>เชื่อมต่อแบบเข้ารหัส${opts.m ? '' : ' · ระยะที่ 2 ยืนยัน 2 ขั้นสำหรับเจ้าของ/ผู้จัดการ'}</p>`;
+const forms = [...document.querySelectorAll('[data-form]')];
+forms.forEach(el => {
+  el.innerHTML = form({ brand: el.hasAttribute('data-brand'), m: el.hasAttribute('data-m') });
   const id = el.querySelector('[data-id]'), hint = el.querySelector('[data-hint]'), err = el.querySelector('[data-err]'), pw = el.querySelector('[data-pw]');
   id.addEventListener('input', () => {
     const v = id.value;
-    hint.innerHTML = isEmail(v) ? '<span class="chip staff">พนักงาน</span> ระบบจะพาไปหน้าตามตำแหน่งในบัญชี' : isPhone(v) ? '<span class="chip member">สมาชิก</span> ระบบจะพาไปหน้าบัตรสมาชิก' : 'พนักงานใช้อีเมล · สมาชิกใช้เบอร์มือถือที่สมัครไว้';
-    el.querySelectorAll('[data-who]').forEach(w => w.classList.toggle('on', (w.dataset.who === 'staff' && isEmail(v)) || (w.dataset.who === 'member' && isPhone(v))));
+    hint.innerHTML = isEmail(v) ? '<span class="chip staff">พนักงาน</span> พาไปหน้าตามตำแหน่งในบัญชี' : isPhone(v) ? '<span class="chip member">สมาชิก</span> พาไปหน้าบัตรสมาชิก' : 'พนักงานใช้อีเมล · สมาชิกใช้เบอร์มือถือที่สมัครไว้';
     err.classList.remove('on');
   });
   el.querySelector('[data-eye]').onclick = () => { pw.type = pw.type === 'password' ? 'text' : 'password'; };
-  el.querySelector('[data-wrong]').onclick = () => { err.classList.add('on'); pw.value = ''; };
-  el.querySelector('[data-submit]').onclick = () => { err.classList.remove('on'); el.querySelector('[data-submit]').textContent = 'กำลังเข้าสู่ระบบ…'; setTimeout(() => { el.querySelector('[data-submit]').textContent = 'เข้าสู่ระบบ'; }, 1200); };
+  const btn = el.querySelector('[data-submit]');
+  btn.onclick = () => { btn.textContent = 'กำลังเข้าสู่ระบบ…'; setTimeout(() => { btn.textContent = 'เข้าสู่ระบบ'; }, 1000); };
+  el._err = on => { err.classList.toggle('on', on); if (on) pw.value = ''; };
 });
+document.querySelectorAll('[data-ctrl]').forEach(c => {
+  const i = Number(c.dataset.ctrl);
+  const pair = [forms[i * 2], forms[i * 2 + 1]];
+  c.innerHTML = '<button type="button" data-a="err">ลองใส่รหัสผิด</button><button type="button" data-a="ok">ล้างข้อความ error</button>';
+  c.querySelector('[data-a=err]').onclick = () => pair.forEach(f => f._err(true));
+  c.querySelector('[data-a=ok]').onclick = () => pair.forEach(f => f._err(false));
+});
+// QR ตัวอย่าง
+document.querySelectorAll('.qr-float div').forEach(q => { const p = '111011100101101110010011110101001110'; q.innerHTML = [...p].map(b => `<i class="${b === '1' ? '' : 'w'}"></i>`).join(''); });
 </script>
 </body>
 </html>
