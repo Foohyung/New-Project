@@ -4,11 +4,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
+import { DateRangeFilter } from '@/components/date-range-filter';
 import { Avatar, btn, Forbidden, StatusBadge } from '@/components/ui';
+import { parseRange } from '@/features/shared/date-range';
 import { UrlDropdown } from '@/components/url-dropdown';
 import { hrefWith, Toolbar, ViewSwitch } from '@/components/view-switch';
 import { MEMBER_SORT_LABEL, STATUS_LABEL, type MemberSort, type MembershipStatus } from '@/features/members/service';
 import type { MemberDto } from '@/features/members/types';
+import { today } from '@/server/clock';
 import { countByStatus, listMembers } from '@/server/dal/members';
 import { listPackages } from '@/server/dal/packages';
 import { pageGuard } from '@/server/guard';
@@ -24,6 +27,8 @@ const SearchParams = z.object({
   view: z.enum(VIEWS).catch('table'),
   sort: z.enum(['expires', 'name', 'recent', 'newest']).catch('expires'),
   pkg: z.string().max(20).optional().catch(undefined),
+  from: z.string().optional().catch(undefined),
+  to: z.string().optional().catch(undefined),
 });
 
 const TABS = [undefined, 'active', 'expiring', 'frozen', 'expired'] as const;
@@ -51,10 +56,11 @@ const lastCheckIn = (m: MemberDto) => (m.lastCheckInAt ? `${formatThaiDateOf(m.l
 export default async function MembersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('members.view');
   if (!allowed) return <Forbidden />;
-  const { status, q, view, sort, pkg } = SearchParams.parse(await searchParams);
-  const [rows, counts, packages] = await Promise.all([listMembers(session, { status, q, sort, packageId: pkg }), countByStatus(session), listPackages(session)]);
+  const { status, q, view, sort, pkg, from, to } = SearchParams.parse(await searchParams);
+  const expires = parseRange({ from, to }, today());
+  const [rows, counts, packages] = await Promise.all([listMembers(session, { status, q, sort, packageId: pkg, expires }), countByStatus(session), listPackages(session)]);
   // ค่าที่ไม่ใช่ค่าเริ่มต้นเท่านั้นที่อยู่ใน URL
-  const current = { status, q, pkg, view: view === 'table' ? undefined : view, sort: sort === 'expires' ? undefined : sort };
+  const current = { status, q, pkg, view: view === 'table' ? undefined : view, sort: sort === 'expires' ? undefined : sort, from: expires?.from, to: expires?.to };
   const href = (patch: Record<string, string | undefined>) => hrefWith('/members', current, patch);
 
   return (
@@ -77,7 +83,7 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
         </div>
       </header>
 
-      <nav aria-label="กรองตามสถานะ" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+      <nav aria-label="กรองตามสถานะ" className="-mx-4 flex gap-2 scrollbar-none overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
         {TABS.map(tab => (
           <Link
             key={tab ?? 'all'}
@@ -90,6 +96,8 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
           </Link>
         ))}
       </nav>
+
+      <DateRangeFilter path="/members" params={current} range={expires} today={today()} label="วันหมดอายุ" allowAll future />
 
       <Toolbar>
         <ViewSwitch views={VIEW_OPTIONS} current={view} hrefFor={v => href({ view: v === 'table' ? undefined : v })} />

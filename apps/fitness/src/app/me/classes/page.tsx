@@ -30,7 +30,7 @@ export default async function MyClassesPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader back={{ href: '/me', label: 'บัตรสมาชิก' }} title="จองคลาส" kicker={`ยกเลิกได้ก่อนคลาสเริ่ม ${String(CANCEL_CUTOFF_MINUTES / 60)} ชั่วโมง`} />
-      <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+      <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 scrollbar-none overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
         {Array.from({ length: 7 }, (_, i) => addDays(from, i)).map((d, i) => {
           const date = new Date(`${d}T00:00:00Z`);
           return (

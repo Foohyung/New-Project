@@ -3,6 +3,9 @@ import { Send } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ActionButton } from '@/components/action-button';
+import { DateRangeFilter } from '@/components/date-range-filter';
+import { monthStart, parseRange, rangeLabel, sameRange } from '@/features/shared/date-range';
+import { today } from '@/server/clock';
 import { RoundEditor } from '@/components/marketing';
 import { MarketingTabs } from '@/components/marketing-tabs';
 import { Badge, Card, EmptyState, Forbidden, PageHeader, Stat, type Tone } from '@/components/ui';
@@ -21,10 +24,14 @@ const OUTCOME: Record<string, { label: string; tone: Tone }> = {
   paid: { label: 'จ่ายแล้ว', tone: 'lime' },
 };
 
-export default async function RemindersPage() {
+export default async function RemindersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('marketing.manage');
   if (!allowed) return <Forbidden />;
-  const [center, coupons] = await Promise.all([getReminderCenter(session), listCoupons(session)]);
+  const date = today();
+  const defaultRange = { from: monthStart(date), to: date };
+  const range = parseRange(await searchParams, date, defaultRange) ?? defaultRange;
+  const isMonth = sameRange(range, defaultRange);
+  const [center, coupons] = await Promise.all([getReminderCenter(session, range), listCoupons(session)]);
   const usable = coupons.filter(c => c.state === 'active' && c.kind === 'promo').map(c => ({ code: c.code, label: c.label }));
   const sample = center.rounds.find(r => r.id === 'before-3') ?? center.rounds[0];
 
@@ -33,8 +40,10 @@ export default async function RemindersPage() {
       <PageHeader kicker={session.branch} title="การตลาด" />
       <MarketingTabs current="reminders" />
 
-      <section aria-label="ผลการแจ้งเตือนเดือนนี้" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <Stat tone="lime" label="ต่ออายุจากลิงก์ เดือนนี้" value={formatBaht(center.stats.revenueSatang)} hint={`${String(center.stats.paidCount)} คน`} />
+      <DateRangeFilter path="/marketing" params={isMonth ? {} : { from: range.from, to: range.to }} range={range} today={date} defaultRange={defaultRange} label="ช่วงผลการแจ้งเตือน" />
+
+      <section aria-label="ผลการแจ้งเตือน" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <Stat tone="lime" label={isMonth ? 'ต่ออายุจากลิงก์ เดือนนี้' : 'ต่ออายุจากลิงก์ ในช่วงนี้'} value={formatBaht(center.stats.revenueSatang)} hint={`${String(center.stats.paidCount)} คน`} />
         <Stat label="ส่งข้อความแล้ว" value={center.stats.sent} hint={center.stats.byChannel} />
         <Stat label="กดลิงก์" value={`${String(center.stats.clickRate)}%`} hint="ของข้อความที่ส่ง" />
         <Stat label="ไม่ส่ง (ไม่ยินยอม)" value={center.excludedNoConsent} hint="ตาม PDPA โทรหาแทน" />
@@ -93,8 +102,8 @@ export default async function RemindersPage() {
         </div>
       </div>
 
-      <Card title="ประวัติการส่งล่าสุด">
-        {center.logs.length === 0 ? <EmptyState>ยังไม่มีการส่ง</EmptyState> : (
+      <Card title="ประวัติการส่ง" subtitle={rangeLabel(range)}>
+        {center.logs.length === 0 ? <EmptyState>ไม่มีการส่งในช่วงนี้</EmptyState> : (
           <ul className="divide-y divide-line">
             {center.logs.map(l => (
               <li key={l.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2.5 text-sm sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]">

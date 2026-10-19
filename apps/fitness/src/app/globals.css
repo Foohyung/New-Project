@@ -128,3 +128,12 @@
     padding-block: max(0px, calc((44px - 1lh) / 2));
   }
 }
+
+/* แถบเลื่อนแนวนอน (แท็บวัน/ตัวกรอง/เมนู) เลื่อนได้แต่ไม่แสดง scrollbar */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

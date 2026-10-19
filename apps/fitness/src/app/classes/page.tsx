@@ -101,7 +101,7 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
 
 function DayTabs({ days, selected, dayHref }: { days: string[]; selected: string; dayHref: (d: string) => string }) {
   return (
-    <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+    <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 scrollbar-none overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
       {days.map(d => {
         const l = dayLabel(d);
         return (

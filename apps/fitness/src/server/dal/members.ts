@@ -2,6 +2,7 @@ import 'server-only';
 import { addDays, bangkokDate, normalizePhone } from '@repo/utils';
 import { compareMembers, daysLeft, isFrozenOn, memberCode, membershipStatus, planFreeze, planUnfreeze, type FreezeDecision, type MemberSort, type MembershipStatus } from '@/features/members/service';
 import type { MemberDetailDto, MemberDto } from '@/features/members/types';
+import { inRange, type DateRange } from '@/features/shared/date-range';
 import type { PaymentMethod } from '@/features/payments/service';
 import type { Session } from '../auth';
 import { now, today } from '../clock';
@@ -30,7 +31,7 @@ export function toMemberDto(store: Store, m: MemberRecord, date: string): Member
   };
 }
 
-export async function listMembers(session: Session, filter: { status?: MembershipStatus; q?: string; packageId?: string; sort?: MemberSort } = {}): Promise<MemberDto[]> {
+export async function listMembers(session: Session, filter: { status?: MembershipStatus; q?: string; packageId?: string; sort?: MemberSort; expires?: DateRange | null } = {}): Promise<MemberDto[]> {
   await authorize(session, 'members.view');
   const store = db();
   const date = today();
@@ -40,6 +41,7 @@ export async function listMembers(session: Session, filter: { status?: Membershi
     .map(m => toMemberDto(store, m, date))
     .filter(m => !filter.status || m.status === filter.status)
     .filter(m => !filter.packageId || m.packageId === filter.packageId)
+    .filter(m => inRange(m.expiresOn, filter.expires ?? null))
     .filter(m => !q || m.name.toLowerCase().includes(q) || m.code.toLowerCase().includes(q) || (digits.length >= 3 && m.phone.includes(digits)))
     .sort(compareMembers(filter.sort ?? 'expires'));
 }

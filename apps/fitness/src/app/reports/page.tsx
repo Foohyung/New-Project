@@ -3,6 +3,10 @@ import { Download } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BarChart } from '@/components/bar-chart';
+import { DateRangeFilter } from '@/components/date-range-filter';
+import { hrefWith } from '@/components/view-switch';
+import { monthStart, parseRange, rangeLabel, sameRange } from '@/features/shared/date-range';
+import { today } from '@/server/clock';
 import { btn, Card, Forbidden, PageHeader, Stat } from '@/components/ui';
 import { getReport } from '@/server/dal/reports';
 import { pageGuard } from '@/server/guard';
@@ -12,37 +16,47 @@ export const metadata: Metadata = { title: 'รายงาน' };
 const num = new Intl.NumberFormat('th-TH');
 const short = (date: string) => String(Number(date.slice(8)));
 
-export default async function ReportsPage() {
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('reports.view');
   if (!allowed) return <Forbidden />;
-  const r = await getReport(session);
+  const query = await searchParams;
+  const date = today();
+  const defaultRange = { from: monthStart(date), to: date };
+  const range = parseRange(query, date, defaultRange) ?? defaultRange;
+  const r = await getReport(session, range);
+  const isMonth = sameRange(range, defaultRange);
+  const params = sameRange(range, defaultRange) ? {} : { from: range.from, to: range.to };
+  const exportHref = hrefWith('/reports/export', {}, params);
   const totalByPackage = r.byPackage.reduce((s, p) => s + p.satang, 0);
 
   return (
     <>
       <PageHeader
-        kicker={`${session.branch} · ${formatThaiDate(r.monthLabelFrom)} – ${formatThaiDate(r.to)}`}
+        kicker={`${session.branch} · ${rangeLabel(range)}`}
         title="รายงาน"
-        actions={<a href="/reports/export" download className={btn.secondary}><Download aria-hidden className="size-5" />ส่งออก CSV</a>}
+        actions={<a href={exportHref} download className={btn.secondary}><Download aria-hidden className="size-5" />ส่งออก CSV</a>}
       />
 
-      <section aria-label="ตัวเลขสำคัญเดือนนี้" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <Stat tone="lime" label="รายได้เดือนนี้" value={formatBaht(r.revenue.monthSatang)} hint={`▲ ${String(r.revenue.changePct)}% จากช่วงเดียวกันเดือนก่อน`} />
+      <DateRangeFilter path="/reports" params={params} range={range} today={date} defaultRange={defaultRange} />
+      {range.from < r.dataFrom && <p className="-mt-2 text-xs text-faint">ข้อมูลตัวอย่างเริ่มที่ {formatThaiDate(r.dataFrom, 'long')} · วันก่อนหน้านั้นแสดงเป็น 0</p>}
+
+      <section aria-label="ตัวเลขสำคัญ" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <Stat tone="lime" label={isMonth ? 'รายได้เดือนนี้' : 'รายได้ในช่วงนี้'} value={formatBaht(r.revenue.totalSatang)} hint={isMonth ? `▲ ${String(r.revenue.changePct)}% จากช่วงเดียวกันเดือนก่อน` : `${String(r.revenue.daily.length)} วัน`} />
         <Stat label="เฉลี่ยต่อวัน" value={formatBaht(r.revenue.avgDailySatang)} hint={`ค้างรับ ${formatBaht(r.revenue.pendingSatang)}`} />
-        <Stat label="สมาชิกที่ใช้งาน" value={num.format(r.members.active)} hint={`ใหม่ ${String(r.members.newThisMonth)} · ต่ออายุ ${String(r.members.renewals)}`} />
+        <Stat label="สมาชิกที่ใช้งาน (เดือนนี้)" value={num.format(r.members.active)} hint={`ใหม่ ${String(r.members.newThisMonth)} · ต่ออายุ ${String(r.members.renewals)}`} />
         <Stat label="ไม่ต่ออายุ" value={num.format(r.members.lapsed)} hint="ควรทักไปชวนกลับมา" />
       </section>
 
       <div className="grid gap-4 lg:gap-5 xl:grid-cols-[1.6fr_1fr]">
-        <Card title="รายได้รายวัน" subtitle="30 วันล่าสุด · แท่งสีเขียวคือวันนี้">
+        <Card title="รายได้รายวัน" subtitle={`${rangeLabel(range)} · แท่งสีเขียวคือวันนี้`}>
           <BarChart
             data={r.revenue.daily.map(d => ({ label: short(d.date), value: d.value }))}
             format={v => formatBaht(v)}
             highlight={short(r.to)}
-            summary={`วันนี้ ${formatBaht(r.revenue.daily.find(d => d.date === r.to)?.value ?? 0)} · สูงสุด ${formatBaht(Math.max(...r.revenue.daily.map(d => d.value)))} · เดือนนี้รวม ${formatBaht(r.revenue.monthSatang)}`}
+            summary={`สูงสุด ${formatBaht(Math.max(...r.revenue.daily.map(d => d.value)))} · รวมช่วงนี้ ${formatBaht(r.revenue.totalSatang)}`}
           />
         </Card>
-        <Card title="ยอดขายตามแพ็กเกจ" subtitle="เดือนนี้">
+        <Card title="ยอดขายตามแพ็กเกจ" subtitle={rangeLabel(range)}>
           <ul className="flex flex-col gap-3">
             {r.byPackage.map(p => (
               <li key={p.id}>
@@ -55,7 +69,7 @@ export default async function ReportsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
-        <Card title="เช็กอินรายวัน" subtitle="14 วันล่าสุด">
+        <Card title="เช็กอินรายวัน" subtitle={rangeLabel(range)}>
           <BarChart
             data={r.checkIns.daily.map(d => ({ label: short(d.date), value: d.value }))}
             format={v => `${num.format(v)} คน`}

@@ -4,6 +4,7 @@ import { REFERRAL } from '@/features/coupons/service';
 import { membershipPeriod } from '@/features/members/service';
 import { isInstantMethod, receiptNo, type PaymentMethod, type PaymentStatus } from '@/features/payments/service';
 import type { PaymentDto } from '@/features/payments/types';
+import { inRange, type DateRange } from '@/features/shared/date-range';
 import { packageDurationLabel } from '@/features/packages/service';
 import type { Session } from '../auth';
 import { now, today } from '../clock';
@@ -114,12 +115,13 @@ export function createPaymentRecord(store: Store, input: { memberId: string; pac
   return record;
 }
 
-export async function listPayments(session: Session, filter: { status?: PaymentStatus; method?: PaymentMethod } = {}): Promise<PaymentDto[]> {
+export async function listPayments(session: Session, filter: { status?: PaymentStatus; method?: PaymentMethod; range?: DateRange | null } = {}): Promise<PaymentDto[]> {
   await authorize(session, 'payments.view');
   const store = db();
   return store.payments
     .filter(p => !filter.status || p.status === filter.status)
     .filter(p => !filter.method || p.method === filter.method)
+    .filter(p => inRange(bangkokDate(new Date(p.createdAt)), filter.range ?? null))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map(p => toPaymentDto(store, p));
 }

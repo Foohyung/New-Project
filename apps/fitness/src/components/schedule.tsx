@@ -34,7 +34,7 @@ export function WeekSchedule({ classes, from, selected, basePath, hrefFor, dayHr
   const byDay = (date: string) => classes.filter(c => bangkokDate(new Date(c.startsAt)) === date);
   return (
     <>
-      <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0 xl:hidden">
+      <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 scrollbar-none overflow-x-auto px-4 pb-1 md:mx-0 md:px-0 xl:hidden">
         {days.map(d => {
           const l = label(d);
           return (

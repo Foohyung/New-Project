@@ -1,5 +1,6 @@
 import 'server-only';
-import { daysBetween, formatThaiDate } from '@repo/utils';
+import { bangkokDate, daysBetween, formatThaiDate } from '@repo/utils';
+import { inRange, monthStart, type DateRange } from '@/features/shared/date-range';
 import { isFrozenOn } from '@/features/members/service';
 import { CHANNEL_LABEL, renderTemplate, ROUND_LABEL, roundForDaysLeft, type Channel, type ReminderRound, type RoundId } from '@/features/reminders/service';
 import type { ReminderCenterDto } from '@/features/reminders/types';
@@ -37,11 +38,12 @@ function dueToday(store: Store): { member: MemberRecord; round: ReminderRound }[
   });
 }
 
-export async function getReminderCenter(session: Session): Promise<ReminderCenterDto> {
+/** สถิติและประวัติตามช่วงวันที่ (ค่าเริ่มต้น = เดือนนี้) */
+export async function getReminderCenter(session: Session, range: DateRange | null = null): Promise<ReminderCenterDto> {
   await authorize(session, 'marketing.manage');
   const store = db();
-  const month = today().slice(0, 7);
-  const logs = store.reminderLogs.filter(l => l.sentAt.startsWith(month));
+  const period = range ?? { from: monthStart(today()), to: today() };
+  const logs = store.reminderLogs.filter(l => inRange(bangkokDate(new Date(l.sentAt)), period)).sort((a, b) => b.sentAt.localeCompare(a.sentAt));
   const paid = logs.flatMap(l => store.payments.filter(p => p.id === l.paymentId && p.status === 'paid'));
   const sample = store.members.find(m => m.id === '02') ?? store.members[0];
   return {
@@ -54,7 +56,7 @@ export async function getReminderCenter(session: Session): Promise<ReminderCente
       revenueSatang: paid.reduce((sum, p) => sum + p.amountSatang, 0),
     },
     due: dueToday(store).map(({ member, round }) => ({ memberId: member.id, name: member.name, roundTitle: ROUND_LABEL[round.id].title, expiresOn: member.expiresOn, channels: round.channels.map(c => CHANNEL_LABEL[c]).join(' + ') })),
-    logs: [...store.reminderLogs].sort((a, b) => b.sentAt.localeCompare(a.sentAt)).slice(0, 12).map(l => ({
+    logs: logs.slice(0, 50).map(l => ({
       id: l.id,
       memberId: l.memberId,
       name: store.members.find(m => m.id === l.memberId)?.name ?? '—',

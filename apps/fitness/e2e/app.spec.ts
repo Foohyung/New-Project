@@ -35,7 +35,15 @@ test.describe('แดชบอร์ด', () => {
     await page.goto('/');
     const navs = page.getByRole('navigation', { name: 'เมนูหลัก' });
     await expect(navs.filter({ visible: true })).toHaveCount(1);
-    await navs.filter({ visible: true }).getByRole('link', { name: 'สมาชิก', exact: true }).click();
+    const nav = navs.filter({ visible: true });
+    // แท็บเล็ต/เดสก์ท็อป: กดโซน "หน้าร้าน" บน rail ก่อน แผงจึงแสดงเมนูย่อยของโซนนั้น
+    const zone = nav.getByRole('button', { name: 'หน้าร้าน' });
+    if (await zone.isVisible()) {
+      await expect(zone).toHaveAttribute('aria-pressed', 'false');
+      await zone.click();
+      await expect(zone).toHaveAttribute('aria-pressed', 'true');
+    }
+    await nav.getByRole('link', { name: 'สมาชิก', exact: true }).click();
     await expect(page).toHaveURL(/\/members$/);
   });
 });
@@ -293,6 +301,8 @@ test.describe('ธีม', () => {
     await page.getByRole('option', { name: /^Daylight/ }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect.poll(bg).not.toBe(before);
+    // รอให้ server action บันทึก cookie เสร็จก่อนโหลดหน้าใหม่
+    await expect.poll(async () => (await page.context().cookies()).find(c => c.name === 'ff-theme')?.value).toBe('light');
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expectNoHorizontalScroll(page);
@@ -367,5 +377,39 @@ test.describe('ชุดหาเงินและรักษาสมาช�
     await expect(page.getByText('FRIEND-2318')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'ต่ออายุอัตโนมัติ' })).toBeVisible();
     await expectNoHorizontalScroll(page);
+  });
+});
+
+test.describe('ตัวกรองช่วงวันที่', () => {
+  test('การเงินกรองตามวันที่ทำรายการ และคงตัวกรองอื่นไว้', async ({ page }) => {
+    await page.goto('/payments?method=promptpay');
+    await page.getByLabel('ตั้งแต่').fill('2026-10-10');
+    await page.getByLabel('ถึง').fill('2026-10-10');
+    await page.getByRole('button', { name: 'ใช้ช่วงนี้' }).click();
+    await expect(page).toHaveURL(/from=2026-10-10/);
+    await expect(page).toHaveURL(/method=promptpay/);
+    await expect(page.getByRole('link', { name: 'อรวรรณ มีสุข' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'วรเมธ พูลผล' })).toHaveCount(0);
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('รายงานใช้ช่วงด่วน และไฟล์ CSV ออกตามช่วงเดียวกัน', async ({ page }) => {
+    await page.goto('/reports');
+    await page.getByRole('link', { name: '7 วัน', exact: true }).click();
+    await expect(page).toHaveURL(/from=2026-10-09&to=2026-10-15/);
+    await expect(page.getByText('รายได้ในช่วงนี้')).toBeVisible();
+    const csv = await page.request.get('/reports/export?from=2026-10-09&to=2026-10-15');
+    expect(csv.status()).toBe(200);
+    expect(csv.headers()['content-disposition']).toContain('2026-10-09_2026-10-15');
+    expect((await csv.text()).trim().split('\n')).toHaveLength(8); // หัวตาราง + 7 วัน
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('สมาชิกกรองตามวันหมดอายุ 7 วันข้างหน้า', async ({ page }) => {
+    await page.goto('/members');
+    await page.getByRole('link', { name: '7 วันข้างหน้า' }).click();
+    await expect(page).toHaveURL(/to=2026-10-21/);
+    await expect(page.getByRole('link', { name: 'ณัฐพล ศรีสุข' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'พิมพ์ชนก วงศ์ดี' }).first()).toBeVisible();
   });
 });
