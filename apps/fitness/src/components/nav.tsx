@@ -1,6 +1,6 @@
 'use client';
 
-import { BellRing, ChevronDown, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, RefreshCw, ScanLine, Store, TicketPercent, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
+import { BellRing, ChevronRight, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, RefreshCw, ScanLine, Store, TicketPercent, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -23,34 +23,46 @@ export interface NavGroup {
   short?: string;
   hint: string;
   icon: LucideIcon;
+  /** หัวข้อหมวดที่โซนนี้อยู่ (แสดงเป็นเส้นคั่นพร้อมชื่อบนเดสก์ท็อป) */
+  section: string;
+  /** สีประจำโซน (ไอคอนกล่อง) */
+  tone: 'lime' | 'cyan' | 'violet' | 'warn' | 'danger';
   items: NavItem[];
 }
 
+const TONE: Record<NavGroup['tone'], string> = {
+  lime: 'border-lime/30 bg-lime/10 text-lime',
+  cyan: 'border-cyan/30 bg-cyan/10 text-cyan',
+  violet: 'border-violet/30 bg-violet/10 text-violet',
+  warn: 'border-warn/30 bg-warn/10 text-warn',
+  danger: 'border-danger/30 bg-danger/10 text-danger',
+};
+
 /** เมนูแบ่งเป็นโซนตามงาน — กดเมนูหลักแล้วกางเมนูย่อย */
 const GROUPS: NavGroup[] = [
-  { id: 'overview', label: 'ภาพรวม', hint: 'ตัวเลขทั้งยิม', icon: LayoutDashboard, items: [
+  { id: 'overview', label: 'ภาพรวม', hint: 'ตัวเลขทั้งยิม', section: 'ภาพรวม · รายงาน', tone: 'lime', icon: LayoutDashboard, items: [
     { href: '/', label: 'แดชบอร์ด', icon: House, permission: 'dashboard.view', primary: true },
     { href: '/reports', label: 'รายงาน', icon: ChartColumn, permission: 'reports.view' },
   ] },
-  { id: 'front', label: 'หน้าร้าน', hint: 'งานเคาน์เตอร์ประจำวัน', icon: Store, items: [
+  { id: 'front', label: 'หน้าร้าน', hint: 'งานเคาน์เตอร์ประจำวัน', section: 'หน้าร้าน · คลาส', tone: 'cyan', icon: Store, items: [
     { href: '/checkin', label: 'เช็กอิน', icon: ScanLine, permission: 'checkin.use', primary: true },
     { href: '/members', label: 'สมาชิก', icon: Users, permission: 'members.view', primary: true },
     { href: '/retention', label: 'ติดตามสมาชิก', short: 'ติดตาม', icon: HeartPulse, permission: 'retention.view' },
   ] },
-  { id: 'classes', label: 'คลาสและเทรนเนอร์', short: 'คลาส', hint: 'ตารางคลาสและคิว PT', icon: CalendarDays, items: [
+  { id: 'classes', label: 'คลาสและเทรนเนอร์', short: 'คลาส', hint: 'ตารางคลาสและคิว PT', section: 'หน้าร้าน · คลาส', tone: 'violet', icon: CalendarDays, items: [
     { href: '/classes', label: 'ตารางคลาส', short: 'คลาส', icon: CalendarDays, permission: 'classes.view', primary: true },
     { href: '/trainers', label: 'เทรนเนอร์', icon: Dumbbell, permission: 'trainers.view' },
   ] },
-  { id: 'money', label: 'การเงิน', hint: 'รับเงินและรายได้ประจำ', icon: Wallet, items: [
+  { id: 'money', label: 'การเงิน', hint: 'รับเงินและรายได้ประจำ', section: 'การเงิน · การตลาด', tone: 'warn', icon: Wallet, items: [
     { href: '/payments', label: 'รายการชำระ', short: 'การเงิน', icon: Wallet, permission: 'payments.view' },
     { href: '/payments/subscriptions', label: 'ตัดบัตรอัตโนมัติ', icon: RefreshCw, permission: 'payments.view' },
     { href: '/packages', label: 'แพ็กเกจ', icon: Package, permission: 'packages.manage' },
   ] },
-  { id: 'marketing', label: 'การตลาด', hint: 'หาเงิน + รักษาสมาชิก', icon: Megaphone, items: [
+  { id: 'marketing', label: 'การตลาด', hint: 'หาเงิน + รักษาสมาชิก', section: 'การเงิน · การตลาด', tone: 'danger', icon: Megaphone, items: [
     { href: '/marketing', label: 'แจ้งเตือนต่ออายุ', icon: BellRing, permission: 'marketing.manage' },
     { href: '/marketing/coupons', label: 'คูปอง & ชวนเพื่อน', icon: TicketPercent, permission: 'marketing.manage' },
   ] },
-  { id: 'portal', label: 'สมาชิก', short: 'ของฉัน', hint: 'บัตรและการจองของฉัน', icon: IdCard, items: [
+  { id: 'portal', label: 'สมาชิก', short: 'ของฉัน', hint: 'บัตรและการจองของฉัน', section: 'สมาชิก', tone: 'lime', icon: IdCard, items: [
     { href: '/me', label: 'บัตรสมาชิก', short: 'บัตร', icon: IdCard, permission: 'portal.use', primary: true },
     { href: '/me/classes', label: 'จองคลาส', icon: CalendarPlus, permission: 'portal.use', primary: true },
   ] },
@@ -110,22 +122,28 @@ export function Sidebar({ user }: { user: ShellUser }) {
           const open = isOpen(g.id);
           const current = g.id === activeGroup;
           const listId = `nav-${g.id}`;
+          const newSection = g.section !== groups[gi - 1]?.section;
           return (
             <div key={g.id} className={gi > 0 ? 'border-t border-line pt-1.5 lg:border-0 lg:pt-0' : ''}>
+              {newSection && (
+                <p className={`hidden items-center gap-2 px-2 pb-1.5 text-[11px] font-semibold tracking-[.14em] text-faint after:h-px after:flex-1 after:bg-line lg:flex ${gi > 0 ? 'pt-4' : ''}`}>
+                  {g.section}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => { toggle(g.id); }}
                 aria-expanded={open}
                 aria-controls={listId}
-                className={`hidden min-h-11 w-full items-center gap-2.5 rounded-xl px-2 font-semibold whitespace-nowrap hover:bg-surface-2 hover:text-ink lg:flex ${current ? 'text-ink' : 'text-muted'}`}
+                className={`hidden min-h-12 w-full items-center gap-3 rounded-xl px-2 font-semibold whitespace-nowrap hover:bg-surface-2 lg:flex ${current || open ? 'text-ink' : 'text-ink/85'}`}
               >
-                <span aria-hidden className={`grid size-[30px] shrink-0 place-items-center rounded-[9px] ${current ? 'bg-lime/15 text-lime' : 'bg-surface-2'}`}>
-                  <g.icon className="size-4" />
+                <span aria-hidden className={`grid size-8 shrink-0 place-items-center rounded-[10px] border ${TONE[g.tone]}`}>
+                  <g.icon className="size-[17px]" />
                 </span>
                 <span className="flex-1 text-left">{g.short ?? g.label}</span>
-                <ChevronDown aria-hidden className={`size-4 shrink-0 text-faint transition-transform ${open ? 'rotate-180' : ''}`} />
+                <ChevronRight aria-hidden className={`size-4 shrink-0 text-muted transition-transform ${open ? 'rotate-90' : ''}`} />
               </button>
-              <ul id={listId} className={`flex flex-col gap-0.5 lg:pt-1 lg:pb-1.5 lg:pl-12 ${open ? '' : 'lg:hidden'}`}>
+              <ul id={listId} className={`flex flex-col gap-0.5 lg:mb-1 lg:ml-[23px] lg:border-l lg:border-line lg:py-1 lg:pl-3 ${open ? '' : 'lg:hidden'}`}>
                 {g.items.map(({ href, label, icon: Icon }) => {
                   const here = href === activeHref;
                   return (
@@ -134,11 +152,12 @@ export function Sidebar({ user }: { user: ShellUser }) {
                         href={href}
                         title={`${g.label} › ${label}`}
                         aria-current={here ? 'page' : undefined}
-                        className="relative flex min-h-11 items-center justify-center rounded-xl text-muted hover:bg-surface-2 hover:text-ink aria-[current=page]:bg-lime/10 aria-[current=page]:text-lime lg:min-h-10 lg:justify-start lg:px-2.5 lg:text-[14.5px] lg:aria-[current=page]:font-semibold"
+                        className="relative flex min-h-11 items-center justify-center rounded-xl text-muted hover:bg-surface-2 hover:text-ink aria-[current=page]:bg-lime/10 aria-[current=page]:text-lime lg:min-h-10 lg:justify-start lg:rounded-lg lg:px-3 lg:text-[14.5px] lg:aria-[current=page]:font-semibold"
                       >
                         <Icon aria-hidden className="size-5 lg:hidden" />
                         <span className="sr-only lg:not-sr-only">{label}</span>
-                        {here && <span aria-hidden className="absolute top-1/2 -left-3.5 hidden size-1.5 -translate-y-1/2 rounded-full bg-lime lg:block" />}
+                        {/* ไฮไลต์บนเส้นนำทางด้านซ้าย */}
+                        {here && <span aria-hidden className="absolute inset-y-2 -left-[13.5px] hidden w-0.5 rounded-full bg-lime lg:block" />}
                       </Link>
                     </li>
                   );
