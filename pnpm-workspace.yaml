@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+# §2.3 ไม่ติดตั้ง package ที่เพิ่งปล่อยไม่ถึง 3 วัน (หน่วยเป็นนาที) — ป้องกัน supply-chain attack
+minimumReleaseAge: 4320
+
+# §2.3 อนุญาต install script เฉพาะที่ระบุ (true = อนุญาต, false = ไม่ต้องรัน)
+allowBuilds:
+  # binary สำหรับ macOS/Linux มากับ optional dependency แล้ว ไม่ต้องรัน postinstall
+  unrs-resolver: false
+
+# §10.11 ข้อยกเว้นของ pnpm audit — ต้องมีเหตุผลและวันทบทวนทุกรายการ
+auditConfig:
+  ignoreGhsas:
+    # braces (ReDoS/stack exhaustion) มาทาง eslint-config-next → fast-glob ใช้ตอน lint เท่านั้น
+    # pattern มาจาก config ของเราเอง ไม่ใช่ input ผู้ใช้ และยังไม่มีเวอร์ชันที่แก้ — ทบทวนภายใน 2026-11-17
+    - GHSA-vfj7-8cjw-p6xm

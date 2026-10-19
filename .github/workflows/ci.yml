@@ -1,0 +1,93 @@
+# §9 CI — ระยะที่ 1: lint · typecheck · unit · build · E2E (3 ขนาดจอ) + security scan
+# ระยะที่ 2 จะเพิ่ม integration test (Testcontainers), Docker image + Trivy + SBOM และ deploy staging
+# §9.4 ทุก action pin ด้วย commit SHA เต็ม (Renovate อัปเดตให้ผ่าน helpers:pinGitHubActionDigests)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 1 * * *' # 08:00 น. เวลาไทย — §10.13 pnpm audit รายวัน
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+  TURBO_TELEMETRY_DISABLED: '1'
+
+jobs:
+  quality:
+    name: Lint · Typecheck · Test · Build · E2E
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # turbo --affected ต้องใช้ประวัติ git เพื่อเทียบกับ base branch
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0 (อ่านเวอร์ชันจาก packageManager)
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # §9.1 รันเฉพาะ app/package ที่ได้รับผลกระทบ
+      - run: pnpm turbo run lint typecheck test build --affected
+
+      - name: Install Chrome for Playwright
+        run: pnpm --filter @app/fitness exec playwright install --with-deps chrome
+      - name: E2E (mobile · tablet · desktop)
+        run: pnpm turbo run test:e2e --affected --concurrency=1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/*/playwright-report
+          retention-days: 7
+
+  security:
+    name: Audit · License · Secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # gitleaks สแกนทุก commit ใน PR
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # §10.11 fail เมื่อพบ High/Critical (ข้อยกเว้นอยู่ใน pnpm-workspace.yaml พร้อมเหตุผล)
+      - run: pnpm audit --audit-level=high
+      - name: License check
+        run: pnpm -r licenses list --prod --json | node scripts/check-licenses.mjs
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false' # ไม่ต้องให้สิทธิ์ pull-requests: write
+
+  sast:
+    name: SAST (Semgrep)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container:
+      image: semgrep/semgrep:1.180.0@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # §10.13 block merge เมื่อพบระดับ High ขึ้นไป (ERROR ของ Semgrep)
+      - run: semgrep scan --config p/default --config p/typescript --config p/react --severity ERROR --error --metrics off
