@@ -283,3 +283,18 @@ test.describe('มุมมองและตัวกรอง', () => {
     await expect(page.getByRole('heading', { name: 'โค้ชบอส' })).toHaveCount(0);
   });
 });
+
+test.describe('ธีม', () => {
+  test('เปลี่ยนธีมแล้วสีเปลี่ยนทันที และยังอยู่หลังโหลดหน้าใหม่', async ({ page }) => {
+    await page.goto('/payments/p-101');
+    const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const before = await bg();
+    await page.getByRole('combobox', { name: 'ธีม' }).click();
+    await page.getByRole('option', { name: /^Daylight/ }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expect.poll(bg).not.toBe(before);
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await expectNoHorizontalScroll(page);
+  });
+});

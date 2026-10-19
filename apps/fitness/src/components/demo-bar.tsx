@@ -14,7 +14,7 @@ const ROLE_INFO: Record<Role, { icon: ReactNode; description: string }> = {
 };
 
 /** แถบโหมดทดลอง: สลับบทบาทเพื่อดูสิทธิ์แต่ละตำแหน่ง (ระยะที่ 2 แทนด้วยการ login จริง) */
-export function DemoBar({ role, canReset, switchAction, resetAction }: { role: Role; canReset: boolean; switchAction: (formData: FormData) => Promise<void>; resetAction: () => Promise<void> }) {
+export function DemoBar({ role, canReset, switchAction, resetAction, children }: { role: Role; canReset: boolean; switchAction: (formData: FormData) => Promise<void>; resetAction: () => Promise<void>; children?: ReactNode }) {
   const [pending, startTransition] = useTransition();
   const [shownRole, setShownRole] = useOptimistic(role);
   const switchTo = (next: string) => {
@@ -32,7 +32,8 @@ export function DemoBar({ role, canReset, switchAction, resetAction }: { role: R
         โหมดทดลอง
       </span>
       <span className="hidden text-muted sm:inline">ข้อมูลตัวอย่าง · ไม่ได้บันทึกถาวร</span>
-      <div className={`ml-auto ${pending ? 'opacity-60' : ''}`} aria-busy={pending}>
+      <div className="ml-auto">{children}</div>
+      <div className={pending ? 'opacity-60' : ''} aria-busy={pending}>
         <Dropdown
           label="ดูในฐานะ"
           inline

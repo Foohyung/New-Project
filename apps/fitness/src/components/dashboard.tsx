@@ -101,7 +101,7 @@ export function HourlyChart({ hourly, currentHour }: { hourly: [number, number, 
               >
                 {isNow && forecast && (
                   <>
-                    <span style={{ height: `${(value / forecast) * 100}%` }} className="absolute inset-x-0 bottom-0 rounded-t-md bg-lime shadow-[0_0_24px_rgba(198,255,61,.4)]" />
+                    <span style={{ height: `${(value / forecast) * 100}%` }} className="absolute inset-x-0 bottom-0 rounded-t-md bg-lime shadow-[0_0_24px_color-mix(in_oklab,var(--color-lime)_40%,transparent)]" />
                     <span className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-lime px-1.5 text-[11px] font-bold whitespace-nowrap text-bg">
                       {value} / ~{forecast}
                     </span>

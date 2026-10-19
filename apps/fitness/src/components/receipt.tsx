@@ -8,10 +8,10 @@ import { QrCode } from './qr-code';
 const amountFmt = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const amount = (satang: number) => amountFmt.format(satang / 100);
 
-/* กระดาษสีขาวทั้งบนจอและตอนพิมพ์ จึงใช้สีคงที่แทน token ของธีมมืด */
-const INK = 'text-[#14161a]';
-const MUTED = 'text-[#5b6270]';
-const LINE = 'border-[#e3e6ea]';
+/* บนจอใช้สีตามธีมที่เลือก · ตอนพิมพ์ globals.css สลับ token เป็นโทนสว่างให้เอง */
+const INK = 'text-ink';
+const MUTED = 'text-muted';
+const LINE = 'border-line';
 
 /**
  * ใบเสร็จรับเงิน/ใบกำกับภาษีอย่างย่อ (ชำระแล้ว) หรือใบแจ้งชำระเงินพร้อม QR (ยังไม่ชำระ)
@@ -23,13 +23,13 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
   const { baseSatang, vatSatang } = vatFromInclusive(p.amountSatang);
 
   return (
-    <article aria-label={paid ? `ใบเสร็จ ${p.receiptNo}` : `ใบแจ้งชำระ ${p.receiptNo}`} className={`receipt-paper mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl bg-white ${INK} shadow-[0_1px_0_#ffffff14,0_24px_48px_-24px_#000]`}>
+    <article aria-label={paid ? `ใบเสร็จ ${p.receiptNo}` : `ใบแจ้งชำระ ${p.receiptNo}`} className={`receipt-paper mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-line bg-surface ${INK} shadow-[0_24px_48px_-28px_#000]`}>
       <div aria-hidden className="h-1.5 bg-lime" />
       <div className="flex flex-col gap-6 p-5 sm:p-10 print:px-0 print:pt-5 print:pb-0">
         {/* ผู้ขาย + ชื่อเอกสาร */}
         <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
-            <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#0b0d10] text-lime"><Zap className="size-6" strokeWidth={2.5} /></span>
+            <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-xl bg-lime text-bg"><Zap className="size-6" strokeWidth={2.5} /></span>
             <div className="min-w-0 text-sm">
               <p className="font-display text-xl leading-tight font-bold tracking-[.08em]">{shop.brand}</p>
               <p className="font-medium">{shop.legalName} · {shop.branch}</p>
@@ -66,7 +66,7 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
         {/* รายการ: จอเล็กซ่อนคอลัมน์จำนวน/ราคาต่อหน่วย แต่ตอนพิมพ์แสดงครบ */}
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className={`border-y ${LINE} bg-[#f4f6f8] text-xs ${MUTED}`}>
+            <tr className={`border-y ${LINE} bg-surface-2 text-xs ${MUTED}`}>
               <th scope="col" className="w-10 px-2 py-2.5 font-medium">ลำดับ</th>
               <th scope="col" className="px-2 py-2.5 font-medium">รายการ</th>
               <th scope="col" className="hidden w-16 px-2 py-2.5 text-right font-medium sm:table-cell print:table-cell">จำนวน</th>
@@ -93,7 +93,7 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
 
         {/* ยอดรวม + จำนวนเงินตัวอักษร */}
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] sm:items-end">
-          <div className="rounded-xl bg-[#f4f6f8] px-4 py-3 text-sm">
+          <div className="rounded-xl bg-surface-2 px-4 py-3 text-sm">
             <p className={`text-xs ${MUTED}`}>จำนวนเงิน (ตัวอักษร)</p>
             <p className="font-semibold">({bahtText(p.amountSatang)})</p>
           </div>
@@ -109,7 +109,7 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
 
         {paid ? (
           <div className={`grid items-end gap-6 border-t border-dashed ${LINE} pt-6 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]`}>
-            <div aria-label="สถานะ: ชำระแล้ว" className="w-fit -rotate-6 rounded-lg border-2 border-[#15803d] px-4 py-1.5 text-center text-[#15803d]">
+            <div aria-label="สถานะ: ชำระแล้ว" className="w-fit -rotate-6 rounded-lg border-2 border-lime px-4 py-1.5 text-center text-lime">
               <p className="font-display text-lg leading-tight font-bold tracking-[.12em]">PAID</p>
               <p className="text-xs font-semibold">ชำระแล้ว {formatThaiDateOf(issuedAt)}</p>
             </div>
@@ -118,7 +118,7 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
           </div>
         ) : (
           <div className={`flex flex-col items-center gap-4 rounded-xl border ${LINE} p-4 text-center sm:flex-row sm:text-left`}>
-            <QrCode value={promptPayPayload(shop.promptPayId, p.amountSatang)} label={`QR PromptPay ยอด ${formatBaht(p.amountSatang, { showSatang: true })}`} className="size-40 shrink-0" />
+            <QrCode value={promptPayPayload(shop.promptPayId, p.amountSatang)} label={`QR PromptPay ยอด ${formatBaht(p.amountSatang, { showSatang: true })}`} className="size-40 shrink-0 border border-line p-2" />
             <div className="min-w-0 text-sm">
               <p className="mb-1 inline-block rounded bg-[#113566] px-2 py-0.5 text-xs font-bold tracking-wide text-white">PromptPay</p>
               <p className="font-display text-2xl font-semibold">{formatBaht(p.amountSatang, { showSatang: true })}</p>
@@ -140,7 +140,7 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
 function Signature({ label, name }: { label: string; name: string }) {
   return (
     <div className="text-center text-sm">
-      <div className={`mx-auto mb-1 h-10 max-w-56 border-b border-[#9aa1ad]`} />
+      <div className={`mx-auto mb-1 h-10 max-w-56 border-b border-muted`} />
       <p className="font-medium">({name})</p>
       <p className={`text-xs ${MUTED}`}>{label}</p>
     </div>
