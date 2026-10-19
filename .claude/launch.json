@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fitness",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["apps/fitness/node_modules/next/dist/bin/next", "dev", "apps/fitness", "--port", "3001"],
+      "port": 3001
+    },
+    {
+      "name": "dormitory",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["apps/dormitory/node_modules/next/dist/bin/next", "dev", "apps/dormitory", "--port", "3002"],
+      "port": 3002
+    },
+    {
+      "name": "real-estate",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["apps/real-estate/node_modules/next/dist/bin/next", "dev", "apps/real-estate", "--port", "3003"],
+      "port": 3003
+    }
+  ]
+}

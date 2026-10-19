@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Design: แบบ 2 Garden — เขียวมิ้นต์ เป็นมิตร */
+@theme {
+  --color-bg: #f2f7f3;
+  --color-surface: #ffffff;
+  --color-ink: #16302b;
+  --color-muted: #5e7470;
+  --color-line: #e1ece5;
+  --color-green: #1f9d6b;
+  --color-green-deep: #0f5f45;
+  --color-mint: #d8f1e4;
+  --color-sun: #ffc857;
+  --color-sun-soft: #fff4d6;
+  --color-coral: #c94f3d;
+  --color-coral-soft: #fde5e1;
+  --color-sky: #3d8fd1;
+  --color-sky-soft: #e1f0fb;
+  --color-lilac: #7a63d8;
+  --color-lilac-soft: #eeeafe;
+}
+
+@theme inline {
+  --font-sans: var(--font-looped), system-ui, sans-serif;
+  --font-display: var(--font-mitr), var(--font-looped), sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-base text-ink antialiased;
+    line-height: 1.65;
+  }
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-green);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -4,20 +4,61 @@
 
 | โปรเจกต์ | โฟลเดอร์ | สถานะ |
 |---|---|---|
-| ระบบจัดการฟิตเนส | [`apps/fitness`](apps/fitness) | เลือก design |
-| ระบบจัดการหอพัก | [`apps/dormitory`](apps/dormitory) | เลือก design |
-| ระบบอสังหาริมทรัพย์ | [`apps/real-estate`](apps/real-estate) | เลือก design |
-| เว็บไซต์บริษัท | [`apps/company-website`](apps/company-website) | เลือก design |
+| ระบบจัดการฟิตเนส | [`apps/fitness`](apps/fitness) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 1 Pulse · http://localhost:3001 |
+| ระบบจัดการหอพัก | [`apps/dormitory`](apps/dormitory) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 2 Garden · http://localhost:3002 |
+| ระบบอสังหาริมทรัพย์ | [`apps/real-estate`](apps/real-estate) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 3 Hearth · http://localhost:3003 |
+| เว็บไซต์บริษัท | [`apps/company-website`](apps/company-website) | ⏸ พักไว้ (ยังมี 3 แบบ) |
 | ระบบจองทัวร์ | [`apps/tour-booking`](apps/tour-booking) | 🎨 รอเลือก design (Horizon · Journey · Getaway) |
+
+**ระยะที่ 1 (เสร็จแล้ว):** หน้าเว็บตาม design ที่เลือก, business logic พร้อม unit test, ข้อมูลตัวอย่างผ่าน Data Access Layer, security headers + CSP แบบ nonce, E2E 3 ขนาดจอ และ CI
+**ระยะที่ 2 (ถัดไป):** PostgreSQL + Prisma, login ด้วย Better Auth + 2FA, RBAC, audit log ลงฐานข้อมูล, Redis rate limit และแจ้งเตือนผ่าน LINE OA
+
+## เริ่มใช้งาน
+
+ต้องมี Node.js 24 (ดู `.nvmrc`) และ pnpm 12 (เวอร์ชันระบุใน `packageManager`)
+
+```bash
+pnpm install
+pnpm dev          # เปิดทั้ง 3 เว็บพร้อมกัน
+```
+
+| เว็บ | URL | หน้าที่มี |
+|---|---|---|
+| ฟิตเนส | http://localhost:3001 | แดชบอร์ด, รายชื่อสมาชิก, เช็กอิน |
+| หอพัก | http://localhost:3002 | ภาพรวม + ผังห้อง, รายการห้อง, ใบแจ้งหนี้, รายละเอียดห้อง |
+| อสังหาฯ | http://localhost:3003 | หน้าแรก + ค้นหา/กรอง, หน้าประกาศ + ฟอร์มนัดชม, sitemap/robots |
+
+ค่า env ของแต่ละเว็บดูได้ใน `apps/<project>/.env.example`
+
+### คำสั่งตรวจคุณภาพ
+
+| คำสั่ง | ทำอะไร |
+|---|---|
+| `pnpm check` | lint + typecheck + unit test ทุกโปรเจกต์ |
+| `pnpm build` | build production ทุกเว็บ |
+| `pnpm test:e2e` | E2E ด้วย Playwright ที่ขนาดมือถือ / แท็บเล็ต / เดสก์ท็อป (ต้องมี Google Chrome ในเครื่อง) |
+| `pnpm --filter @app/fitness dev` | รันเฉพาะเว็บเดียว (`@app/dormitory`, `@app/real-estate`) |
+
+CI อยู่ที่ [`.github/workflows/ci.yml`](.github/workflows/ci.yml): lint · typecheck · unit · build · E2E และ security scan (pnpm audit, license, gitleaks, Semgrep) ส่วน dependency อัปเดตผ่าน Renovate ([`renovate.json`](renovate.json))
 
 ## ดู Design ทั้งหมด
 
-แต่ละโปรเจกต์มี design ให้เลือก 3 แบบ เป็นไฟล์ HTML ธรรมดาอยู่ใน `apps/<project>/designs/` เปิดหน้ารวมได้ที่ [`docs/design-gallery.html`](docs/design-gallery.html) (เปิดในเบราว์เซอร์ได้เลย)
+Design เป็นไฟล์ HTML ธรรมดาอยู่ใน `apps/<project>/designs/` และภาพโปรโมท PDF อยู่ใน `apps/<project>/promo/` เปิดหน้ารวม design ได้ที่ [`docs/design-gallery.html`](docs/design-gallery.html) (เปิดในเบราว์เซอร์ได้เลย)
 
 ## โครงสร้าง
 
 ```
-apps/        # แต่ละโปรเจกต์ (Next.js app — จะ scaffold หลังเลือก design)
-packages/    # โค้ดที่ใช้ร่วมกัน (ui, auth, security, utils, config, testing)
-docs/        # มาตรฐานกลางและเอกสารร่วม
+apps/<project>/
+  src/app/         # หน้าเว็บ (Next.js App Router)
+  src/components/  # UI — ห้าม import จาก src/server (บังคับด้วย ESLint)
+  src/features/    # business logic + schema + server action แยกตามโดเมน
+  src/server/      # Data Access Layer (server-only) — ตรวจสิทธิ์และคืน DTO
+  e2e/             # Playwright
+  designs/ promo/  # HTML mockup และ PDF โปรโมท
+packages/
+  config/          # tsconfig + ESLint ร่วม
+  security/        # CSP, security headers
+  utils/           # เงิน (สตางค์), วันที่ พ.ศ., เบอร์โทร
+  testing/         # Playwright config ร่วม + ตรวจ scroll แนวนอน
+docs/              # มาตรฐานกลางและเอกสารร่วม
 ```

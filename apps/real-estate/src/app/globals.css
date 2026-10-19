@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* Design: แบบ 3 Hearth — โทนอบอุ่นดินเผา แนว lifestyle */
+@theme {
+  --color-sand: #f6efe6;
+  --color-cream: #fffbf5;
+  --color-terra: #c65d3b;
+  --color-terra-deep: #a8472a;
+  --color-terra-soft: #f6ddd2;
+  --color-olive: #5e6b3a;
+  --color-olive-soft: #e6e9d6;
+  --color-ink: #2b211c;
+  --color-muted: #6f5f54;
+  --color-line: #eadfd2;
+}
+
+@theme inline {
+  --font-sans: var(--font-sarabun), system-ui, sans-serif;
+  --font-display: var(--font-pridi), var(--font-sarabun), serif;
+}
+
+@layer base {
+  body {
+    @apply bg-sand font-sans text-base text-ink antialiased;
+    line-height: 1.7;
+  }
+  input, select, textarea {
+    font-size: max(16px, 1em);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-terra);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
