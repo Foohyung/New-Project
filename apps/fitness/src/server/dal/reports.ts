@@ -16,6 +16,8 @@ export interface ReportDto {
   range: DateRange;
   /** วันแรกที่มีข้อมูลตัวอย่าง */
   dataFrom: string;
+  /** รายได้ทุกวันที่มีข้อมูล (สตางค์) — ใช้ทำ heatmap ในปฏิทิน */
+  revenueByDay: Record<string, number>;
   revenue: { totalSatang: number; monthSatang: number; changePct: number; daily: DailyValue[]; avgDailySatang: number; pendingSatang: number };
   byPackage: { id: string; name: string; satang: number }[];
   checkIns: { daily: DailyValue[]; avg: number; today: number };
@@ -71,6 +73,7 @@ export async function getReport(session: Session, requested: DateRange | null = 
     to,
     range,
     dataFrom: BASELINE.dailyRevenue[0]?.date ?? monthStart,
+    revenueByDay: Object.fromEntries(revenueDaily.filter(d => d.date <= to).map(d => [d.date, d.value])),
     revenue: {
       totalSatang,
       monthSatang,

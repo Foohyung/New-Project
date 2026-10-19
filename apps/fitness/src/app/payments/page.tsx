@@ -90,7 +90,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         ))}
       </nav>
 
-      <DateRangeFilter path="/payments" params={current} range={range} today={today()} label="วันที่ทำรายการ" allowAll />
+      <DateRangeFilter path="/payments" params={current} range={range} today={today()} label="วันที่ทำรายการ" allowAll variant="dual" />
 
       <Toolbar>
         <ViewSwitch views={VIEW_OPTIONS} current={view} hrefFor={v => href({ view: v === 'table' ? undefined : v })} />

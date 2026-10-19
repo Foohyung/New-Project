@@ -37,7 +37,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         actions={<a href={exportHref} download className={btn.secondary}><Download aria-hidden className="size-5" />ส่งออก CSV</a>}
       />
 
-      <DateRangeFilter path="/reports" params={params} range={range} today={date} defaultRange={defaultRange} />
+      <DateRangeFilter path="/reports" params={params} range={range} today={date} defaultRange={defaultRange} variant="heatmap" heatSatang={r.revenueByDay} />
       {range.from < r.dataFrom && <p className="-mt-2 text-xs text-faint">ข้อมูลตัวอย่างเริ่มที่ {formatThaiDate(r.dataFrom, 'long')} · วันก่อนหน้านั้นแสดงเป็น 0</p>}
 
       <section aria-label="ตัวเลขสำคัญ" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">

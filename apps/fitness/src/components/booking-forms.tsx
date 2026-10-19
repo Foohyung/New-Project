@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { useActionState, useRef } from 'react';
 import type { ActionResult } from '@/features/shared/action-result';
 import { ResultMessage } from './action-button';
+import { DatePickerField } from './calendar';
 import { Dropdown } from './dropdown';
 import { TextField } from './field';
 import { btn, inputClass } from './ui';
@@ -53,7 +54,7 @@ export function PtBookForm({ action, today }: { action: Action; today: string })
     <form action={formAction} className="flex flex-col gap-3" noValidate>
       <TextField name="query" label="เบอร์โทรหรือรหัสสมาชิก" placeholder="เช่น FF-002107" autoComplete="off" error={errors.query} hint="ลอง FF-002107 (เหลือ 3 ครั้ง) หรือ FF-000958 (เหลือ 5 ครั้ง)" />
       <div className="grid grid-cols-2 gap-3">
-        <TextField name="date" label="วันที่" type="date" min={today} defaultValue={today} error={errors.date} />
+        <DatePickerField name="date" label="วันที่" min={today} defaultValue={today} today={today} error={errors.date} />
         <Dropdown name="time" label="เวลาเริ่ม" defaultValue="19:00" options={PT_TIMES} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -84,7 +85,7 @@ export function ClassCreateForm({ action, trainers, rooms, today }: { action: Ac
         {errors.room && <p className="text-sm text-danger">{errors.room}</p>}
       </div>
       <Dropdown name="level" label="ระดับ" defaultValue="กลาง" options={LEVELS} />
-      <TextField name="date" label="วันที่" type="date" min={today} defaultValue={today} error={errors.date} />
+      <DatePickerField name="date" label="วันที่" min={today} defaultValue={today} today={today} error={errors.date} />
       <TextField name="time" label="เวลาเริ่ม" type="time" defaultValue="17:00" step={900} error={errors.time} />
       <TextField name="minutes" label="ความยาว (นาที)" type="number" inputMode="numeric" min={30} max={120} defaultValue={45} error={errors.minutes} />
       <TextField name="capacity" label="รับได้ (คน)" type="number" inputMode="numeric" min={1} max={60} defaultValue={20} error={errors.capacity} />

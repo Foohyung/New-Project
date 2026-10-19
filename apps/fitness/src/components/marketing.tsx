@@ -5,6 +5,7 @@ import { useActionState, useRef, useState } from 'react';
 import { renderTemplate, CHANNEL_LABEL, CHANNELS, TEMPLATE_VARS, type Channel, type ReminderRound } from '@/features/reminders/service';
 import type { ActionResult } from '@/features/shared/action-result';
 import { ResultMessage } from './action-button';
+import { DatePickerField } from './calendar';
 import { Dropdown } from './dropdown';
 import { TextField } from './field';
 import { btn, inputClass } from './ui';
@@ -117,7 +118,7 @@ export function CouponCreateForm({ packages, action, today }: { packages: { id: 
         <TextField name="value" label={`มูลค่า (${unit ?? ''})`} type="number" inputMode="decimal" min={1} error={errors.value} />
         <TextField name="limit" label="จำนวนสิทธิ์" type="number" inputMode="numeric" min={1} placeholder="ไม่จำกัด" optional error={errors.limit} />
       </div>
-      <TextField name="expiresOn" label="หมดเขต" type="date" min={today} optional error={errors.expiresOn} />
+      <DatePickerField name="expiresOn" label="หมดเขต" min={today} today={today} optional placeholder="ไม่มีวันหมดเขต" error={errors.expiresOn} />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1.5 text-sm font-semibold">ใช้กับแพ็กเกจ <span className="font-normal text-faint">(ไม่เลือก = ทุกแพ็กเกจ)</span></legend>
         <div className="flex flex-wrap gap-2">

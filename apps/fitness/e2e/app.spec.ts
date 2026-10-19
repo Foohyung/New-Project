@@ -383,9 +383,12 @@ test.describe('ชุดหาเงินและรักษาสมาช�
 test.describe('ตัวกรองช่วงวันที่', () => {
   test('การเงินกรองตามวันที่ทำรายการ และคงตัวกรองอื่นไว้', async ({ page }) => {
     await page.goto('/payments?method=promptpay');
-    await page.getByLabel('ตั้งแต่').fill('2026-10-10');
-    await page.getByLabel('ถึง').fill('2026-10-10');
-    await page.getByRole('button', { name: 'ใช้ช่วงนี้' }).click();
+    await page.getByRole('region', { name: 'วันที่ทำรายการ' }).getByRole('button').click();
+    const picker = page.getByRole('dialog', { name: 'วันที่ทำรายการ' });
+    await picker.getByRole('button', { name: '10 ต.ค. 2569' }).click();
+    await picker.getByRole('button', { name: '10 ต.ค. 2569' }).click();
+    await expect(picker.getByRole('button', { name: '16 ต.ค. 2569' })).toBeDisabled(); // ตัวกรองย้อนหลังเลือกอนาคตไม่ได้
+    await picker.getByRole('button', { name: 'ใช้ช่วงนี้' }).click();
     await expect(page).toHaveURL(/from=2026-10-10/);
     await expect(page).toHaveURL(/method=promptpay/);
     await expect(page.getByRole('link', { name: 'อรวรรณ มีสุข' }).first()).toBeVisible();
@@ -395,7 +398,11 @@ test.describe('ตัวกรองช่วงวันที่', () => {
 
   test('รายงานใช้ช่วงด่วน และไฟล์ CSV ออกตามช่วงเดียวกัน', async ({ page }) => {
     await page.goto('/reports');
-    await page.getByRole('link', { name: '7 วัน', exact: true }).click();
+    await page.getByRole('region', { name: 'ช่วงวันที่' }).getByRole('button').click();
+    const picker = page.getByRole('dialog', { name: 'ช่วงวันที่' });
+    await picker.getByRole('button', { name: '7 วัน', exact: true }).click();
+    await expect(picker.getByText(/รวมในช่วงที่เลือก/)).toBeVisible();
+    await picker.getByRole('button', { name: 'ใช้ช่วงนี้' }).click();
     await expect(page).toHaveURL(/from=2026-10-09&to=2026-10-15/);
     await expect(page.getByText('รายได้ในช่วงนี้')).toBeVisible();
     const csv = await page.request.get('/reports/export?from=2026-10-09&to=2026-10-15');
@@ -407,7 +414,10 @@ test.describe('ตัวกรองช่วงวันที่', () => {
 
   test('สมาชิกกรองตามวันหมดอายุ 7 วันข้างหน้า', async ({ page }) => {
     await page.goto('/members');
-    await page.getByRole('link', { name: '7 วันข้างหน้า' }).click();
+    await page.getByRole('region', { name: 'วันหมดอายุ' }).getByRole('button').click();
+    const picker = page.getByRole('dialog', { name: 'วันหมดอายุ' });
+    await picker.getByRole('button', { name: '7 วันข้างหน้า' }).click();
+    await picker.getByRole('button', { name: 'ใช้ช่วงนี้' }).click();
     await expect(page).toHaveURL(/to=2026-10-21/);
     await expect(page.getByRole('link', { name: 'ณัฐพล ศรีสุข' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'พิมพ์ชนก วงศ์ดี' }).first()).toBeVisible();
