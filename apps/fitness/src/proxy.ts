@@ -3,6 +3,13 @@ import { buildCsp, createNonce } from '@repo/security';
 
 /** ใส่ Content-Security-Policy แบบ nonce ทุก request (§10.5) — Next.js ใส่ nonce ให้ script ของตัวเองอัตโนมัติ */
 export function proxy(request: NextRequest) {
+  // ยังไม่ได้เข้าสู่ระบบ → ไปหน้า login พร้อมจำหน้าที่จะไป (server ตรวจ session จริงอีกชั้นใน requireSession)
+  const { pathname, search } = request.nextUrl;
+  if (!request.cookies.has('ff-session') && pathname !== '/login') {
+    const url = new URL('/login', request.url);
+    if (pathname !== '/') url.searchParams.set('next', pathname + search);
+    return NextResponse.redirect(url);
+  }
   const nonce = createNonce();
   const csp = buildCsp({ nonce, dev: process.env.NODE_ENV !== 'production' });
   const requestHeaders = new Headers(request.headers);

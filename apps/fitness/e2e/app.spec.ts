@@ -4,9 +4,29 @@ import { expectNoHorizontalScroll } from '@repo/testing';
 /** เบอร์ไม่ซ้ำกันในแต่ละ test (server ใช้ข้อมูลชุดเดียวกันทุก project ที่รันพร้อมกัน) */
 const uniquePhone = () => `09${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
 
-async function asRole(page: Page, role: 'owner' | 'manager' | 'front-desk' | 'trainer' | 'member') {
-  await page.context().addCookies([{ name: 'ff-demo-role', value: role, url: 'http://localhost:3001' }]);
+type Role = 'owner' | 'manager' | 'front-desk' | 'trainer' | 'member';
+/** บัญชีทดลองจาก src/server/accounts.ts (รหัสผ่านเดียวกันทุกบัญชี = DEMO_PASSWORD) */
+const PASSWORD = process.env.DEMO_PASSWORD ?? 'FitFlow!2569';
+const LOGIN: Record<Role, string> = { owner: 'owner@fitflow.test', manager: 'manager@fitflow.test', 'front-desk': 'desk@fitflow.test', trainer: 'boss@fitflow.test', member: '080-000-0101' };
+
+async function login(page: Page, role: Role, password = PASSWORD) {
+  await page.goto('/login');
+  await page.getByLabel('อีเมลหรือเบอร์มือถือ').fill(LOGIN[role]);
+  await page.getByLabel('รหัสผ่าน', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+  await page.waitForURL(url => !url.pathname.startsWith('/login'));
 }
+
+/** เปลี่ยนผู้ใช้: ออกจากบัญชีเดิมแล้วเข้าด้วยบัญชีของบทบาทนั้น (บทบาทมาจากบัญชี เลือกเองไม่ได้) */
+async function asRole(page: Page, role: Role) {
+  await page.context().clearCookies();
+  await login(page, role);
+}
+
+// ทุกเทสต์เริ่มจากผู้จัดการที่เข้าสู่ระบบแล้ว ยกเว้นชุด "เข้าสู่ระบบ" ที่ล้าง cookie เอง
+test.beforeEach(async ({ page }) => {
+  await login(page, 'manager');
+});
 
 /** สมัครสมาชิกใหม่ผ่านหน้าเว็บ แล้วคืนเบอร์โทร */
 async function signUp(page: Page, method: 'เงินสด' | 'PromptPay' = 'เงินสด'): Promise<string> {
@@ -169,15 +189,8 @@ test.describe('คลาส', () => {
 });
 
 test.describe('บทบาทและสิทธิ์', () => {
-  test('สลับเป็นสมาชิก เห็นบัตร QR และจองคลาสเองได้', async ({ page }) => {
-    await page.goto('/');
-    // ใช้คีย์บอร์ดเลือก เพื่อทดสอบ Dropdown แบบ combobox ไปด้วย
-    const role = page.getByRole('combobox', { name: 'ดูในฐานะ' });
-    await role.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('listbox')).toBeVisible();
-    await page.keyboard.press('End');
-    await page.keyboard.press('Enter');
+  test('สมาชิกเข้าสู่ระบบด้วยเบอร์ เห็นบัตร QR และจองคลาสเองได้', async ({ page }) => {
+    await asRole(page, 'member');
     await expect(page).toHaveURL(/\/me$/);
     await expect(page.getByRole('img', { name: /QR บัตรสมาชิก FF-002318/ })).toBeVisible();
     await expectNoHorizontalScroll(page);
@@ -222,7 +235,7 @@ test.describe('การเงินและรายงาน', () => {
     // ตอนพิมพ์ เหลือเฉพาะใบเสร็จ (เมนู/แถบโหมดทดลอง/ปุ่มซ่อน)
     await page.emulateMedia({ media: 'print' });
     await expect(page.getByRole('button', { name: 'พิมพ์ใบเสร็จ' })).toBeHidden();
-    await expect(page.getByRole('combobox', { name: 'ดูในฐานะ' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'ออกจากระบบ' })).toBeHidden();
     await expect(receipt).toBeVisible();
   });
 
@@ -421,5 +434,70 @@ test.describe('ตัวกรองช่วงวันที่', () => {
     await expect(page).toHaveURL(/to=2026-10-21/);
     await expect(page.getByRole('link', { name: 'ณัฐพล ศรีสุข' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'พิมพ์ชนก วงศ์ดี' }).first()).toBeVisible();
+  });
+});
+
+test.describe('เข้าสู่ระบบ', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies();
+  });
+
+  test('ยังไม่เข้าสู่ระบบถูกพาไปหน้า login แล้วกลับมาหน้าเดิม', async ({ page }) => {
+    await page.goto('/members/02');
+    await expect(page).toHaveURL(/\/login\?next=%2Fmembers%2F02$/);
+    await expect(page.getByRole('heading', { name: 'เข้าสู่ระบบ' })).toBeVisible();
+    await expect(page.getByText(/ดูในฐานะ|เลือกบทบาท/)).toHaveCount(0); // ไม่มีให้เลือกบทบาท
+    await expectNoHorizontalScroll(page);
+    await page.getByLabel('อีเมลหรือเบอร์มือถือ').fill('Manager@FitFlow.test');
+    await page.getByLabel('รหัสผ่าน', { exact: true }).fill(PASSWORD);
+    await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+    await expect(page).toHaveURL(/\/members\/02$/);
+  });
+
+  test('รหัสผิดบอกแบบไม่เปิดเผยว่าบัญชีมีอยู่ และใส่ผิดหลายครั้งถูกล็อก', async ({ page }, info) => {
+    await page.goto('/login');
+    const user = `nobody-${info.project.name}-${String(Date.now())}@fitflow.test`;
+    for (let i = 0; i < 4; i++) {
+      await page.getByLabel('อีเมลหรือเบอร์มือถือ').fill(user);
+      await page.getByLabel('รหัสผ่าน', { exact: true }).fill('wrong-password');
+      await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+      // รอให้ส่งเสร็จจริง (ฟอร์มล้างรหัสผ่าน) ก่อนลองรอบถัดไป — ข้อความ error ของรอบก่อนยังค้างอยู่บนจอ
+      await expect(page.getByLabel('รหัสผ่าน', { exact: true })).toHaveValue('');
+      await expect(page.getByRole('button', { name: 'เข้าสู่ระบบ' })).toBeEnabled();
+      await expect(page.getByRole('alert').filter({ hasText: 'ไม่ถูกต้อง' })).toBeVisible();
+    }
+    // ช่องอีเมลยังค้างไว้ ใส่แค่รหัสผ่านใหม่
+    await expect(page.getByLabel('อีเมลหรือเบอร์มือถือ')).toHaveValue(user);
+    await page.getByLabel('รหัสผ่าน', { exact: true }).fill('wrong-password');
+    await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'ถูกล็อก' })).toBeVisible();
+  });
+
+  test('บทบาทมาจากบัญชี: เทรนเนอร์ไปตารางคลาส สมาชิกไปบัตรสมาชิก', async ({ page }) => {
+    await login(page, 'trainer');
+    await expect(page).toHaveURL(/\/classes$/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('ตารางคลาส');
+    await page.context().clearCookies();
+    await login(page, 'member');
+    await expect(page).toHaveURL(/\/me$/);
+  });
+
+  test('ออกจากระบบแล้วกลับเข้าหน้าเดิมไม่ได้', async ({ page }) => {
+    await login(page, 'front-desk');
+    await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    await page.goto('/checkin');
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test('Dropdown ใช้คีย์บอร์ดได้ (เลือกธีม)', async ({ page }) => {
+    await login(page, 'manager');
+    const theme = page.getByRole('combobox', { name: 'ธีม' });
+    await theme.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('listbox')).toBeVisible();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'sunset');
   });
 });
