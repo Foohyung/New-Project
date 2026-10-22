@@ -1,7 +1,9 @@
 import 'server-only';
 import { addDays } from '@repo/utils';
+import { today } from './clock';
 import type { CouponLike } from '@/features/coupons/service';
 import type { Channel, ReminderRound, RoundId } from '@/features/reminders/service';
+import type { BodyProfile } from '@/features/nutrition/service';
 import type { FollowUpStage } from '@/features/retention/service';
 import type { SavedCard } from '@/features/subscriptions/service';
 
@@ -160,6 +162,37 @@ export interface FollowUpRecord {
   updatedAt: string;
 }
 
+/** โปรแกรมฝึกต่อวันของแต่ละบัญชี (ทุกบทบาทใช้ได้ · ท่าเรียงตามลำดับที่เพิ่ม) */
+export interface WorkoutPlanRecord {
+  userId: string;
+  date: string;
+  exerciseIds: string[];
+  doneIds: string[];
+}
+
+/**
+ * ข้อมูลร่างกายเพื่อคำนวณเป้าอาหาร = ข้อมูลสุขภาพ (PDPA ม.26) เก็บเมื่อสมาชิกยินยอมแยกเฉพาะเรื่องนี้เท่านั้น
+ * ถอนความยินยอมแล้วลบทั้งโปรไฟล์และบันทึกอาหารทันที · ผูกกับบัญชี (userId) เจ้าของเห็นได้คนเดียว ไม่มีบทบาทใดเห็นของคนอื่น
+ */
+export interface HealthProfileRecord extends BodyProfile {
+  userId: string;
+  consentAt: string;
+  noticeVersion: string;
+  updatedAt: string;
+}
+
+export interface MealLogRecord {
+  id: string;
+  userId: string;
+  date: string;
+  name: string;
+  kcal: number;
+  proteinG: number;
+  carbG: number;
+  fatG: number;
+  loggedAt: string;
+}
+
 export interface Store {
   packages: PackageRecord[];
   members: MemberRecord[];
@@ -174,6 +207,9 @@ export interface Store {
   reminderLogs: ReminderLogRecord[];
   charges: ChargeRecord[];
   followUps: FollowUpRecord[];
+  workoutPlans: WorkoutPlanRecord[];
+  healthProfiles: HealthProfileRecord[];
+  mealLogs: MealLogRecord[];
   sequence: { member: number; receipt: number };
 }
 
@@ -375,6 +411,22 @@ const FOLLOW_UPS: FollowUpRecord[] = [
   { memberId: '10', stage: 'won', note: 'ต่ออายุรายเดือนจากลิงก์เตือน', by: 'มนัสนันท์ ร.', updatedAt: '2026-10-10T04:12:00Z' },
 ];
 
+/** สมาชิกตัวอย่าง (ณัฐพล) ยินยอมและกรอกข้อมูลร่างกายไว้แล้ว พร้อมบันทึกอาหาร 2 มื้อของวันนี้ */
+function seedHealth(): Pick<Store, 'healthProfiles' | 'mealLogs'> {
+  const date = today();
+  const at = (time: string) => `${date}T${time}:00+07:00`;
+  return {
+    healthProfiles: [{ userId: 'member-01', sex: 'male', birthYear: 1994, heightCm: 174, weightKg: 78, goal: 'lose', activity: 'moderate', consentAt: '2026-10-01T03:00:00Z', noticeVersion: HEALTH_NOTICE_VERSION, updatedAt: '2026-10-01T03:00:00Z' }],
+    mealLogs: [
+      { id: 'ml-1', userId: 'member-01', date, name: 'ข้าวต้มไข่ + นมจืด', kcal: 380, proteinG: 22, carbG: 48, fatG: 10, loggedAt: at('07:30') },
+      { id: 'ml-2', userId: 'member-01', date, name: 'ข้าวมันไก่ (ไก่ต้ม ไม่เอาหนัง)', kcal: 450, proteinG: 32, carbG: 58, fatG: 9, loggedAt: at('12:15') },
+    ],
+  };
+}
+
+/** เวอร์ชันประกาศความเป็นส่วนตัวเรื่องข้อมูลสุขภาพ (บันทึกคู่กับ consent ทุกครั้ง) */
+export const HEALTH_NOTICE_VERSION = 'health-2026-10';
+
 function createStore(): Store {
   return {
     packages: structuredClone(PACKAGES),
@@ -390,6 +442,8 @@ function createStore(): Store {
     reminderLogs: structuredClone(REMINDER_LOGS),
     charges: structuredClone(CHARGES),
     followUps: structuredClone(FOLLOW_UPS),
+    workoutPlans: [],
+    ...seedHealth(),
     sequence: { member: 2331, receipt: 109 },
   };
 }

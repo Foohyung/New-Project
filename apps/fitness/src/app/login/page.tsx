@@ -1,9 +1,9 @@
-import { Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Kanit } from 'next/font/google';
 import { redirect } from 'next/navigation';
 import { Fragment, type ReactNode } from 'react';
 import { LoginForm } from '@/components/login-form';
+import { LogoIcon, PulseMark, Wordmark } from '@/components/logo';
 import { loginAction } from '@/features/auth/actions';
 import { landingFor, safeNextPath } from '@/features/auth/service';
 import { getSession } from '@/server/auth';
@@ -27,9 +27,9 @@ const STRIPES = 'bg-[repeating-linear-gradient(90deg,var(--color-bg)_0_26px,tran
 function Brand({ sub, inverse = false }: { sub: string; inverse?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${inverse ? 'bg-bg text-lime' : 'bg-lime text-bg'}`}><Zap aria-hidden className="size-6" /></span>
+      <LogoIcon className="size-11 rounded-xl" inverse={inverse} />
       <span className="leading-tight">
-        <b className="block font-display text-xl font-bold tracking-[.08em]">FITFLOW</b>
+        <Wordmark className="block text-xl" inverse={inverse} />
         <small className={`text-xs ${inverse ? 'text-bg/75' : 'text-muted'}`}>{sub}</small>
       </span>
     </div>
@@ -58,8 +58,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       {/* แผงแบรนด์ (แท็บเล็ตขึ้นไป) */}
       <section aria-label="FitFlow ระบบจัดการฟิตเนส" className="relative hidden flex-col justify-between gap-8 overflow-hidden bg-lime p-10 text-bg md:flex lg:p-14">
         <div aria-hidden className={`pointer-events-none absolute -top-24 -right-36 h-[150%] w-[460px] rotate-[28deg] opacity-[.12] ${STRIPES} [mask-image:linear-gradient(to_bottom,#000_45%,transparent_90%)]`} />
-        {/* โลโก้สายฟ้าของแบรนด์เป็นลายน้ำ */}
-        <Zap aria-hidden fill="currentColor" strokeWidth={0} className="pointer-events-none absolute top-1/2 -right-10 size-[400px] -translate-y-1/2 rotate-[8deg] text-bg/[.09]" />
+        {/* เส้นชีพจรของโลโก้เป็นลายน้ำ */}
+        <PulseMark strokeWidth={4} className="pointer-events-none absolute top-1/2 -right-24 size-[480px] -translate-y-1/2 text-bg/[.09]" />
         <div className="relative"><Brand sub="สาขาอารีย์" inverse /></div>
         <Words size="text-[clamp(64px,8.2vw,124px)] relative" />
         <div className="relative flex max-w-xl flex-col gap-4">

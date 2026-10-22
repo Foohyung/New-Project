@@ -14,7 +14,7 @@ import { normalizeIdentifier } from '@/features/auth/service';
  *   เทรนเนอร์     boss@fitflow.test
  *   สมาชิก        เบอร์ 080-000-0101
  */
-export const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? 'FitFlow!2569';
+export const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? '1234';
 
 export interface Account {
   id: string;
@@ -42,6 +42,7 @@ const seed = (a: Omit<Account, 'salt' | 'hash' | 'active'>): Account => ({ ...a,
 
 export const ACCOUNTS: Account[] = [
   seed({ id: 'staff-00', login: 'owner@fitflow.test', name: 'กิตติพงษ์ ส.', nickname: 'กต', role: 'owner', branch: BRANCH }),
+  seed({ id: 'staff-05', login: '67103', name: 'กิตติพงศ์ ส.', nickname: 'กต', role: 'owner', branch: BRANCH }),
   seed({ id: 'staff-01', login: 'manager@fitflow.test', name: 'มนัสนันท์ ร.', nickname: 'มน', role: 'manager', branch: BRANCH }),
   seed({ id: 'staff-02', login: 'desk@fitflow.test', name: 'ปริญญา ท.', nickname: 'ปริ', role: 'front-desk', branch: BRANCH }),
   seed({ id: 'staff-03', login: 'boss@fitflow.test', name: 'ณัฐวุฒิ บ.', nickname: 'บอส', role: 'trainer', branch: BRANCH, trainerId: 't1' }),

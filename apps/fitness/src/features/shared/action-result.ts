@@ -24,6 +24,7 @@ export function knownFailure(error: unknown): ActionResult {
     return { ok: false, message: COUPON_REJECT[reason], fieldErrors: { couponCode: COUPON_REJECT[reason] } };
   }
   if (code === 'NO_CONSENT') return { ok: false, message: 'สมาชิกไม่ได้ยินยอมรับข่าวสาร ส่งข้อความการตลาดไม่ได้ (PDPA) — โทรหาแทน' };
+  if (code === 'NO_HEALTH_CONSENT') return { ok: false, message: 'ยังไม่ได้ยินยอมให้เก็บข้อมูลสุขภาพ กรอกข้อมูลร่างกายก่อนบันทึกอาหาร' };
   if (code === 'COUPON_TAKEN') return { ok: false, message: 'มีโค้ดนี้อยู่แล้ว ตั้งชื่อโค้ดใหม่', fieldErrors: { code: 'โค้ดซ้ำ' } };
   throw error;
 }

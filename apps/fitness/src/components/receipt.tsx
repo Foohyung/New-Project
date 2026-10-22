@@ -1,8 +1,8 @@
 import { bahtText, formatBaht, formatThaiDate, formatThaiDateOf, formatThaiTime } from '@repo/utils';
-import { Zap } from 'lucide-react';
 import Link from 'next/link';
 import { METHOD_LABEL, promptPayPayload, VAT_RATE_PCT, vatFromInclusive } from '@/features/payments/service';
 import { KIND_LABEL, type PaymentDto, type ShopProfile } from '@/features/payments/types';
+import { LogoIcon } from './logo';
 import { QrCode } from './qr-code';
 
 const amountFmt = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -29,7 +29,7 @@ export function ReceiptDocument({ payment: p, shop, memberHref }: { payment: Pay
         {/* ผู้ขาย + ชื่อเอกสาร */}
         <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex gap-3">
-            <span aria-hidden className="grid size-12 shrink-0 place-items-center rounded-xl bg-lime text-bg"><Zap className="size-6" strokeWidth={2.5} /></span>
+            <LogoIcon className="size-12 rounded-xl" />
             <div className="min-w-0 text-sm">
               <p className="font-display text-xl leading-tight font-bold tracking-[.08em]">{shop.brand}</p>
               <p className="font-medium">{shop.legalName} · {shop.branch}</p>

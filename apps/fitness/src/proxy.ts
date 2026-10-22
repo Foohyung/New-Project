@@ -23,7 +23,8 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+      // ไอคอนเว็บต้องโหลดได้ก่อนเข้าสู่ระบบ (หน้า login ใช้ด้วย)
+      source: '/((?!api|_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

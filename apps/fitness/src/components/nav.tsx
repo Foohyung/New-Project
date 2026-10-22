@@ -1,10 +1,12 @@
 'use client';
 
-import { BellRing, ChevronRight, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, RefreshCw, ScanLine, Store, TicketPercent, Users, Wallet, Zap, type LucideIcon } from 'lucide-react';
+import { BellRing, ChevronRight, LogOut, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, Salad, RefreshCw, ScanLine, Store, TicketPercent, Users, Wallet, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { hasPermission, ROLE_LABEL, type Permission, type Role } from '@/features/auth/roles';
+import { ConfirmForm } from './confirm-form';
+import { LogoIcon, Wordmark } from './logo';
 
 interface NavItem {
   href: string;
@@ -65,6 +67,11 @@ const GROUPS: NavGroup[] = [
     { href: '/me', label: 'บัตรสมาชิก', short: 'บัตร', icon: IdCard, permission: 'portal.use', primary: true },
     { href: '/me/classes', label: 'จองคลาส', icon: CalendarPlus, permission: 'portal.use', primary: true },
   ] },
+  // ทุกบทบาทใช้ได้ (ข้อมูลของบัญชีตัวเอง) — สมาชิกเห็นทุกเมนูใน tab bar เพราะมีไม่เกิน 5 เมนู ส่วนพนักงานเข้าจากแถบข้าง/เมนูทั้งหมด
+  { id: 'coach', label: 'ฝึก & อาหาร', short: 'ฝึก/อาหาร', section: 'สุขภาพของฉัน', tone: 'lime', icon: Dumbbell, items: [
+    { href: '/me/workout', label: 'ฝึก', icon: Dumbbell, permission: 'coach.use' },
+    { href: '/me/food', label: 'อาหาร', icon: Salad, permission: 'coach.use' },
+  ] },
 ];
 
 /** โซนที่บทบาทนี้เห็น (ตัดเมนูที่ไม่มีสิทธิ์ และโซนที่ว่างออก) */
@@ -97,7 +104,7 @@ export interface ShellUser {
  * - เดสก์ท็อป (≥ lg): กดโซนแล้วกางเมนูย่อย · โซนของหน้าปัจจุบันกางไว้และไอคอนเป็นสีเขียว
  * - แท็บเล็ต (md): แสดงไอคอนเมนูย่อยทั้งหมด แบ่งโซนด้วยเส้นคั่น (§15.2.4)
  */
-export function Sidebar({ user }: { user: ShellUser }) {
+export function Sidebar({ user, logoutAction }: { user: ShellUser; logoutAction: () => Promise<void> }) {
   const groups = groupsFor(user.role);
   const activeHref = useActiveHref(groups.flatMap(g => g.items));
   const activeGroup = groups.find(g => g.items.some(i => i.href === activeHref))?.id;
@@ -110,11 +117,9 @@ export function Sidebar({ user }: { user: ShellUser }) {
 
   return (
     <aside className="scrollbar-none sticky top-0 hidden h-dvh flex-col gap-6 overflow-y-auto border-r border-line bg-surface px-3 py-5 md:flex lg:px-3 lg:py-6">
-      <Link href={groups[0]?.items[0]?.href ?? '/'} className="flex min-h-11 items-center justify-center gap-2.5 font-display text-xl font-bold tracking-[.08em] lg:justify-start lg:px-2">
-        <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-lime text-bg">
-          <Zap aria-hidden className="size-5" />
-        </span>
-        <span className="sr-only lg:not-sr-only">FITFLOW</span>
+      <Link href={groups[0]?.items[0]?.href ?? '/'} className="flex min-h-11 items-center justify-center gap-2.5 text-xl lg:justify-start lg:px-2">
+        <LogoIcon />
+        <Wordmark className="sr-only lg:not-sr-only" />
       </Link>
       <nav aria-label="เมนูหลัก" className="flex flex-col gap-1">
         {groups.map((g, gi) => {
@@ -166,12 +171,18 @@ export function Sidebar({ user }: { user: ShellUser }) {
           );
         })}
       </nav>
-      <div className="mt-auto flex items-center justify-center gap-2.5 rounded-xl lg:justify-start lg:bg-surface-2 lg:p-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-lime text-xs font-semibold text-bg">{user.nickname.slice(0, 3)}</span>
-        <div className="hidden min-w-0 leading-tight lg:block">
+      {/* การ์ดผู้ใช้ + ปุ่มออกจากระบบ (แท็บเล็ตเรียงแนวตั้ง · เดสก์ท็อปอยู่ขวาของชื่อ) */}
+      <div className="mt-auto flex flex-col items-center gap-2 rounded-xl lg:flex-row lg:bg-surface-2 lg:p-2.5 lg:pl-3">
+        <span title={`${user.name} · ${ROLE_LABEL[user.role]}`} className="grid size-9 shrink-0 place-items-center rounded-full bg-lime text-xs font-semibold text-bg">{user.nickname.slice(0, 3)}</span>
+        <div className="hidden min-w-0 flex-1 leading-tight lg:block">
           <b className="block truncate font-semibold">{user.name}</b>
-          <small className="text-xs text-muted">{ROLE_LABEL[user.role]} · {user.branch}</small>
+          <small className="block truncate text-xs text-muted">{ROLE_LABEL[user.role]} · {user.branch}</small>
         </div>
+        <ConfirmForm action={logoutAction} confirm="ต้องการออกจากระบบหรือไม่?" confirmTitle="ยืนยันออกจากระบบ" confirmLabel="ออกจากระบบ">
+          <button type="submit" aria-label="ออกจากระบบ" title="ออกจากระบบ" className="grid size-11 place-items-center rounded-xl text-muted hover:bg-danger/10 hover:text-danger">
+            <LogOut aria-hidden className="size-5" />
+          </button>
+        </ConfirmForm>
       </div>
     </aside>
   );

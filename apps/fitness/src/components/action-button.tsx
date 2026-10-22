@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import type { ActionResult } from '@/features/shared/action-result';
+import { ConfirmForm } from './confirm-form';
 import { btn } from './ui';
 
 /**
@@ -26,18 +27,16 @@ export function ActionButton({
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
   return (
-    <form
+    <ConfirmForm
       action={formAction}
+      confirm={confirm}
       className={`flex flex-col gap-1.5 ${className}`}
-      onSubmit={e => {
-        if (confirm && !window.confirm(confirm)) e.preventDefault();
-      }}
     >
       <button type="submit" disabled={pending} className={btn[variant]}>
         {pending ? pendingLabel : label}
       </button>
       <ResultMessage state={state} />
-    </form>
+    </ConfirmForm>
   );
 }
 

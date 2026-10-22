@@ -32,11 +32,12 @@ export type Permission =
   | 'reports.view'
   | 'packages.manage'
   | 'portal.use'
+  | 'coach.use'
   | 'marketing.manage'
   | 'retention.view'
   | 'demo.reset';
 
-const STAFF_COMMON: Permission[] = ['members.view', 'classes.view', 'trainers.view'];
+const STAFF_COMMON: Permission[] = ['members.view', 'classes.view', 'trainers.view', 'coach.use'];
 
 export const PERMISSIONS: Record<Role, readonly Permission[]> = {
   owner: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'packages.manage', 'marketing.manage', 'retention.view', 'demo.reset'],
@@ -44,7 +45,7 @@ export const PERMISSIONS: Record<Role, readonly Permission[]> = {
   'front-desk': [...STAFF_COMMON, 'dashboard.view', 'members.manage', 'checkin.use', 'classes.book', 'pt.manage', 'payments.view', 'payments.collect', 'retention.view'],
   // เทรนเนอร์จัดการได้เฉพาะ PT ของตัวเอง (ตรวจ ownership ใน DAL)
   trainer: [...STAFF_COMMON, 'classes.book', 'pt.manage'],
-  member: ['portal.use'],
+  member: ['portal.use', 'coach.use'],
 };
 
 export function hasPermission(role: Role, permission: Permission): boolean {

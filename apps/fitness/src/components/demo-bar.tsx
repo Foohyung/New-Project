@@ -3,6 +3,7 @@
 import { FlaskConical, LogOut, RotateCcw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ROLE_LABEL } from '@/features/auth/roles';
+import { ConfirmForm } from './confirm-form';
 import type { ShellUser } from './nav';
 
 /** แถบด้านบน: ธีม · ผู้ใช้ที่เข้าสู่ระบบ (บทบาทมาจากบัญชี เปลี่ยนเองไม่ได้) · ออกจากระบบ · รีเซ็ตข้อมูลตัวอย่าง */
@@ -19,19 +20,19 @@ export function DemoBar({ user, canReset, resetAction, logoutAction, children }:
         <b className="font-semibold text-ink">{user.name}</b>· {ROLE_LABEL[user.role]}
       </span>
       {canReset && (
-        <form action={resetAction} onSubmit={e => { if (!window.confirm('คืนข้อมูลตัวอย่างทั้งหมดเป็นค่าเริ่มต้น?')) e.preventDefault(); }}>
+        <ConfirmForm action={resetAction} confirm="คืนข้อมูลตัวอย่างทั้งหมดเป็นค่าเริ่มต้น?" confirmTitle="รีเซ็ตข้อมูลตัวอย่าง" confirmLabel="รีเซ็ตข้อมูล">
           <button type="submit" title="รีเซ็ตข้อมูลตัวอย่าง" className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl px-3 font-semibold text-muted hover:bg-surface-2 hover:text-ink">
             <RotateCcw aria-hidden className="size-4" />
             <span className="sr-only 2xl:not-sr-only">รีเซ็ตข้อมูล</span>
           </button>
-        </form>
+        </ConfirmForm>
       )}
-      <form action={logoutAction}>
+      <ConfirmForm action={logoutAction} confirm="ต้องการออกจากระบบหรือไม่?" confirmTitle="ยืนยันออกจากระบบ" confirmLabel="ออกจากระบบ" className="md:hidden">
         <button type="submit" className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl border border-line px-3 font-semibold text-muted hover:bg-surface-2 hover:text-ink">
           <LogOut aria-hidden className="size-4" />
           <span className="sr-only sm:not-sr-only">ออกจากระบบ</span>
         </button>
-      </form>
+      </ConfirmForm>
     </div>
   );
 }

@@ -6,7 +6,7 @@ const uniquePhone = () => `09${String(Math.floor(Math.random() * 1e8)).padStart(
 
 type Role = 'owner' | 'manager' | 'front-desk' | 'trainer' | 'member';
 /** บัญชีทดลองจาก src/server/accounts.ts (รหัสผ่านเดียวกันทุกบัญชี = DEMO_PASSWORD) */
-const PASSWORD = process.env.DEMO_PASSWORD ?? 'FitFlow!2569';
+const PASSWORD = process.env.DEMO_PASSWORD ?? '123456';
 const LOGIN: Record<Role, string> = { owner: 'owner@fitflow.test', manager: 'manager@fitflow.test', 'front-desk': 'desk@fitflow.test', trainer: 'boss@fitflow.test', member: '080-000-0101' };
 
 async function login(page: Page, role: Role, password = PASSWORD) {
@@ -134,8 +134,10 @@ test.describe('สมาชิก', () => {
     await page.getByRole('button', { name: 'เช็กอิน', exact: true }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'เช็กอินไม่ได้' })).toBeVisible();
     await page.goto(paymentUrl);
-    page.once('dialog', dialog => void dialog.accept());
     await page.getByRole('button', { name: 'ยืนยันเงินเข้า' }).click();
+    const confirmation = page.getByRole('dialog', { name: 'ยืนยันการทำรายการ' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'ยืนยัน' }).click();
     // ยืนยันแล้วหน้าเปลี่ยนเป็นใบเสร็จ และสมาชิกเช็กอินได้
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('ใบเสร็จรับเงิน');
     await page.goto('/checkin');
@@ -484,7 +486,15 @@ test.describe('เข้าสู่ระบบ', () => {
 
   test('ออกจากระบบแล้วกลับเข้าหน้าเดิมไม่ได้', async ({ page }) => {
     await login(page, 'front-desk');
-    await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
+    const logout = page.getByRole('button', { name: 'ออกจากระบบ' });
+    await logout.click();
+    const confirmation = page.getByRole('dialog', { name: 'ยืนยันออกจากระบบ' });
+    await expect(confirmation).toBeVisible();
+    await confirmation.getByRole('button', { name: 'ยกเลิก' }).click();
+    await expect(confirmation).toBeHidden();
+    await expect(page).not.toHaveURL(/\/login$/);
+    await logout.click();
+    await confirmation.getByRole('button', { name: 'ออกจากระบบ' }).click();
     await expect(page).toHaveURL(/\/login$/);
     await page.goto('/checkin');
     await expect(page).toHaveURL(/\/login/);
@@ -499,5 +509,73 @@ test.describe('เข้าสู่ระบบ', () => {
     await page.keyboard.press('End');
     await page.keyboard.press('Enter');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'sunset');
+  });
+});
+
+test.describe('ตัวช่วยฝึกและอาหาร (สมาชิก)', () => {
+  test('พนักงานใช้ได้ด้วย แต่เห็นเฉพาะข้อมูลของบัญชีตัวเอง', async ({ page }, testInfo) => {
+    // beforeEach เข้าสู่ระบบเป็นผู้จัดการแล้ว
+    if (testInfo.project.name === 'desktop') {
+      const menu = page.getByRole('complementary').getByRole('navigation', { name: 'เมนูหลัก' });
+      await menu.getByRole('button', { name: /ฝึก/ }).click();
+      await expect(menu.getByRole('link', { name: 'อาหาร' })).toBeVisible();
+    }
+    await page.goto('/me/workout');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('ฝึกวันนี้');
+    await page.goto('/me/food');
+    // ผู้จัดการยังไม่ได้กรอกข้อมูลร่างกาย → เห็นฟอร์มตั้งค่าของตัวเอง ไม่ใช่ข้อมูลของสมาชิก
+    await expect(page.getByRole('button', { name: 'คำนวณเป้าอาหารของฉัน' })).toBeVisible();
+  });
+
+  test('เลือกกล้ามเนื้อทีละมัดจากภาพร่างกาย แล้วเพิ่มท่าลงโปรแกรมวันนี้', async ({ page }, testInfo) => {
+    await asRole(page, 'member');
+    await page.goto('/me/workout');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('ฝึกวันนี้');
+    await expectNoHorizontalScroll(page);
+    const muscles = page.getByRole('group', { name: 'กล้ามเนื้อ', exact: true });
+    await muscles.getByRole('button', { name: 'ต้นขาหน้า' }).click();
+    await muscles.getByRole('button', { name: 'อกบน' }).click();
+    await expect(muscles.getByRole('button', { name: 'ต้นขาหน้า' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('heading', { name: 'ท่าฝึก · ต้นขาหน้า' })).toBeVisible();
+    // เลือกทีละมัด: ต้นขาหน้าไม่ได้ท่าของต้นขาหลัง
+    await expect(page.getByText('Lying Leg Curl')).toHaveCount(0);
+    // ทุก project ใช้สมาชิกคนเดียวกัน — เขียนข้อมูลเฉพาะ desktop เพื่อไม่ให้ชนกัน
+    test.skip(testInfo.project.name !== 'desktop', 'แก้โปรแกรมเฉพาะ desktop');
+    await page.getByRole('button', { name: /เพิ่มลงโปรแกรมวันนี้/ }).click();
+    const plan = page.getByRole('region', { name: 'โปรแกรมวันนี้' });
+    await expect(plan.getByText('Back Squat')).toBeVisible();
+    const done = plan.getByRole('button', { name: /^Back Squat/ });
+    await done.click();
+    await expect(done).toHaveAttribute('aria-pressed', 'true');
+    await expect(plan.getByText(/เสร็จ 1\//)).toBeVisible();
+  });
+
+  test('อาหาร: เห็นเป้าวันนี้ บันทึกเมนูแนะนำ และถอน/ให้ความยินยอมข้อมูลสุขภาพ', async ({ page }, testInfo) => {
+    await asRole(page, 'member');
+    await page.goto('/me/food');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('อาหารวันนี้');
+    await expectNoHorizontalScroll(page);
+    test.skip(testInfo.project.name !== 'desktop', 'แก้ข้อมูลสุขภาพเฉพาะ desktop');
+    await expect(page.getByRole('img', { name: /กินไปแล้ว .* กิโลแคลอรี/ })).toBeVisible();
+    await page.getByRole('button', { name: 'กินแล้ว' }).first().click();
+    await expect(page.getByRole('status').filter({ hasText: /^บันทึก .* แล้ว$/ })).toBeVisible();
+
+    await page.getByRole('button', { name: 'ถอนความยินยอมและลบข้อมูล' }).click();
+    await page.getByRole('dialog', { name: 'ยืนยันการทำรายการ' }).getByRole('button', { name: 'ยืนยัน' }).click();
+    await expect(page.getByRole('button', { name: 'คำนวณเป้าอาหารของฉัน' })).toBeVisible();
+
+    // ไม่ติ๊กยินยอม = ไม่บันทึก
+    await page.getByRole('radio', { name: /^ลดไขมัน/ }).check();
+    await page.getByRole('radio', { name: 'ชาย' }).check();
+    await page.getByLabel('ปีเกิด (ค.ศ.)').fill('1994');
+    await page.getByLabel('ส่วนสูง (ซม.)').fill('174');
+    await page.getByLabel('น้ำหนัก (กก.)').fill('78');
+    await page.getByRole('radio', { name: /3–5 วัน/ }).check();
+    await page.getByRole('button', { name: 'คำนวณเป้าอาหารของฉัน' }).click();
+    await expect(page.getByText('ต้องยินยอมให้เก็บข้อมูลสุขภาพก่อน จึงคำนวณเป้าอาหารได้')).toBeVisible();
+
+    await page.getByRole('checkbox', { name: /ยินยอมให้เก็บข้อมูลสุขภาพ/ }).check();
+    await page.getByRole('button', { name: 'คำนวณเป้าอาหารของฉัน' }).click();
+    await expect(page.getByRole('img', { name: /กินไปแล้ว 0 จาก/ })).toBeVisible();
   });
 });
