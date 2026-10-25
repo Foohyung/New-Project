@@ -372,7 +372,7 @@
   }
 
   /* ---------- router (hash) ---------- */
-  var QKEYS = ['deal', 'market', 'type', 'prov', 'area', 'price', 'beds', 'q', 'sort', 'view', 'pet', 'transit'];
+  var QKEYS = ['deal', 'market', 'type', 'prov', 'area', 'price', 'beds', 'q', 'sort', 'view', 'pet', 'transit', 'baths', 'size'];
   function parse() {
     var h = location.hash.replace(/^#/, '') || '/', parts = h.split('?'), path = parts[0], q = {};
     (parts[1] || '').split('&').forEach(function (kv) { if (!kv) return; var p = kv.split('='); if (QKEYS.indexOf(p[0]) >= 0) q[p[0]] = decodeURIComponent(p[1] || ''); });
