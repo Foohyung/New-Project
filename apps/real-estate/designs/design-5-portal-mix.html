@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E2A57">
+<title>BaanHub · Design 5E — Portal Mix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="portal-base.css">
+<style>
+  /* 5E Mix — โครงและเนื้อหาของ 5D Living (เมนู 2 ชั้น, เช่า/ซื้อ + ช่องค้นหาเดียว, การ์ดประกาศแบบพอร์ทัล, แถบติดต่อ agent)
+     + หน้าตาและฟีเจอร์ของ 5B Transit (กรมท่า/เหลือง, hero แบ่งซ้าย-ขวา, ค้นตามสายรถไฟฟ้า, ทำเลมาแรง, ผลค้นหาคู่แผนที่) */
+  :root {
+    --font: 'IBM Plex Sans Thai', system-ui, sans-serif;
+    --bg: #F3F5F9; --surface: #FFFFFF; --surface-2: #F7F9FC;
+    --ink: #0F1A2E; --muted: #556075; --line: #E1E6EF; --line-strong: #C6CEDC;
+    --navy: #0E2A57; --navy-2: #163C78; --navy-muted: #B9C7E2;
+    --primary: #0B4BA8; --primary-strong: #083A84; --primary-deep: #0E2A57; --primary-soft: #E8F0FC; --primary-ring: rgba(11, 75, 168, .22);
+    --accent: #FFC21A; --accent-strong: #F2AE00; --accent-ink: #0E2A57; --accent-soft: #FFF6D9;
+    --go: #15803D; --go-strong: #116A32; --go-soft: #E6F6EC;
+    --ok: #15803D; --fav: #E11D48; --focus: #0B4BA8; --star: #B7791F;
+    --spot1: #22B8CF; --spot2: #4C6EF5;
+    --scrim: rgba(12, 22, 40, .55);
+    --shadow: 0 2px 8px rgba(20, 32, 51, .06);
+    --shadow-lg: 0 14px 36px rgba(20, 32, 51, .16);
+    --r-card: 16px; --r-field: 12px;
+    --map-bg: #E9EEF5; --map-water: #B9D3F0; --map-park: #CBE5C4; --map-road: #FFFFFF; --map-road2: #DCE3EE; --map-ink: #0E2A57;
+    --line-brand: #06C755; --line-bts: #3FA34D; --line-silom: #0E7A5A; --line-mrt: #1F4FB0; --line-purple: #7B3FA0; --line-yellow: #C99A00; --line-pink: #D6457A; --line-arl: #B4232C;
+  }
+  .btn { min-height: 44px; padding: 0 18px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; white-space: nowrap; font-size: 15px; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-accent { background: var(--accent); color: var(--accent-ink); }
+  .btn-go { background: var(--go); color: #fff; }
+  .btn-ghost { border: 1px solid var(--line-strong); background: var(--surface); }
+  .btn-line { background: var(--surface); border: 1.5px solid var(--line-brand); }
+  .btn-line .i { color: var(--line-brand); }
+  @media (hover: hover) { .btn-primary:hover { background: var(--primary-strong); } .btn-accent:hover { background: var(--accent-strong); } .btn-go:hover { background: var(--go-strong); } .btn-ghost:hover { border-color: var(--primary); color: var(--primary-strong); } }
+  .ib { position: relative; width: 44px; height: 44px; border-radius: 99px; display: grid; place-items: center; color: inherit; }
+  .ib .n { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: var(--fav); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  @media (hover: hover) { .ib:hover { background: var(--primary-soft); } .hdr .ib:hover { background: rgba(255, 255, 255, .12); } }
+
+  /* header 2 ชั้น */
+  .hdr { position: sticky; top: 0; z-index: 40; background: var(--navy); color: #fff; }
+  .hdr-in { display: flex; align-items: center; gap: 8px; min-height: 64px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 21px; color: #fff; min-height: 44px; letter-spacing: -.01em; }
+  .logo-mark { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: var(--accent-ink); background: var(--accent); }
+  .logo-mark svg { width: 26px; height: 26px; }
+  .logo em { font-style: normal; font-weight: 500; color: var(--accent); }
+  .hdr-r { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+  .rows { display: none; }
+  .post { width: 44px; padding: 0; }
+  .post span { display: none; }
+  @media (min-width: 640px) { .post { width: auto; padding: 0 16px; } .post span { display: inline; } }
+  @media (min-width: 1024px) {
+    .hdr-in { min-height: 96px; }
+    .hdr-r { display: none; }
+    .rows { display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; gap: 0; }
+    .util { display: flex; align-items: center; gap: 2px; font-size: 13px; color: var(--navy-muted); }
+    .util a.t { min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; }
+    .util .sep { width: 1px; height: 14px; background: rgba(255, 255, 255, .25); margin: 0 4px; }
+    .util .ib { width: 44px; height: 44px; }
+    .util .ib .i { width: 18px; height: 18px; }
+    .mainnav { display: flex; align-items: center; gap: 2px; }
+    .mainnav > a, .mainnav > .qd > button { min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; font-size: 15px; color: var(--navy-muted); border-radius: 99px; position: relative; white-space: nowrap; }
+    .mainnav > a[aria-current="page"] { color: #fff; box-shadow: inset 0 -3px 0 var(--accent); border-radius: 0; }
+    .mainnav .new { position: absolute; top: 2px; right: -2px; font-size: 10px; font-weight: 700; background: var(--fav); color: #fff; padding: 0 5px; border-radius: 99px; line-height: 1.5; }
+    .mainnav .post { margin-left: 6px; }
+    .mainnav > a.btn-accent, .mainnav > a.btn-accent:hover { color: var(--accent-ink); background: var(--accent); border-radius: 99px; box-shadow: none; }
+    .menu-btn { display: none; }
+  }
+  @media (hover: hover) and (min-width: 1024px) { .mainnav > a:hover, .mainnav > .qd > button:hover { color: #fff; background: rgba(255, 255, 255, .1); } }
+  .qd { position: relative; }
+  .qd-pop { color: var(--ink); position: absolute; top: calc(100% + 6px); right: 0; width: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 16px; z-index: 50; }
+  .qd-pop strong { font-size: 14px; color: var(--primary-deep); grid-column: span 1; }
+  .qd-pop a { min-height: 40px; display: flex; align-items: center; font-size: 14px; color: var(--muted); }
+  @media (hover: hover) { .qd-pop a:hover { color: var(--primary-strong); text-decoration: underline; } }
+
+  /* hero */
+  .hero { position: relative; z-index: 3; padding: 20px 0 28px; color: #fff; background: var(--navy); }
+  .hero::after { content: ''; position: absolute; right: 0; top: 0; width: min(360px, 60vw); height: 300px; border-radius: 0 0 0 100%; background: var(--navy-2); opacity: .7; pointer-events: none; }
+  .hero-g { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .eyebrow { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .hero h1 { font-size: 24px; line-height: 1.4; font-weight: 700; margin-top: 4px; text-wrap: balance; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .sub { color: var(--navy-muted); max-width: 46ch; }
+  .hero-art { display: none; }
+  @media (min-width: 768px) { .hero { padding: 36px 0 44px; } .hero h1 { font-size: 34px; } }
+  @media (min-width: 1024px) {
+    .hero-g { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: center; gap: 48px; }
+    .hero-art { display: block; position: relative; aspect-ratio: 5 / 4; }
+    .hero-art .frame { position: absolute; inset: 0 0 40px 40px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); }
+    .hero-art .frame svg { width: 100%; height: 100%; }
+    .float { position: absolute; background: var(--surface); color: var(--ink); border-radius: 14px; padding: 10px 14px; box-shadow: var(--shadow-lg); font-size: 14px; line-height: 1.4; }
+    .float b { display: block; font-size: 18px; color: var(--primary); }
+    .float.f1 { left: 0; bottom: 0; } .float.f2 { right: -8px; top: 24px; }
+  }
+  .modes { display: flex; gap: 8px; margin: 16px 0 12px; }
+  .mode { flex: 1; min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; background: rgba(255, 255, 255, .08); color: #fff; text-align: left; border: 1px solid rgba(255, 255, 255, .3); }
+  .mode .mi { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255, 255, 255, .12); color: #fff; flex: none; }
+  .mode .mi .i { width: 24px; height: 24px; }
+  .mode b { display: block; font-size: 17px; line-height: 1.3; }
+  .mode small { display: block; font-size: 12px; color: var(--navy-muted); line-height: 1.35; }
+  .mode[aria-selected="true"] { background: var(--surface); color: var(--navy); border-color: var(--surface); }
+  .mode[aria-selected="true"] small { color: var(--muted); }
+  .mode[aria-selected="true"] .mi { background: var(--accent); color: var(--accent-ink); }
+  @media (min-width: 640px) { .mode { flex: 0 0 210px; } }
+  .spanel { background: var(--surface); color: var(--ink); border-radius: 18px; padding: 12px; box-shadow: var(--shadow-lg); }
+  .sline { display: flex; gap: 8px; align-items: stretch; }
+  .ac { position: relative; flex: 1; min-width: 0; }
+  .ac > .i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .ac .input { min-height: 52px; border-radius: 99px; padding-left: 46px; }
+  .ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 6px; z-index: 30; max-height: 320px; overflow: auto; }
+  .ac-list li { min-height: 48px; padding: 6px 10px; display: flex; gap: 10px; align-items: center; border-radius: 10px; cursor: pointer; line-height: 1.35; }
+  .ac-list li .i { color: var(--primary); }
+  .ac-list li small { display: block; color: var(--muted); font-size: 12px; }
+  .ac-list li.is-active { background: var(--primary-soft); }
+  .ac-list .grp { min-height: 28px; font-size: 12px; color: var(--muted); font-weight: 600; cursor: default; padding: 4px 10px 0; }
+  @media (hover: hover) { .ac-list li[role=option]:hover { background: var(--primary-soft); } }
+  .sgo { min-height: 52px; padding: 0 18px; font-size: 16px; }
+  .sgo span { display: none; }
+  @media (min-width: 640px) { .sgo span { display: inline; } .sgo { padding: 0 28px; } }
+  .qlinks { display: flex; gap: 4px 6px; flex-wrap: wrap; margin-top: 8px; }
+  .qlinks a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 10px; font-size: 14px; font-weight: 500; border-radius: 99px; }
+  @media (hover: hover) { .qlinks a:hover { background: var(--primary-soft); color: var(--primary-strong); } }
+
+  /* หัวข้อส่วน */
+  .sec { padding: 28px 0 4px; }
+  .sec.alt { background: var(--surface); margin-top: 28px; padding-bottom: 28px; }
+  .sec-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .sec-h h2 { font-size: 20px; line-height: 1.4; color: var(--primary-deep); }
+  .more { color: var(--primary-strong); font-weight: 500; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; flex: none; text-decoration: underline; text-underline-offset: 3px; }
+  .arrows { display: none; gap: 8px; }
+  .arrows button { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; box-shadow: var(--shadow); }
+  @media (min-width: 768px) { .sec { padding: 40px 0 4px; } .sec.alt { margin-top: 40px; padding-bottom: 40px; } .sec-h h2 { font-size: 24px; } .arrows { display: flex; } }
+  .track { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin: 0 -16px; padding: 4px 16px 8px; scroll-behavior: smooth; }
+  .track::-webkit-scrollbar { display: none; }
+  .track > * { scroll-snap-align: start; flex: none; }
+  @media (min-width: 768px) { .track { margin: 0; padding: 4px 0 8px; } }
+
+  /* ประเภททรัพย์: ไอคอนวงกลม */
+  .tcat { width: 84px; min-height: 108px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-size: 14px; line-height: 1.35; }
+  .tcat .ring { width: 72px; height: 72px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); display: grid; place-items: center; overflow: hidden; }
+  .tcat .ring svg { width: 56px; height: 56px; }
+  @media (min-width: 1024px) { .tcat { width: calc((100% - 9 * 14px) / 10); } }
+  @media (hover: hover) { .tcat:hover .ring { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); } .tcat:hover { color: var(--primary-strong); } }
+
+  /* ทำเลยอดนิยม */
+  .loc { position: relative; width: 78%; max-width: 340px; aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden; color: #fff; display: block; }
+  .loc:nth-child(even) { width: 52%; max-width: 220px; }
+  .loc svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .loc::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(5, 18, 40, .8)); }
+  .loc span { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 10px; line-height: 1.35; }
+  .loc strong { display: block; font-size: 16px; }
+  .loc small { font-size: 13px; opacity: .92; }
+  @media (min-width: 1024px) { .loc { width: 340px; } .loc:nth-child(even) { width: 220px; } }
+
+  /* การ์ดประกาศ */
+  .cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  @media (min-width: 640px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 1280px) { .cards.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .track > .lc { width: 82%; max-width: 300px; }
+  .lc { position: relative; background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow); border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; }
+  @media (hover: hover) { .lc:hover { box-shadow: var(--shadow-lg); } }
+  .lc .ph { position: relative; aspect-ratio: 4 / 3; background: var(--surface-2); }
+  .lc .ph > svg { width: 100%; height: 100%; }
+  .spot { position: absolute; left: 0; top: 10px; font-size: 12px; font-weight: 700; color: #fff; padding: 2px 12px 2px 10px; border-radius: 0 99px 99px 0; background: linear-gradient(90deg, #0E7490, #3B5BDB); display: inline-flex; gap: 4px; align-items: center; z-index: 2; }
+  .spot .i { width: 14px; height: 14px; }
+  .acts { position: absolute; right: 2px; top: 2px; display: flex; z-index: 2; }
+  .acts button { width: 44px; height: 44px; display: grid; place-items: center; }
+  .acts button span { width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, .94); display: grid; place-items: center; color: var(--ink); }
+  .acts .i { width: 17px; height: 17px; }
+  [data-cmp][aria-pressed="true"] span { background: var(--primary); color: #fff; }
+  .lc .who { position: absolute; left: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%; background: var(--surface); color: var(--primary-deep); border: 2px solid #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; z-index: 2; box-shadow: var(--shadow); }
+  .lc .dots { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 4px; padding: 3px 6px; border-radius: 99px; background: rgba(0, 0, 0, .35); }
+  .lc .dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .55); }
+  .lc .dots i:first-child { background: #fff; }
+  .lc .call { position: absolute; right: 8px; bottom: 6px; z-index: 2; min-height: 44px; display: grid; place-items: center; }
+  .lc .call span { padding: 2px 12px; border-radius: 99px; background: rgba(20, 32, 51, .62); color: #fff; font-size: 13px; font-weight: 600; }
+  .lc .bd { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tg { font-size: 12px; font-weight: 600; padding: 0 8px; border-radius: 6px; line-height: 1.8; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+  .tg.t-type { background: var(--go); color: #fff; border-color: var(--go); }
+  .tg.t-deal { background: var(--go-soft); color: var(--go-strong); border-color: #BFE3CB; }
+  .lc h3 { font-size: 15px; line-height: 1.5; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .lc h3 a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+  .meta { font-size: 13px; color: var(--muted); display: flex; gap: 4px; align-items: center; line-height: 1.45; min-width: 0; }
+  .meta .i { width: 15px; height: 15px; }
+  .meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .spec { display: flex; gap: 4px 12px; flex-wrap: wrap; font-size: 13px; color: var(--ink); }
+  .spec span { display: inline-flex; gap: 4px; align-items: center; }
+  .spec .i { width: 15px; height: 15px; color: var(--muted); }
+  .pr { margin-top: 4px; font-size: 20px; font-weight: 700; color: var(--primary-deep); line-height: 1.3; }
+  .pr small { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .psq { font-size: 12px; color: var(--muted); }
+  .ft { margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .ft span { display: inline-flex; gap: 4px; align-items: center; }
+  .ft .i { width: 14px; height: 14px; }
+
+  /* การ์ดโครงการใหม่ */
+  .pj { width: 84%; max-width: 360px; background: var(--surface); border-radius: var(--r-card); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; position: relative; }
+  .pj .ph { position: relative; aspect-ratio: 16 / 10; }
+  .pj .ph > svg { width: 100%; height: 100%; }
+  .pj .from { position: absolute; right: 10px; bottom: 10px; background: var(--surface); color: var(--ink); border-radius: 12px; padding: 2px 10px; font-size: 12px; text-align: right; line-height: 1.3; }
+  .pj .from b { display: block; font-size: 18px; color: var(--primary); }
+  .pj .bd { padding: 12px 14px; }
+  .pj h3 { font-size: 16px; line-height: 1.45; }
+  .pj h3 a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+  .pstat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 10px -14px; padding: 8px 0; text-align: center; font-size: 12px; color: var(--muted); }
+  .pstat b { display: block; font-size: 15px; color: var(--primary-deep); }
+  .pj .dev { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .pj .dev i { width: 28px; height: 28px; border-radius: 8px; background: var(--primary-deep); color: #fff; font-style: normal; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  @media (min-width: 1024px) { .pj { width: calc((100% - 2 * 14px) / 3); max-width: none; } }
+
+  /* agent แนะนำ */
+  .ag { width: 72%; max-width: 250px; background: var(--surface); border-radius: var(--r-card); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
+  .ag .top { position: relative; aspect-ratio: 5 / 4; background: linear-gradient(160deg, var(--primary-soft), #D5E7FB); display: grid; place-items: center; }
+  .ag .face { width: 96px; height: 96px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 30px; font-weight: 700; display: grid; place-items: center; border: 4px solid #fff; }
+  .ag .badge { position: absolute; left: 8px; top: 8px; font-size: 12px; font-weight: 700; color: #fff; background: var(--go); padding: 1px 10px; border-radius: 99px; display: inline-flex; gap: 4px; align-items: center; }
+  .ag .badge .i { width: 14px; height: 14px; }
+  .ag .cbtn { position: absolute; right: 8px; bottom: 8px; }
+  .ag .cbtn .btn { min-height: 44px; padding: 0 14px; font-size: 13px; background: rgba(20, 32, 51, .62); color: #fff; }
+  .ag .bd { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .ag strong { display: flex; gap: 4px; align-items: center; }
+  .ag strong .i { width: 16px; height: 16px; color: var(--go); }
+  .ag .rt { font-size: 13px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+  .ag .rt b { color: var(--star); }
+  .ag .chips { display: flex; gap: 4px; flex-wrap: wrap; }
+  .ag .chips span { font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; }
+  .ag q { font-size: 13px; color: var(--muted); margin-top: auto; padding-top: 6px; border-top: 1px dashed var(--line); quotes: none; }
+  @media (min-width: 1024px) { .ag { width: calc((100% - 3 * 14px) / 4); max-width: none; } }
+
+  /* ใกล้รถไฟฟ้า */
+  .transit { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 12px; }
+  .lines { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .lines::-webkit-scrollbar { display: none; }
+  .lchip { flex: none; min-height: 44px; padding: 0 14px 0 10px; border-radius: 99px; border: 1px solid var(--line-strong); display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; white-space: nowrap; background: var(--surface); }
+  .lchip .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--c); }
+  .lchip[aria-pressed="true"] { border-color: var(--navy); background: var(--navy); color: #fff; }
+  .stations { display: flex; overflow-x: auto; scrollbar-width: none; padding: 6px 2px 2px; }
+  .stations::-webkit-scrollbar { display: none; }
+  .st { flex: 0 0 auto; min-width: 104px; min-height: 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; font-size: 14px; text-align: center; padding: 0 6px; }
+  .st::before { content: ''; position: absolute; top: 13px; left: 0; right: 0; height: 6px; background: var(--c); }
+  .st:first-child::before { left: 50%; } .st:last-child::before { right: 50%; }
+  .st .o { position: relative; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 5px solid var(--c); }
+  .st small { color: var(--muted); font-size: 12px; }
+  @media (hover: hover) { .st:hover .o { background: var(--accent); } .st:hover span { color: var(--primary); text-decoration: underline; } }
+  .rank { display: grid; gap: 8px; }
+  .rk { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px 8px 8px; min-height: 64px; }
+  .rk .no { font-weight: 700; font-size: 18px; color: var(--primary); text-align: center; }
+  .rk .th { display: none; width: 64px; height: 48px; border-radius: 8px; overflow: hidden; }
+  .rk .th svg { width: 100%; height: 100%; }
+  .rk strong { display: block; line-height: 1.35; }
+  .rk small { color: var(--muted); font-size: 13px; }
+  .rk .tr { text-align: right; font-size: 13px; color: var(--muted); line-height: 1.35; }
+  .rk .tr b { display: block; color: var(--ink); font-size: 14px; }
+  .up { color: var(--ok); font-weight: 600; }
+  @media (min-width: 640px) { .rk { grid-template-columns: 28px 64px minmax(0, 1fr) auto; } .rk .th { display: block; } }
+  @media (min-width: 768px) { .rank { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (hover: hover) { .rk:hover { border-color: var(--primary); } }
+  .tlines { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 8px; }
+  .tl { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; text-align: center; line-height: 1.3; font-weight: 500; min-height: 44px; }
+  .tl .sq { width: 64px; height: 64px; border-radius: 14px; border: 3px solid var(--c); background: var(--surface); display: grid; place-items: center; font-weight: 800; color: var(--c); font-size: 18px; letter-spacing: -.02em; box-shadow: var(--shadow); }
+  .tl .sq.m { font-size: 30px; }
+  @media (min-width: 768px) { .tlines { grid-template-columns: repeat(8, minmax(0, 1fr)); } .tl .sq { width: 76px; height: 76px; } }
+  @media (hover: hover) { .tl:hover .sq { background: var(--c); color: #fff; } }
+
+  /* บทความ */
+  .news { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .nw { position: relative; border-radius: var(--r-card); overflow: hidden; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; }
+  .nw .ph { aspect-ratio: 16 / 9; }
+  .nw .ph svg { width: 100%; height: 100%; }
+  .nw .bd { padding: 10px 14px 12px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+  .nw h3 { font-size: 15px; line-height: 1.5; font-weight: 600; }
+  .nw h3 a::after { content: ''; position: absolute; inset: 0; }
+  .nw .go { width: 40px; height: 40px; border-radius: 10px; background: var(--go-soft); color: var(--go); display: grid; place-items: center; flex: none; }
+  @media (min-width: 768px) { .news { grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; } .nw.big { grid-row: span 2; } .nw.big .ph { aspect-ratio: auto; flex: 1; min-height: 260px; } }
+  .ztags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .ztags a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 99px; background: var(--primary-soft); color: var(--primary-strong); font-size: 14px; font-weight: 500; }
+
+  /* ลิงก์ไดเรกทอรีท้ายหน้า (SEO) */
+  .dir { margin-top: 40px; background: var(--surface); border-top: 1px solid var(--line); padding: 28px 0; }
+  .dir h2 { font-size: 18px; color: var(--primary-deep); margin-bottom: 10px; }
+  .dir-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+  .dir h3 { font-size: 15px; margin-bottom: 2px; }
+  .dir a { display: flex; align-items: center; min-height: 44px; font-size: 14px; color: var(--muted); }
+  @media (min-width: 768px) { .dir-g { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (hover: hover) { .dir a:hover { color: var(--primary-strong); text-decoration: underline; } }
+  .ftr { background: var(--navy); color: #C3D2E8; padding: 32px 0 calc(28px + env(safe-area-inset-bottom)); font-size: 14px; }
+  .ftr-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .ftr h3 { color: #fff; font-size: 15px; margin-bottom: 4px; }
+  .ftr a { display: flex; align-items: center; min-height: 44px; }
+  .ftr .brand { grid-column: 1 / -1; }
+  @media (min-width: 1024px) { .ftr-g { grid-template-columns: 2fr 1fr 1fr 1fr; } .ftr .brand { grid-column: auto; } }
+
+  .consult { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 45; min-height: 52px; padding: 0 18px 0 8px; border-radius: 99px; background: var(--surface); box-shadow: var(--shadow-lg); border: 2px solid var(--line-brand); display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+  .consult .fc { width: 38px; height: 38px; border-radius: 50%; background: var(--line-brand); color: #fff; display: grid; place-items: center; }
+  body.on-detail .consult { display: none; }
+
+  /* หน้าผลการค้นหา */
+  .sbar { position: sticky; top: 64px; z-index: 30; background: var(--surface); box-shadow: 0 1px 0 var(--line); }
+  @media (min-width: 1024px) { .sbar { top: 96px; } }
+  .sbar-1 { display: flex; gap: 8px; padding: 10px 0 6px; align-items: center; }
+  .sbar-1 .ac .input { min-height: 46px; }
+  .fpill { flex: none; min-height: 46px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--primary); color: var(--primary-strong); background: var(--primary-soft); display: inline-flex; gap: 6px; align-items: center; font-weight: 600; }
+  .fpill span.l { display: none; }
+  @media (min-width: 640px) { .fpill span.l { display: inline; } }
+  .sbar-1 .dd { flex: none; }
+  .sbar-1 .dd-btn { min-height: 46px; border-radius: 99px; }
+  .sbar-1 .dd .dd-v { max-width: 120px; }
+  .sbar-1 .sortdd { display: none; }
+  @media (min-width: 768px) { .sbar-1 .sortdd { display: block; } }
+  .sbar-2 { display: flex; gap: 8px; padding: 2px 0 10px; overflow-x: auto; scrollbar-width: none; }
+  .sbar-2::-webkit-scrollbar { display: none; }
+  .sbar-2 .dd { flex: none; }
+  .sbar-2 .dd-btn { min-height: 44px; border-radius: 99px; padding: 0 10px 0 14px; font-size: 15px; }
+  .sbar-2 .dd-set .dd-btn { background: var(--primary-soft); border-color: var(--primary); }
+  .sbar-2 .dd-set .dd-v { color: var(--primary-strong); }
+  .seg2 { flex: none; display: inline-flex; padding: 3px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); }
+  .seg2 a { min-height: 44px; min-width: 64px; padding: 0 16px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; color: var(--muted); }
+  .seg2 a[aria-current="true"] { background: var(--primary); color: #fff; }
+  .rh { padding: 16px 0 12px; }
+  .crumb { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+  .crumb a { color: var(--muted); min-height: 44px; display: inline-flex; align-items: center; min-width: 44px; }
+  .crumb [aria-current] { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .rh h1 { font-size: 20px; line-height: 1.45; }
+  .rh p { color: var(--muted); font-size: 14px; max-width: 80ch; }
+  @media (min-width: 768px) { .rh h1 { font-size: 24px; } }
+  .rh-act { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .pager { display: flex; justify-content: center; gap: 6px; padding: 24px 0 0; flex-wrap: wrap; }
+  .pager button { min-width: 44px; min-height: 44px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+  .pager [aria-current="page"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .empty { background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 18px; padding: 40px 20px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+  .empty .ei { width: 64px; height: 64px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; }
+  .related { margin-top: 28px; }
+  .split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .list-col { min-width: 0; padding-bottom: 24px; }
+  .map-col { display: none; }
+  .map { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--map-bg); }
+  .map > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .pin { position: absolute; transform: translate(-50%, -100%); min-height: 44px; min-width: 44px; display: grid; place-items: center; z-index: 1; }
+  .pin span { background: var(--surface); color: var(--ink); font-weight: 700; font-size: 13px; padding: 4px 10px; border-radius: 99px; box-shadow: 0 2px 8px rgba(14, 42, 87, .25); white-space: nowrap; position: relative; }
+  .pin span::after { content: ''; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--surface); }
+  .pin[aria-pressed="true"] { z-index: 3; }
+  .pin[aria-pressed="true"] span { background: var(--navy); color: #fff; }
+  .pin[aria-pressed="true"] span::after { border-top-color: var(--navy); }
+  .map-note { position: absolute; left: 12px; top: 12px; font-size: 12px; background: rgba(255, 255, 255, .92); padding: 4px 10px; border-radius: 8px; color: var(--muted); }
+  .map-card { position: absolute; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 4; }
+  .map-card .lc { flex-direction: row; box-shadow: var(--shadow-lg); }
+  .map-card .lc .ph { width: 120px; flex: none; aspect-ratio: auto; }
+  .map-card .lc .dots, .map-card .lc .call, .map-card .lc .who, .map-card .lc .spot, .map-card .lc .acts, .map-card .lc .spec, .map-card .lc .ft, .map-card .lc .psq { display: none; }
+  .lc.is-hl { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+  .toggle-map { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 45; background: var(--navy); color: #fff; box-shadow: var(--shadow-lg); }
+  body.show-map .list-col, body.show-map .rh, body.show-map .related { display: none; }
+  body.show-map .map-col { display: block; position: fixed; top: var(--map-top, 180px); left: 0; right: 0; bottom: 0; z-index: 20; }
+  body.on-search .consult { display: none; }
+  @media (min-width: 1024px) {
+    .split { grid-template-columns: minmax(0, 1fr) minmax(0, 40%); }
+    .split .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .map-col { display: block; position: sticky; top: calc(var(--map-top, 214px) + 12px); height: calc(100dvh - var(--map-top, 214px) - 24px); border-radius: 16px; overflow: hidden; }
+    .toggle-map, .map-card { display: none; }
+    body.show-map .list-col, body.show-map .rh, body.show-map .related { display: block; }
+    body.show-map .map-col { position: sticky; }
+    body.on-search .consult { display: inline-flex; }
+  }
+  .related h2 { font-size: 17px; margin-bottom: 8px; }
+
+  /* หน้ารายละเอียด */
+  .dtop { display: flex; align-items: center; gap: 8px; padding: 6px 0 10px; flex-wrap: wrap; }
+  .back { min-height: 44px; padding: 0 14px 0 8px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); display: inline-flex; gap: 4px; align-items: center; font-weight: 500; }
+  .projlink { color: var(--primary-strong); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+  .tools { margin-left: auto; display: flex; gap: 4px; }
+  .tools button { width: 44px; height: 44px; display: grid; place-items: center; }
+  .tools button span { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+  .tools .i { width: 18px; height: 18px; }
+  .tools [aria-pressed="true"] span { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .gal { position: relative; margin: 0 -16px; }
+  .gal-t { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .gal-t::-webkit-scrollbar { display: none; }
+  .gal-t > div { flex: 0 0 100%; aspect-ratio: 4 / 3; scroll-snap-align: start; }
+  .gal-t svg { width: 100%; height: 100%; }
+  .gal .cnt { position: absolute; left: 12px; bottom: 12px; min-height: 44px; display: inline-flex; gap: 6px; align-items: center; padding: 0 12px; border-radius: 10px; background: rgba(255, 255, 255, .95); font-weight: 600; font-size: 14px; }
+  @media (min-width: 768px) {
+    .gal { margin: 0; display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; height: 400px; border-radius: 16px; overflow: hidden; }
+    .gal-t { display: contents; }
+    .gal-t > div { aspect-ratio: auto; min-height: 0; }
+    .gal-t > div:first-child { grid-row: span 2; }
+    .gal-t > div:nth-child(n+4) { display: none; }
+  }
+  .dhead { padding: 14px 0 6px; display: grid; gap: 6px; }
+  .dhead h1 { font-size: 20px; line-height: 1.5; }
+  @media (min-width: 768px) { .dhead h1 { font-size: 24px; } }
+  .stat-r { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .stat-r span { display: inline-flex; gap: 4px; align-items: center; }
+  .stat-r .i { width: 15px; height: 15px; }
+  .dprice { font-size: 26px; font-weight: 700; color: var(--primary-deep); }
+  .dprice small { font-size: 14px; font-weight: 500; color: var(--muted); }
+  .blk { padding: 18px 0; border-top: 1px solid var(--line); }
+  .blk h2 { font-size: 18px; margin-bottom: 12px; }
+  .igrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .igrid div { display: flex; gap: 10px; align-items: center; }
+  .igrid .ic { width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; color: var(--primary-deep); flex: none; }
+  .igrid small { display: block; font-size: 12px; color: var(--muted); }
+  .igrid b { font-size: 15px; }
+  @media (min-width: 768px) { .igrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .desc { max-width: 72ch; white-space: pre-line; }
+  .desc.clip { max-height: 7.2em; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent); mask-image: linear-gradient(180deg, #000 60%, transparent); }
+  .linkbtn { color: var(--primary-strong); font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; }
+  .hl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 24px; }
+  .hl li { display: flex; gap: 10px; align-items: center; min-height: 36px; }
+  .hl .i { color: var(--primary); }
+  @media (min-width: 640px) { .hl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .locbox { position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 9; }
+  .locbox > svg { width: 100%; height: 100%; }
+  .locbox .me { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -100%); }
+  .locbox .me .i { width: 40px; height: 40px; fill: var(--navy); stroke: var(--accent); }
+  .locbox .btn { position: absolute; right: 12px; top: 12px; }
+  .near-t { display: flex; gap: 8px; margin: 12px 0 8px; overflow-x: auto; scrollbar-width: none; }
+  .near-t::-webkit-scrollbar { display: none; }
+  .near-t button { flex: none; min-height: 44px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line-strong); background: var(--surface); font-weight: 500; font-size: 14px; }
+  .near-t [aria-pressed="true"] { background: var(--go); color: #fff; border-color: var(--go); }
+  .near li { display: flex; gap: 10px; align-items: center; min-height: 40px; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .near li .i { width: 18px; height: 18px; color: var(--muted); }
+  .near li span:last-child { margin-left: auto; color: var(--muted); font-size: 14px; }
+  .calc { display: grid; gap: 12px; max-width: 560px; }
+  .calc-out { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--primary-soft); border-radius: 14px; padding: 14px 16px; }
+  .calc-out b { font-size: 22px; color: var(--primary-deep); }
+  .looking { margin-top: 8px; border-radius: 18px; padding: 20px; background: linear-gradient(100deg, #E8F0FC, #FFF6D9); display: grid; gap: 12px; }
+  .looking h2 { font-size: 20px; line-height: 1.4; }
+  .looking h2 em { font-style: normal; color: var(--primary); }
+  @media (min-width: 768px) { .looking { grid-template-columns: 1fr auto; align-items: center; padding: 24px 32px; } }
+  .dlay { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .aside-c { display: none; }
+  @media (min-width: 1024px) {
+    .dlay { grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; }
+    .aside-c { display: block; position: sticky; top: 112px; align-self: start; margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); }
+  }
+  .abar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--surface); box-shadow: 0 -6px 22px rgba(20, 32, 51, .1); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
+  .abar-in { display: flex; align-items: center; gap: 8px; }
+  .abar .av { width: 44px; height: 44px; border-radius: 50%; background: var(--primary-soft); color: var(--primary-deep); font-weight: 700; display: grid; place-items: center; flex: none; }
+  .abar .nm { flex: 1; min-width: 0; line-height: 1.3; }
+  .abar .nm b { display: flex; gap: 6px; align-items: center; font-size: 15px; white-space: nowrap; overflow: hidden; }
+  .abar .nm b span { overflow: hidden; text-overflow: ellipsis; }
+  .abar .vf { color: var(--go); font-size: 12px; font-weight: 600; display: none; gap: 2px; align-items: center; flex: none; }
+  .abar .vf .i { width: 14px; height: 14px; }
+  .abar .nm small { color: var(--muted); font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .abar .ib { border: 1px solid var(--line-strong); flex: none; }
+  .abar .hide-xs { display: none; }
+  @media (min-width: 640px) { .abar .vf { display: inline-flex; } .abar .hide-xs { display: grid; } }
+  .has-bar { padding-bottom: 80px; }
+  .lead { display: grid; gap: 10px; }
+  .tlink { color: var(--primary-strong); text-decoration: underline; min-height: 44px; display: inline-flex; align-items: center; }
+</style>
+</head>
+<body>
+<a class="sr" href="#main">ข้ามไปเนื้อหาหลัก</a>
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="#/" aria-label="BaanHub หน้าแรก"><span class="logo-mark"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M5 16 17 5l12 11v13H5z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M13 29v-8h8v8" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/></svg></span><span>Baan<em>Hub</em></span></a>
+    <div class="rows">
+      <div class="util"><a class="t" href="#/login" onclick="BH.toast('ไปหน้าเข้าสู่ระบบ');return false">เข้าสู่ระบบ</a>/<a class="t" href="#/register" onclick="BH.toast('ไปหน้าสมัครสมาชิก');return false">สมัครสมาชิกฟรี</a><span class="sep"></span>
+        <a class="ib" href="#/" aria-label="หน้าแรก"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></svg></a>
+        <a class="ib" href="#/search?deal=sale" aria-label="รายการโปรด"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7.1 4c2 0 3.4 1.1 4.9 2.9C13.5 5.1 14.9 4 16.9 4c3.5 0 5.7 3.4 4.4 6.8C19.5 15.4 12 20 12 20z"/></svg><span class="n" data-fav-count hidden>0</span></a>
+        <a class="ib" href="#/noti" onclick="BH.toast('ยังไม่มีการแจ้งเตือนใหม่');return false" aria-label="การแจ้งเตือน"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></svg></a><span class="sep"></span>
+        <a class="t" href="#/help" onclick="BH.toast('เปิดคู่มือการใช้งาน');return false">คู่มือการใช้งาน</a><span class="sep"></span><a class="t" href="#/contact" onclick="BH.toast('เปิดหน้าติดต่อเรา');return false">ติดต่อเรา</a></div>
+      <nav class="mainnav" aria-label="เมนูหลัก" id="nav"></nav>
+    </div>
+    <div class="hdr-r">
+      <a class="ib" href="#/search?deal=sale" aria-label="รายการโปรด"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7.1 4c2 0 3.4 1.1 4.9 2.9C13.5 5.1 14.9 4 16.9 4c3.5 0 5.7 3.4 4.4 6.8C19.5 15.4 12 20 12 20z"/></svg><span class="n" data-fav-count hidden>0</span></a>
+      <a class="btn btn-accent post" href="#/post" onclick="BH.toast('ไปหน้าลงประกาศ');return false" aria-label="ลงประกาศ"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>ลงประกาศ</span></a>
+      <button class="ib menu-btn" type="button" data-drawer-open aria-label="เปิดเมนู" aria-controls="drawer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="เมนู">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>เมนู</strong><button class="ib" type="button" data-drawer-close aria-label="ปิดเมนู"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="drawer-links"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:8px 0">
+    <a href="#/post" onclick="BH.toast('ไปหน้าลงประกาศ');return false" class="btn btn-accent">ลงประกาศ</a>
+    <a href="#/login" onclick="BH.toast('ไปหน้าเข้าสู่ระบบ');return false" class="btn btn-ghost">เข้าสู่ระบบ / สมัครสมาชิกฟรี</a>
+  </div>
+</div>
+<main id="main"></main>
+<section class="dir" id="dir" aria-label="ค้นหาตามทำเลและประเภท"></section>
+<footer class="ftr" id="ftr"></footer>
+<a class="consult" href="#line" onclick="BH.toast('เปิด LINE ปรึกษาทีมงาน');return false"><span class="fc"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11c0-4 3.6-7 8-7s8 3 8 7-3.6 7-8 7c-.8 0-1.6-.1-2.3-.3L6 19.5l.8-3.1C5.1 15 4 13.1 4 11z"/></svg></span>ปรึกษาฟรี</a>
+<div class="sheet" id="sheet" hidden><div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-h" id="sheet-p"></div></div>
+<span class="design-tag">5E · Portal Mix (5B + 5D)</span>
+
+<script src="portal-core.js"></script>
+<script>
+(function () {
+  var B = BH, I = B.icon, esc = B.esc, main = B.$('#main');
+  var TYPES = B.TYPES.concat([{ id: 'shop', label: 'ร้านค้า', icon: 'shophouse' }, { id: 'warehouse', label: 'โกดัง / โรงงาน', icon: 'building' }]);
+  var typeLabel = function (id) { var t = TYPES.find(function (x) { return x.id === id; }); return t ? t.label : ''; };
+  var VIEWS = [972, 1840, 4490, 326, 2350, 1210, 512, 1650, 288, 3220, 2870, 640];
+  var AG = {
+    a: { rating: 5.0, areas: 'กรุงเทพฯ · ปริมณฑล', tags: ['คอนโด', 'บ้านเดี่ยว', '+6'], quote: 'ดูแลตั้งแต่นัดชมจนโอนกรรมสิทธิ์' },
+    b: { rating: 4.9, areas: 'กรุงเทพฯ · นนทบุรี', tags: ['ทาวน์โฮม', 'อาคารพาณิชย์'], quote: 'ทรัพย์ทุกชิ้นตรวจโฉนดแล้ว' },
+    c: { rating: 4.8, areas: 'เชียงใหม่ · ปทุมธานี', tags: ['บ้าน', 'ที่ดิน', '+2'], quote: 'ถนัดบ้านพักและที่ดินภาคเหนือ' },
+    d: { rating: 5.0, areas: 'ทั่วประเทศ', tags: ['โครงการใหม่'], quote: 'ราคาตรงจากผู้พัฒนาโครงการ' },
+  };
+  var NAV = [
+    { label: 'ค้นหา agent', href: '#/agents', isNew: true, toast: 'ไปหน้าค้นหา agent' },
+    { label: 'ค้นหาด่วน', quick: true },
+    { label: 'รายการขาย-เช่า', q: { deal: 'sale' } },
+    { label: 'ประกาศแนะนำ', q: { sort: 'latest' } },
+    { label: 'โครงการใหม่', q: { deal: 'sale', market: 'new' } },
+    { label: 'ฝากหาทรัพย์', href: '#/looking', toast: 'ไปหน้าฝากความต้องการ (บอกสิ่งที่ตามหา ให้ agent เสนอทรัพย์)' },
+  ];
+  var DIR = [
+    ['ขายคอนโดกรุงเทพฯ', ['อารีย์', 'ทองหล่อ', 'พระราม 9', 'อ่อนนุช', 'สาทร', 'ลาดพร้าว'], { deal: 'sale', type: 'condo', prov: 'bkk' }],
+    ['เช่าคอนโดกรุงเทพฯ', ['อโศก', 'เอกมัย', 'ห้วยขวาง', 'จตุจักร', 'บางนา', 'สีลม'], { deal: 'rent', type: 'condo', prov: 'bkk' }],
+    ['ขายบ้านเดี่ยว', ['นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'เชียงใหม่', 'ชลบุรี', 'ภูเก็ต'], { deal: 'sale', type: 'house' }],
+    ['ขายที่ดิน / อาคารพาณิชย์', ['หางดง', 'บางใหญ่', 'รังสิต', 'ลาดพร้าว', 'ศรีนครินทร์', 'หัวหิน'], { deal: 'sale' }],
+  ];
+  var LINEB = [
+    ['BTS', 'สายสุขุมวิท', 'var(--line-bts)', 'BTS'], ['BTS', 'สายสีลม', 'var(--line-silom)', 'BTS'], ['M', 'MRT สายสีน้ำเงิน', 'var(--line-mrt)', 'MRT'], ['M', 'MRT สายสีม่วง', 'var(--line-purple)', 'MRT'],
+    ['M', 'MRT สายสีเหลือง', 'var(--line-yellow)', 'สีเหลือง'], ['M', 'MRT สายสีชมพู', 'var(--line-pink)', 'สีชมพู'], ['ARL', 'แอร์พอร์ต ลิงก์', 'var(--line-arl)', 'แอร์พอร์ต'], ['BRT', 'รถ BRT', 'var(--primary-deep)', 'BRT'],
+  ];
+
+  /* ไอคอนประเภทแบบภาพประกอบเล็กในวงกลม (วาดเอง) */
+  function typeArt(id) {
+    var sky = '#DDEEFF', g = '#9ED39A', o = '<svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="28" fill="' + sky + '"/><rect y="42" width="56" height="14" fill="' + g + '"/>';
+    var win = function (x, y, c) { return '<rect x="' + x + '" y="' + y + '" width="4" height="4" rx="1" fill="' + (c || '#FFFFFF') + '"/>'; };
+    if (id === 'condo' || id === 'office') { o += '<rect x="18" y="10" width="20" height="34" rx="2" fill="' + (id === 'office' ? '#3FA9A0' : '#4C8DF0') + '"/>'; for (var i = 0; i < 12; i++) o += win(21 + (i % 3) * 5.5, 14 + Math.floor(i / 3) * 6.5, i === 4 ? '#FFD66B' : 0); }
+    else if (id === 'house') o += '<rect x="13" y="26" width="30" height="18" fill="#FFFFFF"/><polygon points="10,28 28,13 46,28" fill="#E0662C"/><rect x="25" y="33" width="7" height="11" fill="#4C8DF0"/>' + win(16, 31, '#FFD66B') + '<circle cx="45" cy="38" r="5" fill="#4E9A5B"/>';
+    else if (id === 'townhouse') { for (var k = 0; k < 3; k++) o += '<rect x="' + (9 + k * 13) + '" y="22" width="12" height="22" fill="' + (k % 2 ? '#7DB3FF' : '#4C8DF0') + '"/><polygon points="' + (8 + k * 13) + ',23 ' + (15 + k * 13) + ',16 ' + (22 + k * 13) + ',23" fill="#2A5DB0"/>' + win(13 + k * 13, 27); }
+    else if (id === 'twin') o += '<rect x="10" y="24" width="18" height="20" fill="#FFFFFF"/><rect x="28" y="24" width="18" height="20" fill="#EAF1FB"/><polygon points="8,26 28,13 48,26" fill="#2A5DB0"/>' + win(14, 29, '#FFD66B') + win(38, 29);
+    else if (id === 'land') o += '<path d="M0 40 Q14 30 28 36 T56 34 V56 H0z" fill="#6CBF6A"/><path d="M28 12c-5 0-8 4-8 8 0 6 8 13 8 13s8-7 8-13c0-4-3-8-8-8z" fill="#E0662C"/><circle cx="28" cy="20" r="3" fill="#fff"/>';
+    else if (id === 'shophouse' || id === 'shop') o += '<rect x="11" y="16" width="34" height="28" fill="#FFFFFF"/><path d="M9 16h38l-3 7H12z" fill="' + (id === 'shop' ? '#E0662C' : '#2E9E6A') + '"/><rect x="15" y="28" width="10" height="16" fill="#4C8DF0"/><rect x="29" y="28" width="12" height="9" fill="#FFD66B"/>';
+    else if (id === 'apartment') { o += '<rect x="12" y="12" width="32" height="32" fill="#7AA7E8"/>'; for (var j = 0; j < 12; j++) o += win(15 + (j % 4) * 7, 16 + Math.floor(j / 4) * 8, j === 6 ? '#FFD66B' : 0); }
+    else if (id === 'warehouse') o += '<path d="M8 44V24l20-9 20 9v20z" fill="#9AA9BE"/><rect x="18" y="30" width="20" height="14" fill="#5F6F86"/><path d="M18 34h20M18 38h20" stroke="#9AA9BE" stroke-width="1.5"/>';
+    return o + '</svg>';
+  }
+
+  function tagsHtml(h) {
+    return '<div class="tags"><span class="tg t-type">' + typeLabel(h.type) + '</span><span class="tg t-deal">' + (h.deal === 'rent' ? 'เช่า' : 'ขาย') + '</span><span class="tg">' + (h.market === 'new' ? 'มือ 1' : 'มือ 2') + '</span>' + (h.badges.indexOf('pet') >= 0 ? '<span class="tg">เลี้ยงสัตว์ได้</span>' : '') + '</div>';
+  }
+  function views(h) { return VIEWS[B.LISTINGS.indexOf(h) % VIEWS.length]; }
+  function compact(n) { return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 2).replace(/\.?0+$/, '') + 'K' : '' + n; }
+  function card(h, spot) {
+    var a = B.AGENTS[h.agent];
+    return '<article class="lc">' +
+      '<div class="ph">' + B.art(h.type, h.palette, h.title) + (spot ? '<span class="spot">' + I('spark') + 'Spotlight</span>' : '') +
+      '<div class="acts"><button type="button" data-cmp="' + h.slug + '" aria-pressed="false" aria-label="เพิ่มเพื่อเปรียบเทียบ"><span>' + I('home') + '</span></button><button type="button" data-fav="' + h.slug + '" aria-pressed="' + B.isFav(h.slug) + '" aria-label="บันทึก ' + esc(h.title) + '"><span>' + I('heart') + '</span></button></div>' +
+      '<span class="who" title="' + esc(a.name) + '">' + a.initials + '</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>' +
+      '<button type="button" class="call" data-contact="' + h.slug + '" aria-label="ติดต่อผู้ลงประกาศ ' + esc(h.title) + '"><span>ติดต่อ</span></button></div>' +
+      '<div class="bd">' + tagsHtml(h) + '<h3><a href="#/homes/' + h.slug + '">' + esc(h.title) + '</a></h3>' +
+      '<p class="meta">' + I('pin') + '<span>' + esc(h.project ? h.project.name : h.loc) + '</span></p>' +
+      '<div class="spec">' + (h.beds ? '<span>' + I('bed') + h.beds + '</span><span>' + I('bath') + h.baths + '</span>' : '') + (h.floor && h.floor !== '-' ? '<span>' + I('building') + (/ชั้น/.test(h.floor) ? h.floor : 'ชั้น ' + h.floor) + '</span>' : '') + '<span>' + I('area') + h.size.toLocaleString() + ' ตร.ม.</span></div>' +
+      '<div class="pr">' + (h.priceFrom ? '<small>เริ่ม </small>' : '') + B.baht(h.price) + (h.deal === 'rent' ? '<small> /เดือน</small>' : '') + '</div>' + (B.perSqm(h) ? '<div class="psq">(' + B.perSqm(h).replace('/ตร.ม.', ' บาท/ตร.ม.').replace('฿', '') + ')</div>' : '') +
+      '<div class="ft"><span>' + (h.days === 0 ? 'อัปเดตวันนี้' : 'อัปเดต ' + B.postedText(h.days)) + '</span><span>' + I('eye') + compact(views(h)) + '</span></div></div></article>';
+  }
+  function pjCard(h) {
+    var p = h.project;
+    return '<article class="pj"><div class="ph">' + B.art(h.type, h.palette, p.name, 1) + '<span class="from">เริ่มต้น<b>' + B.short(h.price).replace(' ล้าน', 'M') + '</b></span></div>' +
+      '<div class="bd"><h3><a href="#/homes/' + h.slug + '">' + esc(p.name) + '</a></h3><p class="meta">' + I('pin') + '<span>' + esc(h.loc) + '</span></p>' +
+      '<div class="pstat"><span>ยูนิต<b>' + p.units + '</b></span><span>แบบห้อง<b>' + (h.type === 'condo' ? 4 : 3) + '</b></span><span>' + (h.type === 'condo' ? 'ชั้น' : 'ชั้นบ้าน') + '<b>' + h.floor.replace(' ชั้น', '') + '</b></span><span>เริ่มต้น<b>' + B.short(h.price).replace(' ล้าน', 'M') + '</b></span></div>' +
+      '<div class="dev"><i>' + p.dev.replace('สมมติ ', '').slice(0, 2) + '</i>' + esc(p.dev) + '</div></div></article>';
+  }
+
+  /* ช่องค้นหาแบบมีคำแนะนำ (APG combobox + listbox) */
+  function suggestions(kw) {
+    kw = (kw || '').trim(); if (!kw) return [];
+    var out = [], add = function (grp, label, sub, icon, q) { if (label.indexOf(kw) >= 0 || (sub || '').indexOf(kw) >= 0) out.push({ grp: grp, label: label, sub: sub, icon: icon, q: q }); };
+    B.AREAS.forEach(function (a) { add('ทำเล', a.label, B.provLabel(a.prov) + ' · ' + a.count.toLocaleString() + ' ประกาศ', 'pin', { area: a.id, prov: a.prov }); });
+    B.LISTINGS.filter(function (h) { return h.project; }).forEach(function (h) { add('โครงการ', h.project.name, h.loc, 'building', { q: h.project.name.split(' ')[0] }); });
+    B.LINES.forEach(function (l) { l.stations.forEach(function (s) { add('รถไฟฟ้า', 'สถานี' + s, l.label, 'train', { q: s, transit: '1' }); }); });
+    B.PROVINCES.forEach(function (p) { add('จังหวัด', p.label, p.hint, 'map', { prov: p.id }); });
+    return out.slice(0, 8);
+  }
+  function acField(id, ph, onPick) {
+    return { html: '<div class="ac"><label class="sr" for="' + id + '">คำค้น</label>' + I('search') + '<input class="input" id="' + id + '" type="search" enterkeyhint="search" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="' + id + '-l" placeholder="' + ph + '"><ul class="ac-list" id="' + id + '-l" role="listbox" aria-label="คำแนะนำ" hidden></ul></div>',
+      mount: function (base) {
+        var inp = B.$('#' + id), list = B.$('#' + id + '-l'), items = [], act = -1;
+        var draw = function () {
+          var html = '', last = '';
+          items.forEach(function (s, i) {
+            if (s.grp !== last) { html += '<li class="grp" role="presentation">' + s.grp + '</li>'; last = s.grp; }
+            html += '<li role="option" id="' + id + '-o' + i + '" data-i="' + i + '" aria-selected="' + (i === act) + '" class="' + (i === act ? 'is-active' : '') + '">' + I(s.icon) + '<span>' + esc(s.label) + '<small>' + esc(s.sub || '') + '</small></span></li>';
+          });
+          list.innerHTML = html; list.hidden = !items.length; inp.setAttribute('aria-expanded', !!items.length);
+          inp.setAttribute('aria-activedescendant', act >= 0 ? id + '-o' + act : '');
+        };
+        inp.addEventListener('input', function () { items = suggestions(inp.value); act = -1; draw(); });
+        inp.addEventListener('keydown', function (e) {
+          if (list.hidden) return;
+          if (e.key === 'ArrowDown') { e.preventDefault(); act = Math.min(items.length - 1, act + 1); draw(); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); act = Math.max(-1, act - 1); draw(); }
+          else if (e.key === 'Escape') { items = []; draw(); }
+          else if (e.key === 'Enter' && act >= 0) { e.preventDefault(); onPick(items[act].q); }
+        });
+        inp.addEventListener('blur', function () { setTimeout(function () { items = []; draw(); }, 150); });
+        list.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        list.addEventListener('click', function (e) { var li = e.target.closest('li[data-i]'); if (li) onPick(items[+li.dataset.i].q); });
+        if (base) inp.value = base;
+        return inp;
+      } };
+  }
+
+  function arrows(id) { return '<div class="arrows"><button type="button" data-scroll="' + id + '" data-dir="-1" aria-label="เลื่อนไปซ้าย">' + I('left') + '</button><button type="button" data-scroll="' + id + '" data-dir="1" aria-label="เลื่อนไปขวา">' + I('right') + '</button></div>'; }
+
+  function home() {
+    var rec = B.LISTINGS.filter(function (h) { return h.market !== 'new'; });
+    var projects = B.LISTINGS.filter(function (h) { return h.project; });
+    projects = projects.concat([Object.assign({}, B.find('condo-ari-skyview'), { slug: 'condo-ari-skyview', project: { name: 'Ari Skyview Residence', dev: 'สมมติ เรียลเอสเตท', units: 248, done: 'พร้อมอยู่', promo: '' } })]);
+    var ac = acField('kw', 'กรอกชื่อ ทำเล / โครงการ / รถไฟฟ้า', function (q) { location.hash = B.href('/search', Object.assign({ deal: mode === 'rent' ? 'rent' : 'sale' }, q)); });
+    var mode = 'rent';
+    main.innerHTML =
+      '<section class="hero"><div class="wrap hero-g"><div>' +
+      '<span class="eyebrow">' + I('spark') + 'ประกาศใหม่วันนี้ 1,284 รายการ</span>' +
+      '<h1>ซื้อ ขาย ให้เช่า บ้าน คอนโด ที่ดิน <em>ใกล้รถไฟฟ้า</em> ลงประกาศฟรี</h1><p class="sub">ค้นจากทำเล สถานี หรือชื่อโครงการ เทียบราคาต่อ ตร.ม. ได้ทันที</p>' +
+      '<div class="modes" role="tablist" aria-label="ต้องการเช่าหรือซื้อ"><button type="button" class="mode" role="tab" aria-selected="true" data-mode="rent"><span class="mi">' + I('tag') + '</span><span><b>เช่า</b><small>เช่าบ้าน คอนโด อสังหาฯ</small></span></button>' +
+      '<button type="button" class="mode" role="tab" aria-selected="false" data-mode="sale"><span class="mi">' + I('home') + '</span><span><b>ซื้อ</b><small>ซื้อบ้าน คอนโด ที่ดิน</small></span></button></div>' +
+      '<form class="spanel" id="sform" role="search" aria-label="ค้นหาประกาศ"><div class="sline">' + ac.html + '<button class="btn btn-primary sgo" type="submit" aria-label="ค้นหา">' + I('search') + '<span>ค้นหา</span></button></div>' +
+      '<div class="qlinks">' + [['คอนโดหรู', { type: 'condo', price: 'p4', deal: 'sale' }], ['เช่าคอนโด', { deal: 'rent', type: 'condo' }], ['ขายคอนโด', { deal: 'sale', type: 'condo' }], ['เช่าบ้าน', { deal: 'rent', type: 'house' }], ['ขายบ้าน', { deal: 'sale', type: 'house' }], ['ขายที่ดิน', { deal: 'sale', type: 'land' }]].map(function (x) { return '<a href="' + B.href('/search', x[1]) + '">' + x[0] + '</a>'; }).join('') + '</div></form></div>' +
+      '<div class="hero-art" aria-hidden="true"><div class="frame">' + B.art('condo', 'dusk', '', 1) + '</div><div class="float f1"><small>ราคาเฉลี่ยคอนโดใกล้ BTS</small><b>฿118,400/ตร.ม.</b></div><div class="float f2"><small>เดินถึงสถานี</small><b>350 ม.</b></div></div></div></section>' +
+      '<div class="wrap">' +
+      '<section class="sec" aria-labelledby="h-type"><div class="sec-h"><h2 id="h-type">ประเภทอสังหาฯ</h2>' + arrows('t-type') + '</div><div class="track" id="t-type">' +
+      TYPES.map(function (t) { return '<a class="tcat" href="' + B.href('/search', { type: t.id }) + '"><span class="ring">' + typeArt(t.id) + '</span>' + t.label + '</a>'; }).join('') + '</div></section>' +
+      '<section class="sec" aria-labelledby="h-loc"><div class="sec-h"><h2 id="h-loc">ทำเลยอดนิยม</h2><a class="more" href="#/search">ทำเลอื่นๆ</a></div><div class="track" id="t-loc">' +
+      B.AREAS.map(function (a, i) { return '<a class="loc" href="' + B.href('/search', { area: a.id, prov: a.prov }) + '">' + B.art(a.kind, a.palette, '', i) + '<span><strong>' + a.label + '</strong><small>' + a.count.toLocaleString() + ' ประกาศ</small></span></a>'; }).join('') + '</div></section>' +
+      '<section class="sec" aria-labelledby="h-rec"><div class="sec-h"><h2 id="h-rec">ประกาศแนะนำ</h2><a class="more" href="#/search?sort=latest">ดูทั้งหมด</a></div><div class="cards c4">' + rec.slice(0, 8).map(function (h, i) { return card(h, i < 4); }).join('') + '</div></section>' +
+      '</div><section class="sec alt" aria-labelledby="h-pj"><div class="wrap"><div class="sec-h"><h2 id="h-pj">โครงการใหม่น่าสนใจ</h2>' + arrows('t-pj') + '</div><div class="track" id="t-pj">' + projects.map(pjCard).join('') + '</div></div></section>' +
+      '<div class="wrap"><section class="sec" aria-labelledby="h-ag"><div class="sec-h"><h2 id="h-ag">agent แนะนำ</h2><a class="btn btn-go" href="#/agent-join" onclick="BH.toast(\'ไปหน้าสมัครเป็น agent\');return false">สมัครเป็น agent</a></div><div class="track" id="t-ag">' +
+      ['a', 'b', 'c', 'd'].map(function (k) {
+        var a = B.AGENTS[k], x = AG[k];
+        return '<article class="ag"><div class="top"><span class="badge">' + I('star') + 'Top agent</span><span class="face">' + a.initials + '</span><span class="cbtn"><button class="btn" type="button" onclick="BH.toast(\'ติดต่อ ' + a.name + ' ' + a.phone + '\')">ติดต่อ</button></span></div>' +
+          '<div class="bd"><strong>' + esc(a.name) + (a.verified ? I('shield') : '') + '</strong><span class="rt"><b>★ ' + x.rating.toFixed(1) + '</b> · ' + x.areas + '</span><span class="chips">' + x.tags.map(function (t) { return '<span>' + t + '</span>'; }).join('') + '</span><q>' + x.quote + '</q></div></article>';
+      }).join('') + '</div></section>' +
+      '<section class="sec" aria-labelledby="h-tr"><div class="sec-h"><div><h2 id="h-tr">ค้นหาตามเส้นทางรถไฟฟ้า</h2><p style="color:var(--muted);font-size:14px">เลือกสาย แล้วแตะสถานีเพื่อดูประกาศรอบสถานี</p></div><a class="more" href="#/search?transit=1">สถานีทั้งหมด</a></div>' +
+      '<div class="transit"><div class="lines" role="group" aria-label="เลือกสายรถไฟฟ้า">' + B.LINES.map(function (l, i) { return '<button type="button" class="lchip" style="--c:' + l.color + '" data-line="' + i + '" aria-pressed="' + (i === 0) + '"><span class="dot"></span>' + l.label + '</button>'; }).join('') + '</div>' +
+      '<div class="stations" id="stations" tabindex="0" aria-label="สถานี เลื่อนดูได้"></div></div></section>' +
+      '<section class="sec" aria-labelledby="h-rk"><div class="sec-h"><div><h2 id="h-rk">ทำเลมาแรงเดือนนี้</h2><p style="color:var(--muted);font-size:14px">จัดอันดับจากยอดค้นหา พร้อมราคากลางต่อ ตร.ม.</p></div><a class="more" href="#/search">ทั้งหมด</a></div><ol class="rank">' +
+      B.AREAS.slice(0, 6).map(function (a, i) {
+        return '<li><a class="rk" href="' + B.href('/search', { area: a.id, prov: a.prov }) + '"><span class="no">' + (i + 1) + '</span><span class="th">' + B.art(a.kind, a.palette, '', i) + '</span>' +
+          '<span><strong>' + a.label + '</strong><small>' + B.provLabel(a.prov) + ' · ' + a.count.toLocaleString() + ' ประกาศ</small></span>' +
+          '<span class="tr"><b>฿' + (82 + i * 17) + 'K/ตร.ม.</b><span class="up">▲ ' + (6 - i * .7).toFixed(1) + '%</span></span></a></li>';
+      }).join('') + '</ol></section>' +
+      '<section class="sec" aria-labelledby="h-nw"><div class="sec-h"><h2 id="h-nw">บทความและข่าวสารที่น่าสนใจ</h2><a class="more" href="#/news" onclick="BH.toast(\'ไปหน้าบทความ\');return false">บทความอื่นๆ</a></div><div class="news">' +
+      [['big', 'condo', 'night', 'รีวิวคอนโดใหม่ย่านพระราม 9 ห้องเพดานสูง ส่วนกลางกว่า 2,000 ตร.ม.'], ['', 'house', 'mint', 'เช็กลิสต์ตรวจบ้านก่อนโอน 12 ข้อที่มือใหม่มักลืม'], ['', 'townhouse', 'dusk', 'ผ่อนบ้านปี 2570 ดอกเบี้ยแบบไหนคุ้มกว่า']].map(function (n) {
+        return '<article class="nw ' + n[0] + '"><div class="ph">' + B.art(n[1], n[2], '', 1) + '</div><div class="bd"><h3><a href="#/news" onclick="BH.toast(\'เปิดบทความ\');return false">' + n[3] + '</a></h3><span class="go" aria-hidden="true">' + I('right') + '</span></div></article>';
+      }).join('') + '</div><div class="ztags">' + ['สุขุมวิท อโศก ทองหล่อ', 'ลาดพร้าว เซ็นทรัลลาดพร้าว', 'พระราม 9 RCA', 'รัชดา ห้วยขวาง'].map(function (z) { return '<a href="' + B.href('/search', { q: z.split(' ')[0] }) + '">' + z + '</a>'; }).join('') + '</div></section></div>';
+
+    ac.mount();
+    var modes = B.$$('[data-mode]');
+    modes.forEach(function (m, i) {
+      m.addEventListener('click', function () { mode = m.dataset.mode; modes.forEach(function (x) { x.setAttribute('aria-selected', x === m); }); });
+      m.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); var n = modes[1 - i]; n.focus(); n.click(); } });
+    });
+    B.$('#sform').addEventListener('submit', function (e) { e.preventDefault(); location.hash = B.href('/search', { deal: mode, q: B.$('#kw').value }); });
+    var drawStations = function (i) {
+      var l = B.LINES[i];
+      B.$('#stations').innerHTML = l.stations.map(function (s, k) { return '<a class="st" style="--c:' + l.color + '" href="' + B.href('/search', { q: s, transit: '1' }) + '"><span class="o"></span><span>' + s + '</span><small>' + (120 + k * 37) + ' ประกาศ</small></a>'; }).join('');
+    };
+    B.$$('[data-line]').forEach(function (b) { b.addEventListener('click', function () { B.$$('[data-line]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); drawStations(+b.dataset.line); }); });
+    drawStations(0);
+  }
+
+  var SIZES = [{ id: 's1', label: 'ไม่เกิน 35 ตร.ม.', min: 0, max: 35 }, { id: 's2', label: '35 – 80 ตร.ม.', min: 35, max: 80 }, { id: 's3', label: '80 – 200 ตร.ม.', min: 80, max: 200 }, { id: 's4', label: '200 ตร.ม. ขึ้นไป', min: 200, max: Infinity }];
+  function search(st) {
+    var q = st.q, size = SIZES.find(function (s) { return s.id === q.size; });
+    var res = B.filter(q).filter(function (h) { return (!q.baths || h.baths >= +q.baths) && (!size || (h.size >= size.min && h.size < size.max)); });
+    var deal = q.deal === 'rent' ? 'rent' : 'sale';
+    var t = q.type ? typeLabel(q.type) : 'อสังหาฯ', place = q.area ? (B.AREAS.find(function (a) { return a.id === q.area; }) || {}).label : q.prov ? B.provLabel(q.prov) : '';
+    var h1 = (deal === 'rent' ? 'เช่า' : 'ขาย') + t + (q.market === 'new' ? ' โครงการใหม่ มือ 1' : q.market === 'resale' ? ' มือสอง' : '') + (place ? ' ' + place : '') + (q.q ? ' ' + q.q : '') + (q.transit ? ' ใกล้รถไฟฟ้า' : '');
+    var nF = ['type', 'prov', 'area', 'price', 'beds', 'baths', 'size', 'pet', 'transit', 'market'].filter(function (k) { return q[k]; }).length;
+    var ac = acField('skw', 'ค้นหาชื่อ ทำเล / โครงการ / รถไฟฟ้า', function (p) { location.hash = B.href('/search', Object.assign({ deal: q.deal }, p)); });
+    main.innerHTML = '<div class="sbar"><div class="wrap"><form class="sbar-1" id="sf" role="search" aria-label="ค้นหาประกาศ">' + ac.html +
+      '<button type="button" class="fpill" data-open-f aria-label="ตัวกรอง ' + nF + ' รายการ">' + I('filter') + '<span class="l">ตัวกรอง</span>' + (nF ? ' (' + nF + ')' : '') + '</button><div data-f="sort" class="sortdd dd-right"></div></form>' +
+      '<div class="sbar-2" aria-label="ตัวกรองด่วน"><div class="seg2" aria-label="เช่าหรือซื้อ"><a href="' + B.href('/search', Object.assign({}, q, { deal: 'rent', price: '' })) + '" aria-current="' + (deal === 'rent') + '">เช่า</a><a href="' + B.href('/search', Object.assign({}, q, { deal: 'sale', price: '' })) + '" aria-current="' + (deal === 'sale') + '">ซื้อ</a></div>' +
+      '<div data-f="type"></div><div data-f="price"></div><div data-f="beds"></div><div data-f="baths"></div><div data-f="size" class="dd-right"></div></div></div></div>' +
+      '<div class="wrap"><div class="rh"><nav class="crumb" aria-label="breadcrumb"><a href="#/">หน้าแรก</a><span aria-hidden="true">/</span><a href="#/search">รายการ ขาย เช่า</a><span aria-hidden="true">/</span><span aria-current="page">' + esc(h1) + '</span></nav>' +
+      '<h1>' + esc(h1) + '</h1><p>ค้นหาประกาศ' + esc(h1) + ' จากเจ้าของและ agent ที่ตรวจสอบแล้ว อัปเดตทุกวัน มีให้เลือก ' + res.length.toLocaleString() + ' รายการ</p>' +
+      '<div class="rh-act"><button type="button" class="btn btn-ghost" onclick="BH.toast(\'บันทึกการค้นหาแล้ว — จะแจ้งเตือนเมื่อมีประกาศใหม่\')">' + I('star') + 'บันทึกการค้นหา</button><button type="button" class="btn btn-ghost" onclick="BH.toast(\'คัดลอกลิงก์การค้นหาแล้ว\')">' + I('share') + 'แชร์</button></div></div>' +
+      '<div class="split"><section class="list-col" aria-label="ผลการค้นหา">' +
+      (res.length ? '<div class="cards" id="results">' + res.map(function (h, i) { return card(h, i < 2); }).join('') + '</div><nav class="pager" aria-label="หน้า"><button type="button" aria-current="page">1</button><button type="button" onclick="BH.toast(\'ตัวอย่าง: หน้าถัดไป\')">2</button><button type="button" onclick="BH.toast(\'ตัวอย่าง: หน้าถัดไป\')">3</button><button type="button" aria-label="หน้าถัดไป" onclick="BH.toast(\'ตัวอย่าง: หน้าถัดไป\')">›</button></nav>'
+        : '<div class="empty"><span class="ei">' + I('search') + '</span><h2>ไม่พบประกาศที่ตรงกับเงื่อนไข</h2><p style="color:var(--muted)">ลองล้างตัวกรองบางข้อ หรือฝากความต้องการไว้ให้ agent หาทรัพย์ให้</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><a class="btn btn-primary" href="' + B.href('/search', { deal: q.deal }) + '">ล้างตัวกรอง</a><a class="btn btn-ghost" href="#/looking" onclick="BH.toast(\'ไปหน้าฝากหาทรัพย์\');return false">ฝากหาทรัพย์</a></div></div>') +
+      '</section><aside class="map-col" aria-label="แผนที่ผลการค้นหา"><div class="map" id="map">' + B.mapArt('แผนที่ประกอบตำแหน่งประกาศ') +
+      res.map(function (h) { return '<button type="button" class="pin" style="left:' + (8 + h.map[0] * .84) + '%;top:' + (14 + h.map[1] * .78) + '%" data-pin="' + h.slug + '" aria-pressed="false" aria-label="' + esc(h.title) + ' ' + B.priceText(h) + '"><span>' + B.priceShort(h) + '</span></button>'; }).join('') +
+      '<span class="map-note">แผนที่ประกอบ · ไม่ใช่ตำแหน่งจริง</span><div class="map-card" id="map-card" hidden></div></div></aside></div>' +
+      '<button class="btn toggle-map" type="button" id="tmap" aria-pressed="false">' + I('map') + '<span>แผนที่</span></button>' +
+      '<section class="related" aria-labelledby="h-rel"><h2 id="h-rel">ค้นหาที่เกี่ยวข้อง</h2><div class="ztags" style="margin-top:0">' +
+      [['ขายคอนโด 1 ห้องนอน', { deal: 'sale', type: 'condo', beds: '1' }], ['ขายคอนโดไม่เกิน 2 ล้าน', { deal: 'sale', type: 'condo', price: 'p1' }], ['เช่าคอนโดเลี้ยงสัตว์ได้', { deal: 'rent', type: 'condo', pet: '1' }], ['ขายบ้านเดี่ยวนนทบุรี', { deal: 'sale', type: 'house', prov: 'non' }], ['คอนโดใกล้ BTS', { transit: '1', q: 'BTS' }]].map(function (x) { return '<a href="' + B.href('/search', x[1]) + '">' + x[0] + '</a>'; }).join('') + '</div></section></div>';
+
+    ac.mount(q.q);
+    B.$('#sf').addEventListener('submit', function (e) { e.preventDefault(); go({ q: B.$('#skw').value }); });
+    var go = function (p) { var n = Object.assign({}, q, p); Object.keys(n).forEach(function (k) { if (!n[k]) delete n[k]; }); location.hash = B.href('/search', n); };
+    var priceOpts = B.PRICE[deal];
+    B.dropdown(B.$('[data-f=sort]'), { aria: 'เรียงตาม', options: [{ id: 'latest', label: 'ล่าสุด / แนะนำ' }].concat(B.SORTS.slice(1)), value: q.sort || 'latest', onChange: function (v) { go({ sort: v === 'latest' ? '' : v }); } });
+    B.dropdown(B.$('[data-f=type]'), { aria: 'ประเภททรัพย์', placeholder: 'ทุกประเภท', options: TYPES.map(function (t) { return { id: t.id, label: t.label, icon: t.icon }; }), value: q.type, onChange: function (v) { go({ type: v }); } });
+    B.dropdown(B.$('[data-f=price]'), { aria: 'ช่วงราคา', placeholder: 'ช่วงราคา (บาท)', options: priceOpts, value: q.price, onChange: function (v) { go({ price: v }); } });
+    B.dropdown(B.$('[data-f=beds]'), { aria: 'ห้องนอน', placeholder: 'ห้องนอน', options: B.BEDS, value: q.beds, onChange: function (v) { go({ beds: v }); } });
+    B.dropdown(B.$('[data-f=baths]'), { aria: 'ห้องน้ำ', placeholder: 'ห้องน้ำ', options: [1, 2, 3].map(function (n) { return { id: '' + n, label: n + ' ห้องน้ำขึ้นไป' }; }), value: q.baths, onChange: function (v) { go({ baths: v }); } });
+    B.dropdown(B.$('[data-f=size]'), { aria: 'ขนาดพื้นที่ใช้สอย', placeholder: 'ขนาดพื้นที่ใช้สอย', options: SIZES, value: q.size, onChange: function (v) { go({ size: v }); } });
+    B.$('[data-open-f]').addEventListener('click', function () { openFilters(q, go); });
+    var setTop = function () { var sb = B.$('.sbar'); if (sb) document.documentElement.style.setProperty('--map-top', Math.round(sb.getBoundingClientRect().bottom) + 'px'); };
+    setTop(); window.onresize = setTop;
+    var hl = function (slug, scroll) {
+      B.$$('.pin').forEach(function (p) { p.setAttribute('aria-pressed', p.dataset.pin === slug); });
+      B.$$('#results .lc').forEach(function (c) { c.classList.toggle('is-hl', !!c.querySelector('a[href="#/homes/' + slug + '"]')); });
+      var c = B.$('#results .lc.is-hl');
+      if (scroll && c && window.matchMedia('(min-width: 1024px)').matches) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var mc = B.$('#map-card'); var h = B.find(slug); mc.innerHTML = h ? card(h, false) : ''; mc.hidden = !h;
+    };
+    B.$$('.pin').forEach(function (p) { p.addEventListener('click', function () { hl(p.dataset.pin, true); }); });
+    if (window.matchMedia('(hover: hover)').matches) B.$$('#results .lc').forEach(function (c) { c.addEventListener('mouseenter', function () { var a = c.querySelector('h3 a'); if (a) hl(a.getAttribute('href').slice(8), false); }); });
+    var tm = B.$('#tmap');
+    tm.addEventListener('click', function () {
+      setTop(); var on = !document.body.classList.contains('show-map'); document.body.classList.toggle('show-map', on);
+      tm.setAttribute('aria-pressed', on); tm.querySelector('span').textContent = on ? 'รายการ' : 'แผนที่'; tm.querySelector('svg').outerHTML = I(on ? 'list' : 'map');
+    });
+  }
+
+  function openSheet(html, focusSel) {
+    var s = B.$('#sheet'); B.$('#sheet-p').innerHTML = html; s.hidden = false; document.documentElement.classList.add('lock');
+    var f = B.$(focusSel || '[data-sheet-close]', s); if (f) f.focus();
+  }
+  function closeSheet() { B.$('#sheet').hidden = true; document.documentElement.classList.remove('lock'); }
+  B.$('#sheet').addEventListener('click', function (e) { if (e.target.id === 'sheet' || e.target.closest('[data-sheet-close]')) closeSheet(); });
+
+  function openFilters(q, go) {
+    openSheet('<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="sheet-h" style="font-size:18px">ตัวกรอง</h2><button class="ib" type="button" data-sheet-close aria-label="ปิด">' + I('x') + '</button></div>' +
+      '<div data-s="prov"></div><div data-s="market"></div>' +
+      '<label class="check"><input type="checkbox" id="s-pet"' + (q.pet ? ' checked' : '') + '>เลี้ยงสัตว์ได้</label><label class="check"><input type="checkbox" id="s-tr"' + (q.transit ? ' checked' : '') + '>ใกล้รถไฟฟ้า (ไม่เกิน 1 กม.)</label>' +
+      '<div style="display:flex;gap:10px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><a class="btn btn-ghost" style="flex:1" href="' + B.href('/search', { deal: q.deal }) + '" data-sheet-close>ล้างทั้งหมด</a><button class="btn btn-primary" style="flex:2" type="button" id="s-apply">ดูผลลัพธ์</button></div>');
+    var pend = {};
+    B.dropdown(B.$('[data-s=prov]'), { label: 'จังหวัด', placeholder: 'ทุกจังหวัด', options: B.PROVINCES, value: q.prov, onChange: function (v) { pend.prov = v; pend.area = ''; } });
+    B.dropdown(B.$('[data-s=market]'), { label: 'สภาพทรัพย์', placeholder: 'ทั้งมือ 1 และมือ 2', options: [{ id: 'new', label: 'มือ 1 / โครงการใหม่' }, { id: 'resale', label: 'มือ 2' }], value: q.market, onChange: function (v) { pend.market = v; } });
+    B.$('#s-apply').addEventListener('click', function () { closeSheet(); go(Object.assign(pend, { pet: B.$('#s-pet').checked ? '1' : '', transit: B.$('#s-tr').checked ? '1' : '' })); });
+  }
+  function openContact(h) {
+    var a = B.AGENTS[h.agent];
+    openSheet('<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="sheet-h" style="font-size:18px">ติดต่อ ' + esc(a.name) + '</h2><button class="ib" type="button" data-sheet-close aria-label="ปิด">' + I('x') + '</button></div>' +
+      '<p style="color:var(--muted);font-size:14px">เรื่อง: ' + esc(h.title) + '</p>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn btn-ghost" type="button" id="c-tel">' + I('phone') + '<span>' + a.phone.slice(0, 4) + 'XX-XXXX</span></button><a class="btn btn-line" href="#line" onclick="BH.toast(\'เปิด LINE ของผู้ลงประกาศ\');return false">' + I('line') + 'LINE</a></div>' +
+      '<form class="lead" id="c-form" novalidate><div class="field"><label for="c-name">ชื่อ</label><input class="input" id="c-name" autocomplete="name"></div><div class="field"><label for="c-ph">เบอร์โทร</label><input class="input" id="c-ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="08X-XXX-XXXX"></div>' +
+      '<div class="field"><label for="c-msg">ข้อความ</label><textarea class="input" id="c-msg">สนใจประกาศนี้ ขอนัดชมได้ไหมครับ/คะ</textarea></div><label class="check"><input type="checkbox" id="c-ok">ยินยอมให้ส่งข้อมูลติดต่อของฉันให้ผู้ลงประกาศ</label><p id="c-err" role="alert" style="color:#B42318;font-size:14px"></p><button class="btn btn-go" type="submit">' + I('chat') + 'ส่งข้อความ</button></form>', '#c-name');
+    B.$('#c-tel').addEventListener('click', function (e) { e.currentTarget.querySelector('span').textContent = a.phone; });
+    B.$('#c-form').addEventListener('submit', function (e) {
+      e.preventDefault(); var err = B.$('#c-err');
+      if (!B.$('#c-name').value.trim()) { err.textContent = 'กรุณากรอกชื่อ'; B.$('#c-name').focus(); return; }
+      if (!/^0\d{1,2}-?\d{3}-?\d{4}$/.test(B.$('#c-ph').value.trim())) { err.textContent = 'เบอร์โทรไม่ถูกต้อง — กรอก 10 หลัก เช่น 081-234-5678'; B.$('#c-ph').focus(); return; }
+      if (!B.$('#c-ok').checked) { err.textContent = 'กรุณาติ๊กยินยอมก่อนส่งข้อความ'; return; }
+      e.target.innerHTML = '<div class="empty" style="border-style:solid"><span class="ei">' + I('check') + '</span><strong>ส่งข้อความแล้ว</strong><span style="color:var(--muted)">' + esc(a.name) + ' จะติดต่อกลับ' + a.reply.replace('ตอบกลับ', '') + '</span></div>';
+    });
+  }
+
+  function thDate(daysAgo) { var d = new Date(); d.setDate(d.getDate() - daysAgo); return d.getDate() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + (d.getFullYear() + 543); }
+  function detail(st) {
+    var h = B.find(st.slug);
+    if (!h) { main.innerHTML = '<div class="wrap"><div class="empty" style="margin:40px 0"><h1>ไม่พบประกาศนี้</h1><p>ประกาศอาจถูกปิดไปแล้ว</p><a class="btn btn-primary" href="#/search">กลับไปค้นหา</a></div></div>'; return; }
+    var a = B.AGENTS[h.agent], place = h.area ? (B.AREAS.find(function (x) { return x.id === h.area; }) || {}).label : h.loc.split(',')[0];
+    var sim = B.LISTINGS.filter(function (x) { return x.slug !== h.slug && (x.prov === h.prov || x.type === h.type); }).slice(0, 4);
+    var NEAR = { all: [['building', 'ห้างสรรพสินค้าใกล้เคียง', '0.6 กม.'], ['train', h.transit || 'ป้ายรถเมล์', h.transit ? (h.transit.match(/[\d.,]+\s?(กม|ม)\.$/) || ['0.3 กม.'])[0] : '0.4 กม.'], ['shield', 'โรงพยาบาล', '1.4 กม.'], ['home', 'มหาวิทยาลัย / โรงเรียน', '1.9 กม.'], ['building', 'ตลาดสด', '0.8 กม.']] };
+    NEAR.mall = NEAR.all.filter(function (x) { return /ห้าง|ตลาด/.test(x[1]); }); NEAR.train = NEAR.all.filter(function (x) { return x[0] === 'train'; });
+    NEAR.hos = NEAR.all.filter(function (x) { return /โรงพยาบาล/.test(x[1]); }); NEAR.uni = NEAR.all.filter(function (x) { return /มหาวิทยาลัย/.test(x[1]); });
+    var longDesc = h.desc + '\n\n📍 ' + (h.project ? h.project.name : place) + '\n• ขนาด ' + h.size + ' ตร.ม.' + (h.beds ? '\n• ' + h.beds + ' ห้องนอน ' + h.baths + ' ห้องน้ำ' : '') + '\n• ' + (/ชั้น/.test(h.floor) ? h.floor : 'ชั้น ' + h.floor) + (B.perSqm(h) ? '\n• ราคาเฉลี่ย ' + B.perSqm(h) : '') + '\n• ราคา ' + B.priceText(h) + '\n\nนัดชมได้ทุกวัน ติดต่อผ่านปุ่มด้านล่าง';
+    var shots = [0, 1, 2, 3].map(function (v, i) { return '<div>' + B.art(i === 1 ? 'condo' : h.type, i === 2 ? 'dusk' : i === 1 ? 'night' : h.palette, h.title + ' ภาพที่ ' + (i + 1), v) + '</div>'; }).join('');
+    main.innerHTML = '<div class="wrap has-bar">' +
+      '<nav class="crumb" aria-label="breadcrumb"><a href="#/">หน้าแรก</a><span aria-hidden="true">/</span><a href="' + B.href('/search', { deal: h.deal }) + '">รายการ ขาย เช่า</a><span aria-hidden="true">/</span><a href="' + B.href('/search', { prov: h.prov, area: h.area }) + '">' + esc(place) + '</a><span aria-hidden="true">/</span><span aria-current="page">' + esc(h.title) + '</span></nav>' +
+      '<div class="dtop"><a class="back" href="#/search">' + I('left') + 'กลับ</a>' + (h.project ? '<a class="projlink" href="' + B.href('/search', { q: h.project.name.split(' ')[0] }) + '">' + esc(h.project.name) + '</a>' : '') +
+      '<div class="tools"><button type="button" aria-label="จดโน้ตส่วนตัว" onclick="BH.toast(\'จดโน้ตไว้ดูคนเดียว (ต้องเข้าสู่ระบบ)\')"><span>' + I('list') + '</span></button><button type="button" data-cmp="' + h.slug + '" aria-pressed="false" aria-label="เพิ่มเพื่อเปรียบเทียบ"><span>' + I('home') + '</span></button><button type="button" data-fav="' + h.slug + '" aria-pressed="' + B.isFav(h.slug) + '" aria-label="บันทึกประกาศ"><span>' + I('heart') + '</span></button><button type="button" aria-label="แชร์" onclick="BH.toast(\'คัดลอกลิงก์ประกาศแล้ว\')"><span>' + I('share') + '</span></button><button type="button" aria-label="แจ้งประกาศไม่เหมาะสม" onclick="BH.toast(\'เปิดฟอร์มแจ้งประกาศ\')"><span>' + I('shield') + '</span></button></div></div>' +
+      '<div class="gal"><div class="gal-t" tabindex="0" aria-label="ภาพประกาศ เลื่อนดูได้">' + shots + '</div><button type="button" class="cnt" onclick="BH.toast(\'เปิดดูรูปทั้งหมด ' + h.photos + ' รูป\')">' + I('camera') + h.photos + '</button></div>' +
+      '<div class="dlay"><div style="min-width:0"><div class="dhead">' + tagsHtml(h) + '<div class="stat-r"><span>รหัส BH-' + (10240 + B.LISTINGS.indexOf(h)) + '</span><span>' + I('eye') + views(h).toLocaleString() + ' ครั้ง</span></div>' +
+      '<h1>' + esc(h.title) + '</h1><div class="dprice">' + (h.priceFrom ? '<small>เริ่ม </small>' : '') + B.baht(h.price) + (h.deal === 'rent' ? '<small> /เดือน</small>' : '') + (B.perSqm(h) ? ' <small>(' + B.perSqm(h) + ')</small>' : '') + '</div>' +
+      '<div class="stat-r"><span>' + I('clock') + 'สร้างเมื่อ ' + thDate(h.days + 30) + '</span><span>' + I('spark') + 'อัปเดตล่าสุด ' + B.postedText(h.days) + '</span></div></div>' +
+      '<section class="blk" aria-labelledby="h-inf"><h2 id="h-inf">ข้อมูลอสังหาฯ</h2><div class="igrid"><div><span class="ic">' + I('area') + '</span><span><small>พื้นที่ใช้สอย</small><b>' + h.size.toLocaleString() + ' ตร.ม.</b></span></div><div><span class="ic">' + I('building') + '</span><span><small>ชั้นที่</small><b>' + h.floor + '</b></span></div>' +
+      (h.beds ? '<div><span class="ic">' + I('bed') + '</span><span><small>ห้องนอน</small><b>' + h.beds + '</b></span></div><div><span class="ic">' + I('bath') + '</span><span><small>ห้องน้ำ</small><b>' + h.baths + '</b></span></div>' : '<div><span class="ic">' + I('land') + '</span><span><small>ที่ดิน</small><b>' + h.land + ' ตร.ว.</b></span></div>') + '</div></section>' +
+      '<section class="blk" aria-labelledby="h-desc"><h2 id="h-desc">รายละเอียด</h2><p class="desc clip" id="desc">' + esc(longDesc) + '</p><button type="button" class="linkbtn" id="more" aria-expanded="false" aria-controls="desc">แสดงรายละเอียดเพิ่มเติม' + I('chev') + '</button></section>' +
+      '<section class="blk" aria-labelledby="h-hl"><h2 id="h-hl">จุดเด่นทรัพย์</h2><ul class="hl"><li>' + I('tag') + (h.market === 'new' ? 'ทรัพย์มือ 1' : 'ทรัพย์มือ 2') + '</li>' + h.features.map(function (f) { return '<li>' + I('check') + f + '</li>'; }).join('') + '</ul></section>' +
+      '<section class="blk" aria-labelledby="h-loc2"><h2 id="h-loc2">ที่ตั้งและทำเล</h2><p class="meta" style="font-size:15px;margin-bottom:10px">' + I('pin') + '<span>' + esc(h.loc) + (h.project ? ' · ' + esc(h.project.name) : '') + '</span></p><div class="locbox">' + B.mapArt('แผนที่ประกอบทำเล') + '<span class="me">' + I('pin') + '</span><button type="button" class="btn btn-primary" onclick="BH.toast(\'เปิดแผนที่\')">' + I('map') + 'ดูแผนที่</button></div>' +
+      '<h3 style="font-size:16px;margin-top:16px">สถานที่ใกล้เคียง</h3><div class="near-t" role="group" aria-label="ประเภทสถานที่">' + [['all', 'ทั้งหมด'], ['mall', 'ห้างสรรพสินค้า'], ['train', 'รถไฟฟ้า'], ['hos', 'โรงพยาบาล'], ['uni', 'มหาวิทยาลัย']].map(function (x, i) { return '<button type="button" data-near="' + x[0] + '" aria-pressed="' + (i === 0) + '">' + x[1] + '</button>'; }).join('') + '</div><ul class="near" id="near"></ul></section>' +
+      (h.deal === 'sale' ? '<section class="blk" aria-labelledby="h-calc"><h2 id="h-calc">คำนวณสินเชื่อ</h2><div class="calc"><div class="field"><label for="c-down">เงินดาวน์ <b id="c-down-v">10%</b></label><input type="range" id="c-down" min="0" max="50" step="5" value="10"></div><div class="field"><label for="c-yr">ระยะเวลาผ่อน <b id="c-yr-v">30 ปี</b></label><input type="range" id="c-yr" min="5" max="40" step="5" value="30"></div><div class="calc-out"><span>ผ่อนประมาณ (ดอกเบี้ย 3.5%)</span><b id="c-out"></b></div></div></section>' : '') +
+      '<section class="looking"><div><h2>ยังไม่เจอ <em>' + esc(h.project ? h.project.name : place) + '</em> ที่ต้องการ?</h2><p style="color:var(--muted)">ฝากความต้องการไว้ agent ในย่านนี้จะเสนอทรัพย์ให้คุณเอง</p></div><a class="btn btn-accent" href="#/looking" onclick="BH.toast(\'ไปหน้าฝากหาทรัพย์\');return false">' + I('search') + 'ฝากหาทรัพย์</a></section>' +
+      '</div><aside class="aside-c" aria-label="ผู้ลงประกาศ"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="width:52px;height:52px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);display:grid;place-items:center;font-weight:700">' + a.initials + '</span><div><strong>' + esc(a.name) + '</strong><br><small style="color:var(--go);font-weight:600">' + (a.verified ? '✓ Verified' : 'ยังไม่ยืนยันตัวตน') + '</small><small style="color:var(--muted)"> · ' + esc(a.company) + '</small></div></div>' +
+      '<p style="font-size:14px;color:var(--muted);margin:10px 0">' + a.reply + ' · ประกาศ ' + a.listings + ' รายการ</p><div style="display:grid;gap:8px"><button class="btn btn-go" type="button" data-contact="' + h.slug + '">' + I('chat') + 'ติดต่อ</button><a class="btn btn-ghost" href="' + B.href('/search', {}) + '" onclick="BH.toast(\'ดูประกาศทั้งหมดของ ' + a.name + '\');return false">ดูประกาศทั้งหมดของ agent</a></div>' +
+      '<p style="font-size:13px;color:var(--muted);margin-top:10px">' + I('shield', '') + ' อย่าโอนเงินจองก่อนเห็นทรัพย์จริง</p></aside></div>' +
+      '<section class="sec" style="padding-top:8px" aria-labelledby="h-sim"><div class="sec-h"><h2 id="h-sim">ประกาศอื่นๆ ใน' + esc(place) + '</h2><a class="more" href="' + B.href('/search', { prov: h.prov }) + '">ดูทั้งหมด</a></div><div class="cards c4">' + sim.map(function (x) { return card(x, false); }).join('') + '</div></section></div>' +
+      '<div class="abar"><div class="wrap abar-in"><span class="av">' + a.initials + '</span><span class="nm"><b><span>' + esc(a.name) + '</span>' + (a.verified ? '<span class="vf">' + I('shield') + 'Verified</span>' : '') + '</b><small>' + esc(a.company) + ' · ' + B.priceText(h) + '</small></span>' +
+      '<a class="ib" href="tel:' + a.phone.replace(/-/g, '') + '" aria-label="โทรหา ' + esc(a.name) + '">' + I('phone') + '</a><a class="ib hide-xs" href="#line" aria-label="แชต LINE" style="color:var(--line-brand)" onclick="BH.toast(\'เปิด LINE\');return false">' + I('line') + '</a><button class="btn btn-go" type="button" data-contact="' + h.slug + '">' + I('chat') + 'ติดต่อ</button></div></div>';
+
+    var drawNear = function (k) { B.$('#near').innerHTML = (NEAR[k].length ? NEAR[k] : [['pin', 'ยังไม่มีข้อมูลในหมวดนี้', '']]).map(function (x) { return '<li>' + I(x[0]) + '<span>' + esc(x[1]) + '</span><span>' + x[2] + '</span></li>'; }).join(''); };
+    B.$$('[data-near]').forEach(function (b) { b.addEventListener('click', function () { B.$$('[data-near]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); drawNear(b.dataset.near); }); });
+    drawNear('all');
+    B.$('#more').addEventListener('click', function (e) {
+      var d = B.$('#desc'), open = d.classList.toggle('clip') === false; e.currentTarget.setAttribute('aria-expanded', open);
+      e.currentTarget.firstChild.textContent = open ? 'ย่อรายละเอียด' : 'แสดงรายละเอียดเพิ่มเติม';
+    });
+    if (h.deal === 'sale') {
+      var upd = function () { var d = +B.$('#c-down').value, y = +B.$('#c-yr').value; B.$('#c-down-v').textContent = d + '%'; B.$('#c-yr-v').textContent = y + ' ปี'; B.$('#c-out').textContent = B.baht(B.mortgage(h.price, d, y, 3.5)) + '/เดือน'; };
+      ['c-down', 'c-yr'].forEach(function (id) { B.$('#' + id).addEventListener('input', upd); }); upd();
+    }
+  }
+
+  /* อีเวนต์ที่ใช้ทุกหน้า */
+  var cmp = {};
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest('[data-contact]'); if (c) { e.preventDefault(); e.stopPropagation(); openContact(B.find(c.dataset.contact)); return; }
+    var m = e.target.closest('[data-cmp]');
+    if (m) { e.preventDefault(); e.stopPropagation(); var s = m.dataset.cmp; if (cmp[s]) delete cmp[s]; else cmp[s] = 1; var n = Object.keys(cmp).length;
+      B.$$('[data-cmp="' + s + '"]').forEach(function (x) { x.setAttribute('aria-pressed', !!cmp[s]); }); B.toast(cmp[s] ? 'เพิ่มในรายการเปรียบเทียบ (' + n + '/4)' : 'นำออกจากการเปรียบเทียบ'); return; }
+    var sc = e.target.closest('[data-scroll]'); if (sc) { var t = B.$('#' + sc.dataset.scroll); t.scrollBy({ left: +sc.dataset.dir * t.clientWidth * .8, behavior: 'smooth' }); return; }
+    var qd = e.target.closest('[data-qd]'); var pop = B.$('#qd-pop');
+    if (qd) { var open = pop.hidden; pop.hidden = !open; qd.setAttribute('aria-expanded', open); return; }
+    if (pop && !pop.hidden && !e.target.closest('#qd-pop')) { pop.hidden = true; B.$('[data-qd]').setAttribute('aria-expanded', 'false'); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var pop = B.$('#qd-pop'); if (pop && !pop.hidden) { pop.hidden = true; var b = B.$('[data-qd]'); b.setAttribute('aria-expanded', 'false'); b.focus(); }
+    if (!B.$('#sheet').hidden) closeSheet();
+  });
+
+  function navHtml(st) {
+    return NAV.map(function (n) {
+      if (n.quick) return '<div class="qd"><button type="button" data-qd aria-expanded="false" aria-controls="qd-pop">' + n.label + I('chev') + '</button><div class="qd-pop" id="qd-pop" hidden>' +
+        DIR.slice(0, 3).map(function (d) { return '<div><strong>' + d[0] + '</strong>' + d[1].slice(0, 4).map(function (z) { return '<a href="' + B.href('/search', Object.assign({}, d[2], { q: z })) + '">' + d[0].split(' ')[0] + ' ' + z + '</a>'; }).join('') + '</div>'; }).join('') + '</div></div>';
+      if (n.href) return '<a href="' + n.href + '" onclick="BH.toast(\'' + n.toast + '\');return false">' + n.label + (n.isNew ? '<span class="new">ใหม่</span>' : '') + '</a>';
+      var on = st.view === 'search' && Object.keys(n.q).every(function (k) { return st.q[k] === n.q[k]; }) && (n.q.market || !st.q.market);
+      return '<a href="' + B.href('/search', n.q) + '"' + (on ? ' aria-current="page"' : '') + '>' + n.label + '</a>';
+    }).join('') + '<a class="btn btn-accent post" href="#/post" onclick="BH.toast(\'ไปหน้าลงประกาศ\');return false">' + I('plus') + '<span>ลงประกาศ</span></a>';
+  }
+
+  B.$('#drawer-links').innerHTML = '<a href="#/">' + I('home') + 'หน้าแรก</a>' + NAV.filter(function (n) { return !n.quick; }).map(function (n) {
+    return n.href ? '<a href="' + n.href + '" onclick="BH.toast(\'' + n.toast + '\');return false">' + I('user') + n.label + '</a>' : '<a href="' + B.href('/search', n.q) + '">' + I('search') + n.label + '</a>';
+  }).join('');
+  B.$('#dir').innerHTML = '<div class="wrap"><h2>ค้นหาตามทำเลและประเภท</h2><div class="dir-g">' + DIR.map(function (d) {
+    return '<div><h3>' + d[0] + '</h3>' + d[1].map(function (z) { return '<a href="' + B.href('/search', Object.assign({}, d[2], { q: z })) + '">' + d[0].split(' ')[0] + ' ' + z + '</a>'; }).join('') + '</div>';
+  }).join('') + '</div></div>';
+  B.$('#ftr').innerHTML = '<div class="wrap"><div class="ftr-g"><div class="brand"><strong style="font-size:20px;color:#fff">BaanHub</strong><p style="max-width:42ch;margin-top:4px">เว็บประกาศซื้อ ขาย ให้เช่า อสังหาฯ ทั่วไทย ลงประกาศฟรี</p></div>' +
+    '<div><h3>ค้นหา</h3><a href="#/search?deal=sale">ซื้อ</a><a href="#/search?deal=rent">เช่า</a><a href="#/search?deal=sale&market=new">โครงการใหม่</a></div><div><h3>สมาชิก</h3><a href="#/post" onclick="BH.toast(\'ไปหน้าลงประกาศ\');return false">ลงประกาศ</a><a href="#/agent-login" onclick="BH.toast(\'ไปหน้าเข้าสู่ระบบ agent\');return false">เข้าสู่ระบบ agent</a></div>' +
+    '<div><h3>ช่วยเหลือ</h3><a href="#/help" onclick="BH.toast(\'เปิดคู่มือการใช้งาน\');return false">คู่มือการใช้งาน</a><a href="#/privacy" onclick="BH.toast(\'เปิดนโยบายความเป็นส่วนตัว\');return false">ความเป็นส่วนตัว</a></div></div><p style="margin-top:20px;font-size:13px">© 2569 BaanHub · ข้อมูลในหน้านี้เป็นข้อมูลตัวอย่าง</p></div>';
+
+  B.start(function (st) {
+    if (!B.$('#sheet').hidden) closeSheet();
+    document.body.classList.toggle('on-detail', st.view === 'detail');
+    document.body.classList.toggle('on-search', st.view === 'search');
+    document.body.classList.remove('show-map');
+    B.$('#nav').innerHTML = navHtml(st);
+    if (st.view === 'search') search(st); else if (st.view === 'detail') detail(st); else home();
+    B.$$('[data-fav-count]').forEach(function (x) { x.textContent = B.favCount(); x.hidden = !B.favCount(); });
+    document.title = 'BaanHub · 5E Mix — ' + (st.view === 'home' ? 'หน้าแรก' : st.view === 'search' ? 'ค้นหา' : 'รายละเอียด');
+  });
+})();
+</script>
+</body>
+</html>
