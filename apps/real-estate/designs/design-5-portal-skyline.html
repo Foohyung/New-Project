@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1A56DB">
+<title>BaanHub · Design 5A — Portal Skyline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="portal-base.css">
+<style>
+  /* 5A Skyline — พอร์ทัลคลาสสิก: hero เส้นขอบฟ้าเต็มกว้าง + กล่องค้นหาใหญ่กลางจอ, ขาว/น้ำเงิน + ส้มเป็นปุ่มเน้น */
+  :root {
+    --font: 'Anuphan', system-ui, sans-serif;
+    --bg: #F4F6FA; --surface: #FFFFFF; --surface-2: #F8FAFD;
+    --ink: #111827; --muted: #5B6577; --line: #E3E8F0; --line-strong: #CBD3E1;
+    --primary: #1A56DB; --primary-strong: #1543B0; --primary-soft: #EBF2FF; --primary-ring: rgba(26, 86, 219, .22);
+    --accent: #CC4A08; --accent-strong: #A93C05; --accent-ink: #FFFFFF; --accent-soft: #FFF1E6;
+    --ok: #047857; --ok-soft: #E3F6EE; --fav: #E11D48; --focus: #1A56DB;
+    --hero-ink: #FFFFFF; --hero-shade: rgba(9, 22, 56, .55);
+    --scrim: rgba(15, 23, 42, .5);
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+    --shadow-lg: 0 12px 32px rgba(16, 24, 40, .14);
+    --r-card: 14px; --r-field: 10px;
+    --map-bg: #EEF2F7; --map-water: #BFD7F5; --map-park: #CFE8C9; --map-road: #FFFFFF; --map-road2: #E2E8F0; --map-ink: #334155;
+    --line-brand: #06C755; --line-bts: #3FA34D; --line-silom: #0E7A5A; --line-mrt: #1F4FB0; --line-purple: #7B3FA0; --line-yellow: #C99A00;
+  }
+
+  /* header */
+  .hdr { position: sticky; top: 0; z-index: 40; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .hdr-in { height: 64px; display: flex; align-items: center; gap: 8px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px; color: var(--primary); letter-spacing: -.01em; min-height: 44px; }
+  .logo-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--primary); color: #fff; display: grid; place-items: center; }
+  .logo b { color: var(--accent); font-weight: 700; }
+  .nav { display: none; }
+  .hdr-r { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+  .ib { position: relative; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; color: var(--ink); }
+  .ib .n { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; background: var(--fav); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  .btn { min-height: 44px; padding: 0 16px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; white-space: nowrap; font-size: 15px; }
+  .btn-accent { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-ghost { border: 1px solid var(--line-strong); background: var(--surface); }
+  .btn-post { padding: 0; width: 44px; }
+  .btn-post span { display: none; }
+  .hide-sm { display: none; }
+  @media (hover: hover) {
+    .btn-accent:hover { background: var(--accent-strong); } .btn-primary:hover { background: var(--primary-strong); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); } .ib:hover { background: var(--primary-soft); }
+  }
+  @media (min-width: 640px) { .btn-post { padding: 0 16px; width: auto; } .btn-post span { display: inline; } }
+  @media (min-width: 1024px) {
+    .nav { display: flex; gap: 2px; margin-left: 20px; height: 64px; }
+    .nav a { display: flex; align-items: center; padding: 0 14px; font-weight: 500; color: var(--muted); border-bottom: 3px solid transparent; }
+    .nav a[aria-current="page"] { color: var(--primary); border-bottom-color: var(--primary); }
+    .hide-sm { display: inline-flex; }
+    .menu-btn { display: none; }
+  }
+  @media (hover: hover) and (min-width: 1024px) { .nav a:hover { color: var(--ink); } }
+
+  /* hero */
+  .hero { position: relative; isolation: isolate; color: var(--hero-ink); padding: 36px 0 28px; overflow: hidden; }
+  .hero-art { position: absolute; inset: 0; z-index: -2; }
+  .hero-art svg { width: 100%; height: 100%; }
+  .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, var(--hero-shade) 0%, rgba(9, 22, 56, .25) 55%, rgba(9, 22, 56, .45) 100%); }
+  .hero h1 { font-size: 26px; line-height: 1.35; font-weight: 700; text-align: center; text-wrap: balance; }
+  .hero p.sub { text-align: center; margin: 6px auto 20px; max-width: 48ch; opacity: .95; }
+  @media (min-width: 768px) { .hero { padding: 72px 0 56px; } .hero h1 { font-size: 40px; } .hero p.sub { font-size: 18px; margin-bottom: 28px; } }
+
+  .sbox { background: var(--surface); color: var(--ink); border-radius: 16px; box-shadow: var(--shadow-lg); max-width: 1040px; margin: 0 auto; }
+  .stabs { display: flex; gap: 0; padding: 4px 4px 0; border-bottom: 1px solid var(--line); }
+  .stab { flex: 1; min-height: 48px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; font-size: 15px; white-space: nowrap; padding: 0 6px; }
+  .stab[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+  .sfields { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kw { grid-column: 1 / -1; position: relative; }
+  .kw .i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .kw .input { padding-left: 44px; }
+  .sgo { grid-column: 1 / -1; min-height: 52px; font-size: 18px; }
+  @media (min-width: 640px) { .stab { flex: 0 0 auto; padding: 0 20px; } }
+  @media (min-width: 1024px) {
+    .sfields { grid-template-columns: minmax(0, 2.2fr) repeat(4, minmax(0, 1fr)) auto; align-items: end; padding: 18px; }
+    .kw { grid-column: auto; }
+    .sgo { grid-column: auto; padding: 0 28px; }
+  }
+  .hot { display: flex; gap: 8px; align-items: center; margin-top: 16px; justify-content: flex-start; }
+  .hot > span { font-size: 14px; opacity: .9; flex: none; }
+  .hot a { flex: none; min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 99px; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .35); font-size: 14px; white-space: nowrap; }
+  @media (min-width: 1024px) { .hot { justify-content: center; } }
+  @media (hover: hover) { .hot a:hover { background: rgba(255, 255, 255, .28); } }
+
+  .stats { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .stats-in { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; padding: 14px 0; gap: 8px; }
+  .stats b { display: block; font-size: 18px; color: var(--primary); }
+  .stats span { font-size: 12px; color: var(--muted); line-height: 1.4; display: block; }
+  @media (min-width: 768px) { .stats b { font-size: 24px; } .stats span { font-size: 14px; } }
+
+  /* sections */
+  .sec { padding: 32px 0 8px; }
+  .sec-h { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .sec-h h2 { font-size: 20px; line-height: 1.4; }
+  .sec-h p { color: var(--muted); font-size: 14px; }
+  .more { color: var(--primary); font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 2px; min-height: 44px; flex: none; }
+  @media (min-width: 768px) { .sec { padding: 48px 0 8px; } .sec-h h2 { font-size: 24px; } }
+
+  .cats { gap: 10px; margin: 0 -16px; padding: 2px 16px 6px; }
+  .cat { flex: 0 0 auto; width: 92px; min-height: 104px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); text-align: center; font-size: 14px; font-weight: 500; line-height: 1.35; scroll-snap-align: start; }
+  .cat-ic { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); }
+  .cat-ic .i { width: 26px; height: 26px; stroke-width: 1.7; }
+  @media (min-width: 768px) { .cats { margin: 0; padding: 2px 0 6px; } }
+  @media (min-width: 1024px) { .cats { display: grid; grid-template-columns: repeat(8, 1fr); overflow: visible; } .cat { width: auto; } }
+  @media (hover: hover) { .cat:hover { border-color: var(--primary); color: var(--primary); } .cat:hover .cat-ic { background: var(--primary); color: #fff; } }
+
+  .areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .area { position: relative; border-radius: var(--r-card); overflow: hidden; aspect-ratio: 1 / 1; color: #fff; display: block; }
+  .area svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .area::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(8, 18, 45, .78)); }
+  .area-t { position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 1; line-height: 1.35; }
+  .area-t strong { display: block; font-size: 16px; }
+  .area:first-child { grid-column: span 2; aspect-ratio: 2 / 1; }
+  .area-t span { font-size: 13px; opacity: .92; }
+  .area .tl { position: absolute; z-index: 1; top: 10px; left: 10px; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--surface); color: var(--primary); }
+  @media (min-width: 768px) { .areas { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; } .area { aspect-ratio: 4 / 3; } .area:first-child { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; } .area:first-child .area-t strong { font-size: 22px; } }
+  @media (hover: hover) { .area svg { transition: transform .4s; } .area:hover svg { transform: scale(1.05); } }
+
+  .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
+  .seg button, .seg a { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 9px; font-weight: 600; font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .seg [aria-selected="true"], .seg [aria-current="true"] { background: var(--primary); color: #fff; }
+
+  /* การ์ดประกาศ */
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .grid.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); transition: box-shadow .15s, border-color .15s; }
+  @media (hover: hover) { .card:hover { box-shadow: var(--shadow-lg); border-color: var(--primary-ring); } }
+  .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--primary-soft); }
+  .card-media svg { width: 100%; height: 100%; }
+  .badges { position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 70px); }
+  .bdg { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; line-height: 1.6; background: var(--surface); color: var(--ink); }
+  .bdg-hot, .bdg-promo { background: var(--accent); color: var(--accent-ink); }
+  .bdg-new { background: var(--primary); color: #fff; }
+  .bdg-verified { color: var(--ok); }
+  .heart { position: absolute; top: 6px; right: 6px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; z-index: 2; }
+  .heart span { width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, .94); display: grid; place-items: center; color: var(--ink); }
+  .heart .i { width: 18px; height: 18px; }
+  .pc { position: absolute; right: 10px; bottom: 10px; display: inline-flex; gap: 4px; align-items: center; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: rgba(15, 23, 42, .72); color: #fff; }
+  .pc .i { width: 14px; height: 14px; }
+  .card-b { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .price { font-size: 20px; font-weight: 700; color: var(--primary-strong); line-height: 1.3; }
+  .price small { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .card-t { font-weight: 600; line-height: 1.45; }
+  .card-t a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+  .meta { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 4px; line-height: 1.45; }
+  .meta .i { width: 16px; height: 16px; }
+  .tr { color: var(--primary-strong); }
+  .facts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; padding-top: 8px; border-top: 1px dashed var(--line); margin-top: auto; }
+  .facts span { display: inline-flex; align-items: center; gap: 5px; }
+  .facts .i { width: 17px; height: 17px; color: var(--muted); }
+  .agent-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding-top: 8px; }
+  .av { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 12px; display: grid; place-items: center; flex: none; }
+  .agent-row .nm { color: var(--ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agent-row .vf { color: var(--ok); display: inline-flex; }
+  .agent-row .vf .i { width: 16px; height: 16px; }
+  .agent-row time { margin-left: auto; flex: none; }
+  /* มุมมองรายการ */
+  .grid.list { grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 768px) {
+    .grid.list .card { flex-direction: row; }
+    .grid.list .card-media { width: 300px; flex: none; aspect-ratio: auto; min-height: 210px; }
+  }
+
+  .rowx { gap: 14px; margin: 0 -16px; padding: 2px 16px 10px; }
+  .rowx > .card { flex: 0 0 82%; max-width: 320px; scroll-snap-align: start; }
+  @media (min-width: 768px) { .rowx { margin: 0; padding: 2px 0 10px; } .rowx > .card { flex-basis: 300px; } }
+
+  .band { margin: 40px 0 0; background: var(--primary); color: #fff; border-radius: 18px; padding: 24px 20px; display: grid; gap: 16px; position: relative; overflow: hidden; }
+  .band h2 { font-size: 22px; line-height: 1.35; }
+  .band p { opacity: .92; }
+  .band .acts { display: flex; flex-wrap: wrap; gap: 10px; }
+  .band .btn-ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
+  @media (min-width: 768px) { .band { grid-template-columns: 1fr auto; align-items: center; padding: 32px 40px; } .band h2 { font-size: 28px; } }
+
+  .ftr { margin-top: 56px; background: #0F1B3D; color: #C7D2E8; padding: 36px 0 calc(28px + env(safe-area-inset-bottom)); font-size: 14px; }
+  .ftr-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .ftr h3 { color: #fff; font-size: 15px; margin-bottom: 8px; }
+  .ftr a { display: flex; align-items: center; min-height: 44px; }
+  .ftr .logo { color: #fff; }
+  .ftr .copy { border-top: 1px solid rgba(255, 255, 255, .12); margin-top: 24px; padding-top: 16px; font-size: 13px; }
+  .ftr .brand { grid-column: 1 / -1; }
+  @media (min-width: 1024px) { .ftr-g { grid-template-columns: 2fr repeat(3, 1fr); } .ftr .brand { grid-column: auto; } }
+
+  /* หน้าค้นหา */
+  .crumb { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; padding: 14px 0 4px; }
+  .crumb a { color: var(--primary); display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+  .crumb { align-items: center; }
+  .s-head h1 { font-size: 20px; line-height: 1.4; }
+  .s-head h1 span { color: var(--muted); font-weight: 500; font-size: 15px; display: block; }
+  .s-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding-bottom: 24px; }
+  .toolbar { position: sticky; top: 64px; z-index: 30; background: var(--bg); padding: 10px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .toolbar .dd { flex: 1 1 140px; }
+  .toolbar .seg { display: none; }
+  @media (min-width: 768px) { .toolbar .seg { display: inline-flex; } }
+  .fbtn-m { position: relative; }
+  .fbtn-m .n { min-width: 20px; height: 20px; border-radius: 99px; background: var(--primary); color: #fff; font-size: 12px; display: grid; place-items: center; padding: 0 5px; }
+  .chips { gap: 8px; padding: 2px 0 8px; }
+  .chip { flex: none; min-height: 44px; padding: 0 8px 0 12px; border-radius: 99px; background: var(--primary-soft); color: var(--primary-strong); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .chip .i { width: 16px; height: 16px; }
+  .chip.clear { background: none; color: var(--muted); text-decoration: underline; }
+  .flt { position: fixed; inset: 0; z-index: 85; background: var(--scrim); display: flex; align-items: flex-end; }
+  .flt[hidden] { display: none; }
+  .flt-p { width: 100%; max-height: 90dvh; overflow-y: auto; background: var(--surface); border-radius: 20px 20px 0 0; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px; }
+  .flt-h { display: flex; align-items: center; justify-content: space-between; }
+  .flt-h h2 { font-size: 18px; }
+  .flt-foot { position: sticky; bottom: 0; background: var(--surface); padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); display: flex; gap: 10px; }
+  .flt-foot .btn { flex: 1; }
+  .flt .grp { display: flex; flex-direction: column; gap: 8px; }
+  .flt .grp > strong { font-size: 14px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { min-height: 44px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line-strong); font-size: 14px; font-weight: 500; background: var(--surface); }
+  .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+  @media (min-width: 1024px) {
+    .s-layout { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+    .flt { position: sticky; top: 80px; inset: auto; background: none; display: block !important; z-index: 1; }
+    .flt-p { max-height: calc(100dvh - 100px); border-radius: var(--r-card); border: 1px solid var(--line); padding: 16px; }
+    .flt-close, .flt-foot .btn-primary { display: none; }
+    .flt-foot { position: static; padding: 4px 0 0; border: 0; }
+    .fbtn-m { display: none; }
+    .toolbar { position: static; }
+  }
+  .empty { text-align: center; background: var(--surface); border: 1px dashed var(--line-strong); border-radius: var(--r-card); padding: 40px 20px; display: grid; gap: 10px; justify-items: center; }
+  .empty .ei { width: 64px; height: 64px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; }
+  .pager { display: flex; justify-content: center; gap: 6px; padding: 24px 0 0; flex-wrap: wrap; }
+  .pager button { min-width: 44px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+  .pager [aria-current="page"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* หน้ารายละเอียด */
+  .gal { position: relative; margin: 0 -16px; }
+  .gal-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .gal-track::-webkit-scrollbar { display: none; }
+  .gal-track > div { flex: 0 0 100%; aspect-ratio: 4 / 3; scroll-snap-align: start; }
+  .gal-track svg { width: 100%; height: 100%; }
+  .gal-n { position: absolute; right: 12px; bottom: 12px; font-size: 13px; padding: 2px 10px; border-radius: 99px; background: rgba(15, 23, 42, .72); color: #fff; }
+  .gal-all { position: absolute; left: 12px; bottom: 8px; }
+  .gal-all .btn { background: rgba(255, 255, 255, .95); min-height: 44px; font-size: 14px; }
+  .gal-tools { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; }
+  .gal-tools .ib { background: rgba(255, 255, 255, .94); }
+  @media (min-width: 768px) {
+    .gal { margin: 0; display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; height: 420px; border-radius: 16px; overflow: hidden; }
+    .gal-track { display: contents; }
+    .gal-track > div { aspect-ratio: auto; min-height: 0; }
+    .gal-track > div:first-child { grid-row: span 2; }
+    .gal-track > div:nth-child(n+6) { display: none; }
+    .gal-n { display: none; }
+  }
+  .d-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 16px 0 24px; }
+  @media (min-width: 1024px) { .d-layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; padding-top: 24px; } }
+  .d-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; }
+  @media (min-width: 768px) { .panel { padding: 20px 24px; } }
+  .panel h2 { font-size: 18px; margin-bottom: 10px; }
+  .d-title h1 { font-size: 22px; line-height: 1.4; margin: 6px 0 4px; }
+  .d-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 10px; }
+  .d-price .price { font-size: 28px; }
+  .keyf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+  .keyf div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+  .keyf .i { color: var(--primary); width: 22px; height: 22px; }
+  .keyf small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; }
+  .keyf b { font-size: 15px; }
+  @media (min-width: 768px) { .keyf { grid-template-columns: repeat(4, minmax(0, 1fr)); } .d-title h1 { font-size: 28px; } }
+  .feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 16px; }
+  .feat li { display: flex; gap: 8px; align-items: center; min-height: 32px; }
+  .feat .i { color: var(--ok); }
+  .spec { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 20px; font-size: 15px; }
+  .spec div { display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .spec dt { color: var(--muted); }
+  .spec dd { font-weight: 600; text-align: right; }
+  @media (min-width: 640px) { .spec { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .mapbox { position: relative; aspect-ratio: 16 / 10; border-radius: 12px; overflow: hidden; }
+  .mapbox svg { width: 100%; height: 100%; }
+  .mapbox .me { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -100%); color: var(--accent); }
+  .mapbox .me .i { width: 40px; height: 40px; fill: var(--accent); stroke: #fff; stroke-width: 1.5; }
+  .near { display: grid; gap: 4px; margin-top: 12px; }
+  .near li { display: flex; gap: 10px; align-items: center; min-height: 40px; font-size: 15px; }
+  .near li span:last-child { margin-left: auto; color: var(--muted); font-size: 14px; }
+  .near .i { color: var(--primary); }
+  .calc { display: grid; gap: 12px; }
+  .calc-out { background: var(--primary-soft); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .calc-out b { font-size: 24px; color: var(--primary-strong); }
+  .calc-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
+  .calc-row b { color: var(--ink); }
+  .side { display: flex; flex-direction: column; gap: 16px; }
+  @media (min-width: 1024px) { .side { position: sticky; top: 80px; align-self: start; } }
+  .ag { display: flex; gap: 12px; align-items: center; }
+  .ag .av { width: 52px; height: 52px; font-size: 17px; }
+  .ag strong { display: flex; gap: 4px; align-items: center; }
+  .ag strong .i { color: var(--ok); width: 18px; height: 18px; }
+  .ag small { color: var(--muted); display: block; font-size: 13px; }
+  .ag-acts { display: grid; gap: 8px; margin: 14px 0; }
+  .btn-line { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line-brand); }
+  .btn-line .i { color: var(--line-brand); }
+  .tlink { color: var(--primary); display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+  .lead { display: grid; gap: 10px; }
+  .sticky-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; box-shadow: 0 -6px 20px rgba(16, 24, 40, .08); }
+  .sticky-cta .btn { padding: 0 8px; font-size: 14px; }
+  .has-cta { padding-bottom: 76px; }
+  @media (min-width: 1024px) { .sticky-cta { display: none; } .has-cta { padding-bottom: 0; } }
+  .proj { background: var(--accent-soft); border: 1px solid #F6CFB3; }
+  .proj dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; font-size: 14px; }
+  .proj dt { color: var(--muted); font-size: 13px; }
+  .proj dd { font-weight: 600; }
+</style>
+</head>
+<body>
+<a class="sr" href="#main">ข้ามไปเนื้อหาหลัก</a>
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="#/" aria-label="BaanHub หน้าแรก"><span class="logo-mark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg></span><span>Baan<b>Hub</b></span></a>
+    <nav class="nav" aria-label="เมนูหลัก" id="nav"></nav>
+    <div class="hdr-r">
+      <a class="ib" href="#/search?deal=sale" aria-label="รายการโปรด"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7.1 4c2 0 3.4 1.1 4.9 2.9C13.5 5.1 14.9 4 16.9 4c3.5 0 5.7 3.4 4.4 6.8C19.5 15.4 12 20 12 20z"/></svg><span class="n" data-fav-count hidden>0</span></a>
+      <a class="btn btn-ghost hide-sm" href="#/agent-login" onclick="BH.toast('ไปหน้าเข้าสู่ระบบ agent (/agent/login)');return false">เข้าสู่ระบบ</a>
+      <a class="btn btn-accent btn-post" href="#/post" onclick="BH.toast('ไปหน้าลงประกาศ — สำหรับ agent / เจ้าของ');return false" aria-label="ลงประกาศฟรี"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>ลงประกาศฟรี</span></a>
+      <button class="ib menu-btn" type="button" data-drawer-open aria-label="เปิดเมนู" aria-controls="drawer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+</header>
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="เมนู">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>เมนู</strong><button class="ib" type="button" data-drawer-close aria-label="ปิดเมนู"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="drawer-links"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:8px 0">
+    <a href="#/post" onclick="BH.toast('ไปหน้าลงประกาศ');return false" class="btn btn-accent" style="justify-content:center">ลงประกาศฟรี</a>
+    <a href="#/agent-login" onclick="BH.toast('ไปหน้าเข้าสู่ระบบ agent');return false" class="btn btn-ghost" style="justify-content:center">เข้าสู่ระบบ agent</a>
+  </div>
+</div>
+<main id="main"></main>
+<footer class="ftr" id="ftr"></footer>
+<span class="design-tag">5A · Portal Skyline</span>
+
+<script src="portal-core.js"></script>
+<script>
+(function () {
+  var B = BH, I = B.icon, esc = B.esc, main = B.$('#main');
+  var NAV = [
+    { label: 'ซื้อ', q: { deal: 'sale' } }, { label: 'เช่า', q: { deal: 'rent' } },
+    { label: 'โครงการใหม่', q: { deal: 'sale', market: 'new' } }, { label: 'มือสอง', q: { deal: 'sale', market: 'resale' } },
+    { label: 'คอนโด', q: { type: 'condo' } }, { label: 'บ้านเดี่ยว', q: { type: 'house' } },
+  ];
+  function navHtml(cur) {
+    return NAV.map(function (n) {
+      var on = cur && cur.view === 'search' && Object.keys(n.q).every(function (k) { return cur.q[k] === n.q[k]; }) && (n.q.market || !cur.q.market) && (n.q.type || !cur.q.type);
+      return '<a href="' + B.href('/search', n.q) + '"' + (on ? ' aria-current="page"' : '') + '>' + n.label + '</a>';
+    }).join('');
+  }
+
+  function badges(h) { return h.badges.map(function (b) { return '<span class="bdg bdg-' + b + '">' + (b === 'verified' ? '✓ ' : '') + B.badgeText(b) + '</span>'; }).join(''); }
+  function card(h) {
+    var a = B.AGENTS[h.agent];
+    return '<article class="card">' +
+      '<div class="card-media">' + B.art(h.type, h.palette, h.title) + '<div class="badges">' + badges(h) + '</div>' +
+      '<button class="heart" type="button" data-fav="' + h.slug + '" aria-pressed="' + B.isFav(h.slug) + '" aria-label="บันทึก ' + esc(h.title) + '"><span>' + I('heart') + '</span></button>' +
+      '<span class="pc">' + I('camera') + h.photos + '</span></div>' +
+      '<div class="card-b"><div class="price">' + (h.priceFrom ? '<small>เริ่ม </small>' : '') + B.baht(h.price) + (h.deal === 'rent' ? '<small> /เดือน</small>' : '') + '</div>' +
+      '<h3 class="card-t"><a href="#/homes/' + h.slug + '">' + esc(h.title) + '</a></h3>' +
+      '<p class="meta">' + I('pin') + esc(h.loc) + '</p>' +
+      (h.transit ? '<p class="meta tr">' + I('train') + esc(h.transit) + '</p>' : '') +
+      '<div class="facts">' + (h.beds ? '<span>' + I('bed') + h.beds + ' นอน</span><span>' + I('bath') + h.baths + ' น้ำ</span>' : '') + '<span>' + I('area') + h.size.toLocaleString() + ' ตร.ม.</span>' + (h.land ? '<span>' + I('land') + h.land + ' ตร.ว.</span>' : '') + '</div>' +
+      '<div class="agent-row"><span class="av">' + a.initials + '</span><span class="nm">' + esc(a.name) + '</span>' + (a.verified ? '<span class="vf" title="ตรวจสอบตัวตนแล้ว">' + I('shield') + '</span>' : '') + '<time>' + B.postedText(h.days) + '</time></div>' +
+      '</div></article>';
+  }
+
+  /* กล่องค้นหา hero */
+  function searchBox(q) {
+    return '<form class="sbox" id="sbox" role="search" aria-label="ค้นหาประกาศ">' +
+      '<div class="stabs scroll-x" role="tablist" aria-label="ประเภทการค้นหา">' + B.DEALS.map(function (d, i) {
+        return '<button type="button" class="stab" role="tab" aria-selected="' + (i === 0) + '" data-tab="' + d.id + '">' + d.label + '</button>';
+      }).join('') + '</div>' +
+      '<div class="sfields"><div class="kw"><label class="sr" for="kw">คำค้น</label>' + I('search') + '<input class="input" id="kw" name="q" type="search" enterkeyhint="search" placeholder="ทำเล, ชื่อโครงการ, สถานีรถไฟฟ้า" autocomplete="off"></div>' +
+      '<div data-dd="prov"></div><div data-dd="type"></div><div data-dd="price"></div><div data-dd="beds" class="dd-right"></div>' +
+      '<button class="btn btn-accent sgo" type="submit">' + I('search') + 'ค้นหา</button></div></form>';
+  }
+  function mountSearchBox() {
+    var form = B.$('#sbox'), tab = 'buy';
+    var dd = {
+      prov: B.dropdown(B.$('[data-dd=prov]', form), { aria: 'จังหวัด', placeholder: 'ทุกจังหวัด', options: B.PROVINCES }),
+      type: B.dropdown(B.$('[data-dd=type]', form), { aria: 'ประเภททรัพย์', placeholder: 'ทุกประเภท', options: B.TYPES }),
+      price: B.dropdown(B.$('[data-dd=price]', form), { aria: 'ช่วงราคา', placeholder: 'ทุกราคา', options: B.PRICE.sale }),
+      beds: B.dropdown(B.$('[data-dd=beds]', form), { aria: 'ห้องนอน', placeholder: 'ห้องนอน', options: B.BEDS }),
+    };
+    var tabs = B.$$('.stab', form);
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () {
+        tab = t.dataset.tab; tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t); });
+        dd.price.setOptions(B.PRICE[tab === 'rent' ? 'rent' : 'sale']);
+      });
+      t.addEventListener('keydown', function (e) {
+        var j = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -9;
+        if (j !== -9) { e.preventDefault(); var n = tabs[(j + tabs.length) % tabs.length]; n.focus(); n.click(); }
+      });
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var d = B.DEALS.find(function (x) { return x.id === tab; });
+      location.hash = B.href('/search', { deal: d.deal, market: d.market, q: B.$('#kw').value, prov: dd.prov.get(), type: dd.type.get(), price: dd.price.get(), beds: dd.beds.get() });
+    });
+  }
+
+  function home() {
+    var sale = B.LISTINGS.filter(function (h) { return h.deal === 'sale' && h.market !== 'new'; }).slice(0, 6);
+    var projects = B.LISTINGS.filter(function (h) { return h.market === 'new'; }).concat(B.LISTINGS.filter(function (h) { return h.type === 'condo' && h.deal === 'sale'; }));
+    main.innerHTML =
+      '<section class="hero"><div class="hero-art">' + B.skyline('day') + '</div><div class="wrap">' +
+      '<h1>ค้นหาบ้าน คอนโด ที่ดิน ทั่วไทยในที่เดียว</h1><p class="sub">ประกาศจากเจ้าของและ agent ที่ตรวจสอบตัวตนแล้ว อัปเดตทุกวัน</p>' + searchBox() +
+      '<div class="hot scroll-x"><span>ค้นหายอดนิยม:</span>' +
+      [['คอนโดใกล้ BTS', { deal: 'sale', type: 'condo', transit: '1' }], ['บ้านเดี่ยว นนทบุรี', { deal: 'sale', type: 'house', prov: 'non' }], ['คอนโดให้เช่า เลี้ยงสัตว์ได้', { deal: 'rent', pet: '1' }], ['ที่ดินเชียงใหม่', { type: 'land', prov: 'cnx' }]]
+        .map(function (x) { return '<a href="' + B.href('/search', x[1]) + '">' + x[0] + '</a>'; }).join('') + '</div></div></section>' +
+      '<div class="stats"><div class="wrap stats-in"><div><b>45,300+</b><span>ประกาศทั้งหมด</span></div><div><b>1,280</b><span>agent ตรวจสอบแล้ว</span></div><div><b>386</b><span>โครงการใหม่</span></div></div></div>' +
+      '<div class="wrap">' +
+      '<section class="sec" aria-labelledby="h-cat"><div class="sec-h"><h2 id="h-cat">ค้นหาตามประเภททรัพย์</h2></div><div class="cats scroll-x">' +
+      B.TYPES.map(function (t) { return '<a class="cat" href="' + B.href('/search', { type: t.id }) + '"><span class="cat-ic">' + I(t.icon) + '</span>' + t.label + '</a>'; }).join('') + '</div></section>' +
+      '<section class="sec" aria-labelledby="h-area"><div class="sec-h"><div><h2 id="h-area">ทำเลยอดนิยม</h2><p>ย่านที่คนค้นหามากที่สุดในเดือนนี้</p></div><a class="more" href="#/search">ดูทั้งหมด' + I('right') + '</a></div><div class="areas">' +
+      B.AREAS.map(function (a, i) {
+        return '<a class="area" href="' + B.href('/search', { area: a.id, prov: a.prov }) + '">' + B.art(a.kind, a.palette, '', i) + (a.line ? '<span class="tl">' + a.line + '</span>' : '') +
+          '<span class="area-t"><strong>' + a.label + '</strong><span>' + B.provLabel(a.prov) + ' · ' + a.count.toLocaleString() + ' ประกาศ</span></span></a>';
+      }).join('') + '</div></section>' +
+      '<section class="sec" aria-labelledby="h-rec"><div class="sec-h"><div><h2 id="h-rec">ประกาศแนะนำ</h2><p>คัดจากประกาศที่ตรวจสอบแล้วล่าสุด</p></div>' +
+      '<div class="seg" role="tablist" aria-label="ประเภทประกาศแนะนำ"><button type="button" role="tab" aria-selected="true" data-rec="sale">ขาย</button><button type="button" role="tab" aria-selected="false" data-rec="rent">เช่า</button></div></div>' +
+      '<div class="grid" id="rec">' + sale.map(card).join('') + '</div>' +
+      '<p style="text-align:center;margin-top:16px"><a class="btn btn-ghost" href="#/search?deal=sale">ดูประกาศขายทั้งหมด</a></p></section>' +
+      '<section class="sec" aria-labelledby="h-proj"><div class="sec-h"><div><h2 id="h-proj">โครงการใหม่ & คอนโดน่าสนใจ</h2><p>ราคาพิเศษจากผู้พัฒนาโครงการ</p></div><a class="more" href="#/search?deal=sale&market=new">ดูทั้งหมด' + I('right') + '</a></div>' +
+      '<div class="rowx scroll-x">' + projects.map(card).join('') + '</div></section>' +
+      '<section class="band"><div><h2>มีบ้านหรือคอนโดอยากขาย / ให้เช่า?</h2><p>ลงประกาศฟรี มีคนเห็นนับพันต่อวัน หรือฝากให้ agent ที่ตรวจสอบแล้วดูแลให้</p></div>' +
+      '<div class="acts"><a class="btn btn-accent" href="#/post" onclick="BH.toast(\'ไปหน้าลงประกาศ\');return false">' + I('plus') + 'ลงประกาศฟรี</a><a class="btn btn-ghost" href="#/post" onclick="BH.toast(\'ไปหน้าฝากขายกับ agent\');return false">ฝากขายกับ agent</a></div></section>' +
+      '</div>';
+    mountSearchBox();
+    B.$$('[data-rec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        B.$$('[data-rec]').forEach(function (x) { x.setAttribute('aria-selected', x === b); });
+        B.$('#rec').innerHTML = B.LISTINGS.filter(function (h) { return h.deal === b.dataset.rec && h.market !== 'new'; }).slice(0, 6).map(card).join('');
+      });
+    });
+  }
+
+  /* หน้าค้นหา */
+  function titleFor(q, n) {
+    var t = q.type ? B.typeLabel(q.type) : 'อสังหาฯ', d = q.market === 'new' ? 'โครงการใหม่' : q.deal === 'rent' ? 'ให้เช่า' : q.deal === 'sale' ? (q.market === 'resale' ? 'มือสองขาย' : 'ขาย') : 'ขาย-เช่า';
+    var area = q.area ? B.AREAS.find(function (a) { return a.id === q.area; }) : null;
+    return t + d + (area ? ' ' + area.label : q.prov ? ' ' + B.provLabel(q.prov) : ' ทั่วประเทศ');
+  }
+  function search(st) {
+    var q = st.q, res = B.filter(q), view = q.view === 'grid' ? 'grid' : 'list';
+    var active = ['type', 'prov', 'area', 'price', 'beds', 'q', 'pet', 'transit'].filter(function (k) { return q[k]; });
+    var priceOpts = B.PRICE[q.deal === 'rent' ? 'rent' : 'sale'];
+    var chipLabel = function (k) {
+      if (k === 'type') return B.typeLabel(q.type); if (k === 'prov') return B.provLabel(q.prov);
+      if (k === 'area') { var a = B.AREAS.find(function (x) { return x.id === q.area; }); return a ? a.label : q.area; }
+      if (k === 'price') { var p = priceOpts.find(function (x) { return x.id === q.price; }); return p ? p.label : ''; }
+      if (k === 'beds') return q.beds + '+ ห้องนอน'; if (k === 'pet') return 'เลี้ยงสัตว์ได้'; if (k === 'transit') return 'ใกล้รถไฟฟ้า'; return '“' + q.q + '”';
+    };
+    var without = function (k) { var c = Object.assign({}, q); delete c[k]; if (k === 'prov') delete c.area; return B.href('/search', c); };
+    var dealId = q.market === 'new' ? 'new' : q.market === 'resale' ? 'resale' : q.deal === 'rent' ? 'rent' : 'buy';
+    main.innerHTML = '<div class="wrap">' +
+      '<nav class="crumb" aria-label="breadcrumb"><a href="#/">หน้าแรก</a><span aria-hidden="true">›</span><span>' + esc(titleFor(q)) + '</span></nav>' +
+      '<div class="s-head"><h1>' + esc(titleFor(q)) + '<span>พบ ' + res.length + ' รายการ</span></h1></div>' +
+      '<div class="s-layout">' +
+      '<aside class="flt" id="flt" hidden aria-label="ตัวกรอง"><div class="flt-p" role="dialog" aria-modal="true" aria-labelledby="flt-h">' +
+      '<div class="flt-h"><h2 id="flt-h">ตัวกรอง</h2><button class="ib flt-close" type="button" aria-label="ปิดตัวกรอง" data-flt-close>' + I('x') + '</button></div>' +
+      '<div class="grp"><strong>ต้องการ</strong><div class="pills" role="group" aria-label="ประเภทการค้นหา">' + B.DEALS.map(function (d) { return '<button type="button" class="pill" data-deal="' + d.id + '" aria-pressed="' + (d.id === dealId) + '">' + d.label + '</button>'; }).join('') + '</div></div>' +
+      '<div class="field"><label for="fq">คำค้น</label><input class="input" id="fq" type="search" value="' + esc(q.q || '') + '" placeholder="ทำเล, โครงการ, สถานี"></div>' +
+      '<div data-f="prov"></div><div data-f="type"></div><div data-f="price"></div>' +
+      '<div class="grp"><strong>ห้องนอน</strong><div class="pills" role="group" aria-label="ห้องนอนขั้นต่ำ">' + ['', '1', '2', '3', '4'].map(function (b) { return '<button type="button" class="pill" data-beds="' + b + '" aria-pressed="' + ((q.beds || '') === b) + '">' + (b ? b + '+' : 'ทั้งหมด') + '</button>'; }).join('') + '</div></div>' +
+      '<label class="check"><input type="checkbox" id="fpet"' + (q.pet ? ' checked' : '') + '>เลี้ยงสัตว์ได้</label>' +
+      '<label class="check"><input type="checkbox" id="ftr"' + (q.transit ? ' checked' : '') + '>ใกล้รถไฟฟ้า (ไม่เกิน 1 กม.)</label>' +
+      '<div class="flt-foot"><a class="btn btn-ghost" href="' + B.href('/search', { deal: q.deal, market: q.market }) + '">ล้างทั้งหมด</a><button class="btn btn-primary" type="button" data-flt-apply>ดู ' + res.length + ' รายการ</button></div>' +
+      '</div></aside>' +
+      '<section aria-label="ผลการค้นหา" style="min-width:0">' +
+      '<div class="toolbar"><button class="btn btn-ghost fbtn-m" type="button" data-flt-open aria-controls="flt">' + I('filter') + 'ตัวกรอง' + (active.length ? '<span class="n">' + active.length + '</span>' : '') + '</button>' +
+      '<div data-f="sort" class="dd-right"></div>' +
+      '<div class="seg" aria-label="มุมมอง"><a href="' + B.href('/search', Object.assign({}, q, { view: '' })) + '" aria-current="' + (view === 'list') + '" aria-label="มุมมองรายการ">' + I('list') + '</a><a href="' + B.href('/search', Object.assign({}, q, { view: 'grid' })) + '" aria-current="' + (view === 'grid') + '" aria-label="มุมมองตาราง">' + I('grid') + '</a></div></div>' +
+      (active.length ? '<div class="chips scroll-x">' + active.map(function (k) { return '<a class="chip" href="' + without(k) + '" aria-label="ลบตัวกรอง ' + esc(chipLabel(k)) + '">' + esc(chipLabel(k)) + I('x') + '</a>'; }).join('') + '<a class="chip clear" href="' + B.href('/search', { deal: q.deal, market: q.market }) + '">ล้างทั้งหมด</a></div>' : '') +
+      (res.length ? '<div class="grid ' + (view === 'list' ? 'list' : '') + '">' + res.map(card).join('') + '</div>' +
+        '<nav class="pager" aria-label="หน้า"><button type="button" aria-current="page">1</button><button type="button" onclick="BH.toast(\'ตัวอย่าง: หน้าถัดไป\')">2</button><button type="button" onclick="BH.toast(\'ตัวอย่าง: หน้าถัดไป\')">3</button><button type="button" aria-label="หน้าถัดไป" onclick="BH.toast(\'ตัวอย่าง: หน้าถัดไป\')">›</button></nav>'
+        : '<div class="empty"><span class="ei">' + I('search', '') + '</span><h2>ไม่พบประกาศที่ตรงกับตัวกรอง</h2><p style="color:var(--muted)">ลองลดตัวกรองบางข้อ เช่น ช่วงราคา หรือจำนวนห้องนอน</p><a class="btn btn-primary" href="' + B.href('/search', { deal: q.deal, market: q.market }) + '">ล้างตัวกรอง</a></div>') +
+      '</section></div></div>';
+
+    var go = function (patch) { var n = Object.assign({}, q, patch); Object.keys(n).forEach(function (k) { if (!n[k]) delete n[k]; }); location.hash = B.href('/search', n); };
+    var isDesk = function () { return window.matchMedia('(min-width: 1024px)').matches; };
+    var pending = {};
+    var setF = function (patch) { if (isDesk()) go(patch); else Object.assign(pending, patch); };
+    B.dropdown(B.$('[data-f=prov]'), { label: 'จังหวัด', placeholder: 'ทุกจังหวัด', options: B.PROVINCES, value: q.prov, onChange: function (v) { setF({ prov: v, area: '' }); } });
+    B.dropdown(B.$('[data-f=type]'), { label: 'ประเภททรัพย์', placeholder: 'ทุกประเภท', options: B.TYPES, value: q.type, onChange: function (v) { setF({ type: v }); } });
+    B.dropdown(B.$('[data-f=price]'), { label: 'ช่วงราคา', placeholder: 'ทุกราคา', options: priceOpts, value: q.price, onChange: function (v) { setF({ price: v }); } });
+    B.dropdown(B.$('[data-f=sort]'), { aria: 'เรียงตาม', options: B.SORTS, value: q.sort || 'latest', onChange: function (v) { go({ sort: v === 'latest' ? '' : v }); } });
+    B.$$('[data-deal]').forEach(function (b) { b.addEventListener('click', function () {
+      B.$$('[data-deal]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      var d = B.DEALS.find(function (x) { return x.id === b.dataset.deal; }); setF({ deal: d.deal, market: d.market, price: '' });
+    }); });
+    B.$$('[data-beds]').forEach(function (b) { b.addEventListener('click', function () { B.$$('[data-beds]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); setF({ beds: b.dataset.beds }); }); });
+    B.$('#fpet').addEventListener('change', function (e) { setF({ pet: e.target.checked ? '1' : '' }); });
+    B.$('#ftr').addEventListener('change', function (e) { setF({ transit: e.target.checked ? '1' : '' }); });
+    B.$('#fq').addEventListener('change', function (e) { setF({ q: e.target.value }); });
+    var flt = B.$('#flt');
+    B.$('[data-flt-open]').addEventListener('click', function () { flt.hidden = false; document.documentElement.classList.add('lock'); B.$('[data-flt-close]').focus(); });
+    var closeF = function () { flt.hidden = true; document.documentElement.classList.remove('lock'); };
+    B.$('[data-flt-close]').addEventListener('click', closeF);
+    flt.addEventListener('click', function (e) { if (e.target === flt) closeF(); });
+    B.$('[data-flt-apply]').addEventListener('click', function () { closeF(); go(pending); });
+  }
+
+  /* หน้ารายละเอียด */
+  function detail(st) {
+    var h = B.find(st.slug);
+    if (!h) { main.innerHTML = '<div class="wrap"><div class="empty" style="margin:40px 0"><h1>ไม่พบประกาศนี้</h1><p>ประกาศอาจถูกปิดไปแล้ว</p><a class="btn btn-primary" href="#/search">กลับไปค้นหา</a></div></div>'; return; }
+    var a = B.AGENTS[h.agent];
+    var similar = B.LISTINGS.filter(function (x) { return x.slug !== h.slug && (x.type === h.type || x.prov === h.prov); }).slice(0, 4);
+    var shots = [0, 1, 2, 3, 0, 1].map(function (v, i) { return '<div>' + B.art(i === 3 ? 'condo' : h.type, i === 2 ? 'dusk' : i === 4 ? 'night' : h.palette, h.title + ' ภาพที่ ' + (i + 1), v) + '</div>'; }).join('');
+    main.innerHTML = '<div class="wrap has-cta">' +
+      '<nav class="crumb" aria-label="breadcrumb"><a href="#/">หน้าแรก</a><span aria-hidden="true">›</span><a href="' + B.href('/search', { deal: h.deal, type: h.type }) + '">' + B.typeLabel(h.type) + (h.deal === 'rent' ? 'ให้เช่า' : 'ขาย') + '</a><span aria-hidden="true">›</span><a href="' + B.href('/search', { deal: h.deal, prov: h.prov }) + '">' + B.provLabel(h.prov) + '</a></nav>' +
+      '<div class="gal"><div class="gal-track" id="gal" tabindex="0" aria-label="ภาพประกาศ เลื่อนดูได้">' + shots + '</div>' +
+      '<span class="gal-n" id="galn">1 / ' + h.photos + '</span>' +
+      '<div class="gal-tools"><button class="ib" type="button" onclick="BH.toast(\'คัดลอกลิงก์ประกาศแล้ว\')" aria-label="แชร์">' + I('share') + '</button><button class="ib" type="button" data-fav="' + h.slug + '" aria-pressed="' + B.isFav(h.slug) + '" aria-label="บันทึกประกาศ">' + I('heart') + '</button></div>' +
+      '<div class="gal-all"><button class="btn" type="button" onclick="BH.toast(\'เปิดดูรูปทั้งหมด ' + h.photos + ' รูป\')">' + I('camera') + 'ดูรูปทั้งหมด ' + h.photos + '</button></div></div>' +
+      '<div class="d-layout"><div class="d-main">' +
+      '<div class="panel d-title"><div class="badges" style="position:static;max-width:none">' + h.badges.map(function (b) { return '<span class="bdg bdg-' + b + '" style="border:1px solid var(--line)">' + B.badgeText(b) + '</span>'; }).join('') + '<span class="bdg" style="border:1px solid var(--line)">' + B.typeLabel(h.type) + (h.deal === 'rent' ? 'ให้เช่า' : 'ขาย') + '</span></div>' +
+      '<h1>' + esc(h.title) + '</h1><p class="meta">' + I('pin') + esc(h.loc) + '</p>' + (h.transit ? '<p class="meta tr">' + I('train') + esc(h.transit) + '</p>' : '') +
+      '<div class="d-price"><span class="price">' + (h.priceFrom ? '<small>เริ่ม </small>' : '') + B.baht(h.price) + (h.deal === 'rent' ? '<small> /เดือน</small>' : '') + '</span>' + (B.perSqm(h) ? '<span class="meta">' + B.perSqm(h) + '</span>' : '') + '</div>' +
+      '<div class="keyf">' + (h.beds ? '<div>' + I('bed') + '<span><small>ห้องนอน</small><b>' + h.beds + '</b></span></div><div>' + I('bath') + '<span><small>ห้องน้ำ</small><b>' + h.baths + '</b></span></div>' : '') +
+      '<div>' + I('area') + '<span><small>พื้นที่ใช้สอย</small><b>' + h.size.toLocaleString() + ' ตร.ม.</b></span></div>' +
+      (h.land ? '<div>' + I('land') + '<span><small>ที่ดิน</small><b>' + h.land + ' ตร.ว.</b></span></div>' : '<div>' + I('building') + '<span><small>ชั้น</small><b>' + h.floor + '</b></span></div>') + '</div></div>' +
+      (h.project ? '<div class="panel proj"><h2>ข้อมูลโครงการ</h2><p><strong>' + esc(h.project.name) + '</strong> โดย ' + esc(h.project.dev) + '</p><dl><div><dt>จำนวนยูนิต</dt><dd>' + h.project.units + '</dd></div><div><dt>สถานะ</dt><dd>' + h.project.done + '</dd></div><div style="grid-column:1/-1"><dt>โปรโมชัน</dt><dd style="color:var(--accent-strong)">' + h.project.promo + '</dd></div></dl></div>' : '') +
+      '<div class="panel"><h2>รายละเอียด</h2><p style="max-width:70ch">' + esc(h.desc) + '</p>' +
+      '<dl class="spec" style="margin-top:12px"><div><dt>รหัสประกาศ</dt><dd>BH-' + (10240 + B.LISTINGS.indexOf(h)) + '</dd></div><div><dt>ประเภท</dt><dd>' + B.typeLabel(h.type) + '</dd></div><div><dt>สภาพ</dt><dd>' + (h.market === 'new' ? 'โครงการใหม่' : 'มือสอง') + '</dd></div><div><dt>ชั้น / จำนวนชั้น</dt><dd>' + h.floor + '</dd></div><div><dt>ลงประกาศ</dt><dd>' + B.postedText(h.days) + '</dd></div><div><dt>เข้าชม</dt><dd>1,284 ครั้ง</dd></div></dl></div>' +
+      '<div class="panel"><h2>สิ่งอำนวยความสะดวก</h2><ul class="feat">' + h.features.map(function (f) { return '<li>' + I('check') + f + '</li>'; }).join('') + '</ul></div>' +
+      '<div class="panel"><h2>ทำเลและสถานที่ใกล้เคียง</h2><div class="mapbox">' + B.mapArt('แผนที่ประกอบทำเล ' + h.loc) + '<span class="me">' + I('pin') + '</span></div>' +
+      '<ul class="near"><li>' + I('train') + '<span>' + esc(h.transit || 'ป้ายรถเมล์ใกล้สุด') + '</span><span>' + (h.transit ? 'เดิน 5 นาที' : '400 ม.') + '</span></li><li>' + I('building') + '<span>ห้างสรรพสินค้า</span><span>1.2 กม.</span></li><li>' + I('home') + '<span>โรงเรียน / มหาวิทยาลัย</span><span>1.8 กม.</span></li><li>' + I('shield') + '<span>โรงพยาบาล</span><span>2.4 กม.</span></li></ul></div>' +
+      (h.deal === 'sale' ? '<div class="panel" id="calc"><h2>คำนวณค่างวดผ่อนบ้าน</h2><div class="calc">' +
+        '<div class="field"><label for="c-down">เงินดาวน์ <b id="c-down-v">10%</b></label><input type="range" id="c-down" min="0" max="50" step="5" value="10"></div>' +
+        '<div class="field"><label for="c-yr">ระยะเวลาผ่อน <b id="c-yr-v">30 ปี</b></label><input type="range" id="c-yr" min="5" max="40" step="5" value="30"></div>' +
+        '<div class="field"><label for="c-rate">ดอกเบี้ยเฉลี่ย (%/ปี)</label><input class="input" id="c-rate" type="text" inputmode="decimal" value="3.5"></div>' +
+        '<div class="calc-out"><span>ผ่อนประมาณ</span><b id="c-out"></b></div><div class="calc-row"><span>วงเงินกู้</span><b id="c-loan"></b></div>' +
+        '<p style="font-size:13px;color:var(--muted)">ตัวเลขประมาณการเท่านั้น ธนาคารจะพิจารณาจากรายได้และภาระหนี้จริง</p></div></div>' : '') +
+      '</div>' +
+      '<aside class="side" aria-label="ติดต่อผู้ลงประกาศ"><div class="panel"><div class="ag"><span class="av">' + a.initials + '</span><div><strong>' + esc(a.name) + (a.verified ? I('shield') : '') + '</strong><small>' + esc(a.company) + ' · ประกาศ ' + a.listings + ' รายการ</small><small>' + I('clock', '') + ' ' + a.reply + '</small></div></div>' +
+      '<div class="ag-acts"><button class="btn btn-primary" type="button" id="tel">' + I('phone') + '<span>แสดงเบอร์โทร ' + a.phone.slice(0, 4) + 'XX-XXXX</span></button><a class="btn btn-line" href="#line" onclick="BH.toast(\'เปิด LINE ของผู้ลงประกาศ\');return false">' + I('line') + 'แชตทาง LINE</a></div>' +
+      '<form class="lead" id="lead" novalidate><h2 style="font-size:16px">ส่งข้อความถึงผู้ลงประกาศ</h2>' +
+      '<div class="field"><label for="l-name">ชื่อ</label><input class="input" id="l-name" autocomplete="name" required></div>' +
+      '<div class="field"><label for="l-tel">เบอร์โทร</label><input class="input" id="l-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="08X-XXX-XXXX" required></div>' +
+      '<div class="field"><label for="l-msg">ข้อความ</label><textarea class="input" id="l-msg">สนใจ “' + esc(h.title) + '” ขอนัดดูได้ไหมครับ/คะ</textarea></div>' +
+      '<label class="check"><input type="checkbox" id="l-ok" required>ยินยอมให้ BaanHub ส่งข้อมูลติดต่อให้ผู้ลงประกาศเพื่อติดต่อกลับ</label>' +
+      '<p id="l-err" role="alert" style="color:#B42318;font-size:14px"></p>' +
+      '<button class="btn btn-accent" type="submit">ส่งข้อความ</button></form></div>' +
+      '<div class="panel" style="font-size:14px;color:var(--muted)">' + I('shield', '') + ' อย่าโอนเงินจองก่อนเห็นทรัพย์จริงและตรวจสอบโฉนด · <a href="#report" class="tlink" onclick="BH.toast(\'เปิดฟอร์มแจ้งประกาศไม่เหมาะสม\');return false">แจ้งประกาศนี้</a></div></aside></div>' +
+      '<section class="sec" aria-labelledby="h-sim" style="padding-top:8px"><div class="sec-h"><h2 id="h-sim">ประกาศใกล้เคียงที่คุณอาจสนใจ</h2></div><div class="grid g4">' + similar.map(card).join('') + '</div></section>' +
+      '</div>' +
+      '<div class="sticky-cta"><a class="btn btn-ghost" href="tel:' + a.phone.replace(/-/g, '') + '">' + I('phone') + 'โทร</a><a class="btn btn-line" href="#line" onclick="BH.toast(\'เปิด LINE ของผู้ลงประกาศ\');return false">' + I('line') + 'LINE</a><a class="btn btn-accent" href="#lead" onclick="document.getElementById(\'l-name\').focus();return false">' + I('chat') + 'ส่งข้อความ</a></div>';
+
+    var gal = B.$('#gal');
+    gal.addEventListener('scroll', function () { B.$('#galn').textContent = (Math.round(gal.scrollLeft / gal.clientWidth) + 1) + ' / ' + h.photos; }, { passive: true });
+    B.$('#tel').addEventListener('click', function (e) { e.currentTarget.querySelector('span').textContent = a.phone; });
+    if (h.deal === 'sale') {
+      var upd = function () {
+        var d = +B.$('#c-down').value, y = +B.$('#c-yr').value, r = parseFloat(B.$('#c-rate').value) || 0;
+        B.$('#c-down-v').textContent = d + '%'; B.$('#c-yr-v').textContent = y + ' ปี';
+        B.$('#c-out').textContent = B.baht(B.mortgage(h.price, d, y, r)) + '/เดือน'; B.$('#c-loan').textContent = B.baht(h.price * (1 - d / 100));
+      };
+      ['c-down', 'c-yr', 'c-rate'].forEach(function (id) { B.$('#' + id).addEventListener('input', upd); }); upd();
+    }
+    B.$('#lead').addEventListener('submit', function (e) {
+      e.preventDefault(); var err = B.$('#l-err');
+      if (!B.$('#l-name').value.trim()) { err.textContent = 'กรุณากรอกชื่อ เพื่อให้ผู้ลงประกาศเรียกคุณได้ถูก'; B.$('#l-name').focus(); return; }
+      if (!/^0\d{1,2}-?\d{3}-?\d{4}$/.test(B.$('#l-tel').value.trim())) { err.textContent = 'เบอร์โทรไม่ถูกต้อง — กรอก 10 หลัก เช่น 081-234-5678'; B.$('#l-tel').focus(); return; }
+      if (!B.$('#l-ok').checked) { err.textContent = 'กรุณาติ๊กยินยอมส่งข้อมูลติดต่อก่อนส่งข้อความ'; return; }
+      err.textContent = ''; e.target.innerHTML = '<div class="empty" style="border-style:solid"><span class="ei">' + I('check') + '</span><h2 style="font-size:18px">ส่งข้อความแล้ว</h2><p style="color:var(--muted)">' + esc(a.name) + ' จะติดต่อกลับ ' + a.reply.replace('ตอบกลับ', '') + '</p></div>';
+    });
+  }
+
+  function footer() {
+    B.$('#ftr').innerHTML = '<div class="wrap"><div class="ftr-g"><div class="brand"><a class="logo" href="#/"><span class="logo-mark">' + I('home') + '</span>BaanHub</a><p style="margin-top:8px;max-width:40ch">พอร์ทัลประกาศซื้อ-ขาย-เช่าอสังหาฯ ทั่วไทย ประกาศจากเจ้าของและ agent ที่ตรวจสอบแล้ว</p></div>' +
+      '<div><h3>ค้นหา</h3><a href="#/search?deal=sale">ซื้อ</a><a href="#/search?deal=rent">เช่า</a><a href="#/search?deal=sale&market=new">โครงการใหม่</a></div>' +
+      '<div><h3>สำหรับ agent</h3><a href="#/post" onclick="BH.toast(\'ไปหน้าลงประกาศ\');return false">ลงประกาศ</a><a href="#/agent-login" onclick="BH.toast(\'ไปหน้าเข้าสู่ระบบ agent\');return false">เข้าสู่ระบบ agent</a></div>' +
+      '<div><h3>ช่วยเหลือ</h3><a href="#help">คำถามที่พบบ่อย</a><a href="#privacy">นโยบายความเป็นส่วนตัว</a></div></div><p class="copy">© 2569 BaanHub · ข้อมูลในหน้านี้เป็นข้อมูลตัวอย่าง</p></div>';
+  }
+
+  B.$('#drawer-links').innerHTML = '<a href="#/">' + I('home') + 'หน้าแรก</a>' + NAV.map(function (n) { return '<a href="' + B.href('/search', n.q) + '">' + I('search') + n.label + '</a>'; }).join('');
+  footer();
+  B.start(function (st) {
+    B.$('#nav').innerHTML = navHtml(st);
+    if (st.view === 'search') search(st); else if (st.view === 'detail') detail(st); else home();
+    B.$$('[data-fav-count]').forEach(function (x) { x.textContent = B.favCount(); x.hidden = !B.favCount(); });
+    document.title = 'BaanHub · 5A Skyline — ' + (st.view === 'home' ? 'หน้าแรก' : st.view === 'search' ? 'ค้นหา' : 'รายละเอียด');
+  });
+})();
+</script>
+</body>
+</html>
