@@ -8,16 +8,16 @@
       "port": 3001
     },
     {
-      "name": "dormitory",
+      "name": "real-estate",
       "runtimeExecutable": "/usr/local/bin/node",
-      "runtimeArgs": ["apps/dormitory/node_modules/next/dist/bin/next", "dev", "apps/dormitory", "--port", "3002"],
+      "runtimeArgs": ["apps/real-estate/node_modules/next/dist/bin/next", "dev", "apps/real-estate", "--port", "3002"],
       "port": 3002
     },
     {
-      "name": "real-estate",
+      "name": "real-estate-designs",
       "runtimeExecutable": "/usr/local/bin/node",
-      "runtimeArgs": ["apps/real-estate/node_modules/next/dist/bin/next", "dev", "apps/real-estate", "--port", "3003"],
-      "port": 3003
+      "runtimeArgs": ["-e", "const h=require('http'),f=require('fs'),p=require('path'),d=p.resolve('apps/real-estate/designs'),t={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};h.createServer((q,s)=>{let u=decodeURIComponent(q.url.split('?')[0]);if(u==='/')u='/design-5-portal-skyline.html';const fp=p.join(d,p.normalize(u));if(!fp.startsWith(d))return s.writeHead(403).end();f.readFile(fp,(e,b)=>{if(e)return s.writeHead(404).end('not found');s.writeHead(200,{'content-type':t[p.extname(fp)]||'application/octet-stream','cache-control':'no-store'}).end(b)})}).listen(+process.env.PORT||4173,'127.0.0.1')"],
+      "port": 4173
     }
   ]
 }

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TechForce Social — โพสต์อัตโนมัติหลายแบรนด์</title>
+<meta name="description" content="ตั้งเวลาโพสต์รูปและข้อความไป Facebook, Instagram, TikTok, LINE OA, YouTube Shorts และ X ได้หลายแบรนด์จากที่เดียว (ต้นแบบ HTML)">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237C5CFF'/%3E%3Cstop offset='1' stop-color='%2338BDF8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ccircle cx='20' cy='40' r='7' fill='white'/%3E%3Ccircle cx='44' cy='24' r='7' fill='white'/%3E%3Ccircle cx='44' cy='46' r='5' fill='white' opacity='.8'/%3E%3Cpath d='M20 40 44 24M20 40 44 46' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Kanit:ital,wght@0,500;0,600;0,700;1,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side" aria-label="เมนูหลัก">
+    <a class="brand" href="#/autopilot">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="22" height="22"><circle cx="20" cy="40" r="7" fill="#fff"/><circle cx="44" cy="24" r="7" fill="#fff"/><circle cx="44" cy="46" r="5" fill="#fff" opacity=".8"/><path d="M20 40 44 24M20 40 44 46" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></span>
+      <span><b>TechForce Social</b><small>โพสต์อัตโนมัติหลายแบรนด์</small></span>
+    </a>
+    <div class="ws" data-ws></div>
+    <nav class="nav" data-nav style="margin-top:10px"></nav>
+    <div class="foot">
+      <div class="row"><button class="btn ghost small" data-theme-toggle>สลับธีม</button><button class="btn ghost small" data-reset>รีเซ็ตข้อมูล</button></div>
+      <span>ต้นแบบ HTML · ข้อมูลจำลอง เก็บในเบราว์เซอร์นี้เท่านั้น ยังไม่โพสต์จริง</span>
+    </div>
+  </aside>
+
+  <main class="main" id="main" tabindex="-1">
+    <div class="topbar">
+      <div class="ws mobile" data-ws></div>
+      <button class="btn ghost small" data-theme-toggle style="margin-left:auto" aria-label="สลับธีม">◐</button>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+<nav class="tabbar" aria-label="เมนูหลัก" data-tabbar></nav>
+<div class="toast" role="status" aria-live="polite" id="toast"></div>
+<dialog id="dlg"></dialog>
+<script src="assets/app.js"></script>
+</body>
+</html>

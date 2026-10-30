@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoHorizontalScroll } from '@repo/testing';
+import { expectNoHorizontalScroll } from './helpers';
 
 /** เบอร์ไม่ซ้ำกันในแต่ละ test (server ใช้ข้อมูลชุดเดียวกันทุก project ที่รันพร้อมกัน) */
 const uniquePhone = () => `09${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
 
 type Role = 'owner' | 'manager' | 'front-desk' | 'trainer' | 'member';
-/** บัญชีทดลองจาก src/server/accounts.ts (รหัสผ่านเดียวกันทุกบัญชี = DEMO_PASSWORD) */
+/** บัญชีทดลองจาก src/api/lib/auth/auth/auth.accounts.ts (รหัสผ่านเดียวกันทุกบัญชี = DEMO_PASSWORD) */
 const PASSWORD = process.env.DEMO_PASSWORD ?? '123456';
 const LOGIN: Record<Role, string> = { owner: 'owner@fitflow.test', manager: 'manager@fitflow.test', 'front-desk': 'desk@fitflow.test', trainer: 'boss@fitflow.test', member: '080-000-0101' };
 

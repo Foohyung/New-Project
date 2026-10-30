@@ -9,6 +9,9 @@ minimumReleaseAge: 4320
 allowBuilds:
   # binary สำหรับ macOS/Linux มากับ optional dependency แล้ว ไม่ต้องรัน postinstall
   unrs-resolver: false
+  # Prisma ดาวน์โหลด schema engine (ใช้ตอน migrate) ตอนติดตั้ง
+  prisma: true
+  '@prisma/engines': true
 
 # §10.11 ข้อยกเว้นของ pnpm audit — ต้องมีเหตุผลและวันทบทวนทุกรายการ
 auditConfig:

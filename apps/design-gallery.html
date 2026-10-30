@@ -79,13 +79,13 @@
 <div class="wrap">
   <header>
     <h1>Design Gallery</h1>
-    <p>Fitness เลือกแบบ Pulse, หอพักเลือก Garden, อสังหาฯ เลือก Hearth (เก็บ Marketplace และ Nest ไว้อ้างอิง) ส่วนเว็บบริษัทยังพักไว้ทั้ง 3 แบบ และระบบจองทัวร์รอเลือก 1 จาก 3 แบบ ทุกแบบเป็น HTML ธรรมดา คลิกการ์ดเพื่อเปิดแบบเต็มหน้าจอ ทุกแบบผ่านกฎ responsive §15.2 ข้อมูลในหน้าเป็นข้อมูลตัวอย่าง</p>
-    <nav class="jump"><a href="#fitness">🏋️ Fitness</a><a href="#dormitory">🏢 หอพัก</a><a href="#real-estate">🏡 อสังหาฯ</a><a href="#company-website">💼 เว็บบริษัท</a><a href="#tour-booking">🧳 จองทัวร์</a></nav>
+    <p>Fitness เลือกแบบ Pulse, อสังหาฯ เลือก Hearth (เก็บ Marketplace และ Nest ไว้อ้างอิง) และระบบจองทัวร์รอเลือก 1 จาก 3 แบบ ทุกแบบเป็น HTML ธรรมดา คลิกการ์ดเพื่อเปิดแบบเต็มหน้าจอ ทุกแบบผ่านกฎ responsive §15.2 ข้อมูลในหน้าเป็นข้อมูลตัวอย่าง</p>
+    <nav class="jump"><a href="#fitness">🏋️ Fitness</a><a href="#real-estate">🏡 อสังหาฯ</a><a href="#tour-booking">🧳 จองทัวร์</a></nav>
   </header>
   <div id="sections"></div>
   <div class="how">
     <b>ขั้นต่อไป</b>
-    <p>แบบที่เลือกจะกลายเป็น design system ใน <code>packages/ui</code> ตอน scaffold Next.js ส่วนเว็บบริษัทบอกชื่อแบบที่ชอบเมื่อพร้อม (Corporate, Showcase หรือ Modern) และระบบจองทัวร์เลือก Horizon, Journey หรือ Getaway</p>
+    <p>แบบที่เลือกจะกลายเป็น design system ใน <code>packages/ui</code> ตอน scaffold Next.js ส่วนระบบจองทัวร์เลือก Horizon, Journey หรือ Getaway</p>
   </div>
 </div>
 
@@ -98,25 +98,11 @@
       ],
     },
     {
-      id: 'dormitory', name: 'DormDee · ระบบจัดการหอพัก', path: '../apps/dormitory/designs/',
-      designs: [
-        { file: 'design-2-garden.html', n: 2, chosen: true, name: 'Garden', desc: 'เขียวมิ้นต์ เป็นมิตร ใช้งานง่ายสำหรับเจ้าของหอ ผังห้องแบบการ์ดใหญ่แยกชั้น และ checklist งานประจำวัน', colors: ['#F2F7F3', '#1F9D6B', '#FFC857', '#E5604D'], font: 'Mitr + Noto Sans Thai Looped' },
-      ],
-    },
-    {
       id: 'real-estate', name: 'BaanHub · ระบบอสังหาริมทรัพย์', path: '../apps/real-estate/designs/',
       designs: [
         { file: 'design-2-marketplace.html', n: 2, ref: true, name: 'Marketplace', desc: 'แนว portal ขาว-น้ำเงิน ค้นหาแบบรายการคู่แผนที่ ตัวกรองครบ ชี้ประกาศแล้วหมุดบนแผนที่ไฮไลต์ตาม', colors: ['#FFFFFF', '#1A56DB', '#F97316', '#7CB342'], font: 'Anuphan' },
         { file: 'design-3-hearth.html', n: 3, chosen: true, name: 'Hearth', desc: 'โทนอบอุ่นดินเผา ค้นหาจากไลฟ์สไตล์ (กดกรองได้จริง) มีคะแนนย่านน่าอยู่และเครื่องคำนวณค่าผ่อน', colors: ['#F6EFE6', '#C65D3B', '#5E6B3A', '#2B211C'], font: 'Pridi + Sarabun' },
         { file: 'design-4-nest.html', n: 4, ref: true, name: 'Nest', desc: 'รวมแบบ 2 + 3: รายการคู่แผนที่ของ Marketplace กับตัวกรองไลฟ์สไตล์ % ตรงใจ คะแนนย่าน และค่าผ่อนบนทุกประกาศของ Hearth บนมือถือสลับรายการ ↔ แผนที่ได้', colors: ['#F6EFE6', '#C65D3B', '#5E6B3A', '#7CB342'], font: 'Pridi + Anuphan' },
-      ],
-    },
-    {
-      id: 'company-website', name: 'SiteSabai · เว็บไซต์บริษัท', path: '../apps/company-website/designs/',
-      designs: [
-        { file: 'design-1-corporate.html', name: 'Corporate', desc: 'Navy + ฟ้า น่าเชื่อถือแบบ B2B (ตัวอย่าง: นภาวัสดุ) มีหมวดสินค้า กรองสินค้า และฟอร์มขอใบเสนอราคา', colors: ['#0E1B33', '#FFFFFF', '#3D7BEA', '#F6F8FB'], font: 'K2D + Noto Sans Thai' },
-        { file: 'design-2-showcase.html', name: 'Showcase', desc: 'โทนอบอุ่น เน้นภาพสินค้าใหญ่ (ตัวอย่าง: ไร่ใบเตย ฟู้ดส์) กดดูรายละเอียดสินค้าแล้วสอบถามทาง LINE ไม่มีตะกร้า', colors: ['#FFF8EC', '#3E7C3A', '#F2A33A', '#C8402A'], font: 'Chonburi + Niramit' },
-        { file: 'design-3-modern.html', name: 'Modern', desc: 'Minimal + bento grid (ตัวอย่าง: Lumen Lighting) มีตัวอย่างหน้าหลังบ้านที่ลองพิมพ์แก้สินค้าได้จริง', colors: ['#F5F5F3', '#111111', '#FF5A1F', '#FFE8A3'], font: 'Space Grotesk + Noto Sans Thai' },
       ],
     },
     {

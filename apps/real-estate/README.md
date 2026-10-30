@@ -23,7 +23,7 @@
 ## หน้าเว็บ (ระยะที่ 1)
 
 ```bash
-pnpm --filter @app/real-estate dev   # http://localhost:3003
+pnpm --filter @app/real-estate dev   # http://localhost:3002
 ```
 
 | หน้า | path | ทำอะไรได้ |

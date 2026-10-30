@@ -1,0 +1,263 @@
+@import "tailwindcss";
+
+/* Design: แบบ 1 Pulse — dark + เขียวนีออน */
+@theme {
+  --color-bg: #0b0d10;
+  --color-surface: #13161b;
+  --color-surface-2: #1a1e25;
+  --color-line: #252a33;
+  --color-ink: #eceff3;
+  --color-muted: #8b94a3;
+  --color-faint: #5d6573;
+  --color-lime: #c6ff3d;
+  --color-cyan: #3ddcff;
+  --color-violet: #a78bfa;
+  --color-danger: #ff5c7a;
+  --color-warn: #ffb547;
+}
+
+/* ธีมอื่น: แทนค่า token เดิม ทุก utility (bg-surface, text-lime, bg-lime/10 …) จึงเปลี่ยนตามทันที
+   ชื่อ token คงเดิม: lime = สีหลัก (accent), cyan = สีรอง */
+[data-theme='light'] {
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f3;
+  --color-line: #dfe3e8;
+  --color-ink: #14161a;
+  --color-muted: #5b6270;
+  --color-faint: #848b97;
+  --color-lime: #4d7c0f;
+  --color-cyan: #0e7490;
+  --color-violet: #6d28d9;
+  --color-danger: #d92d4c;
+  --color-warn: #b45309;
+}
+[data-theme='ocean'] {
+  --color-bg: #08111c;
+  --color-surface: #0e1a28;
+  --color-surface-2: #142334;
+  --color-line: #1f3247;
+  --color-ink: #e6eef7;
+  --color-muted: #8aa0b8;
+  --color-faint: #5a6f86;
+  --color-lime: #5eead4;
+  --color-cyan: #60a5fa;
+  --color-violet: #c4b5fd;
+}
+[data-theme='sunset'] {
+  --color-bg: #120d0b;
+  --color-surface: #1b1411;
+  --color-surface-2: #251c17;
+  --color-line: #35281f;
+  --color-ink: #f5ede6;
+  --color-muted: #a8988b;
+  --color-faint: #7a6a5d;
+  --color-lime: #ff8a3d;
+  --color-cyan: #7dd3fc;
+  --color-violet: #f0abfc;
+  --color-warn: #fcd34d;
+}
+
+@theme inline {
+  --font-sans: var(--font-plex), system-ui, sans-serif;
+  --font-display: var(--font-kanit), var(--font-plex), sans-serif;
+  --font-athletic: var(--font-kanit-athletic), var(--font-kanit), sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-bg font-sans text-base text-ink antialiased;
+    line-height: 1.6; /* ภาษาไทยต้องไม่ต่ำกว่า 1.6 (§15.1) */
+  }
+  input, select, textarea {
+    font-size: max(16px, 1em); /* กัน iOS ซูมเอง (§15.2.5) */
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-lime);
+    outline-offset: 2px;
+  }
+}
+
+/* ==========================================================================
+   แอนิเมชันแบบ C (Athletic)
+   สปริง = cubic-bezier(.34,1.56,.64,1) · ปิดเองเมื่อ prefers-reduced-motion และตอนพิมพ์
+   ========================================================================== */
+:root {
+  /* ตัวคูณความเร็วของทุกแอนิเมชัน (1 = เร็วตามต้นแบบ · มากขึ้น = ช้าลง) — แถบเปลี่ยนหน้าใช้ค่า SLOW ใน modules/motion/motion.routes.ts ให้ตรงกัน */
+  --ff-slow: 1.0;
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-spring-hard: cubic-bezier(.34, 1.8, .5, 1);
+  --ease-wipe: cubic-bezier(.7, 0, .2, 1);
+}
+
+/* แถบเฉียงเปลี่ยนหน้า (components/page-transition.tsx) */
+.ff-wipe { transform: translateX(-140%) skewX(-12deg); }
+.ff-wipe-label { transform: skewX(12deg); }
+.ff-wipe[data-phase='cover'] { animation: ff-wipe-in var(--wipe-enter) var(--ease-wipe) forwards; }
+.ff-wipe[data-phase='reveal'] { transform: translateX(0) skewX(-12deg); animation: ff-wipe-out var(--wipe-exit) var(--ease-wipe) forwards; }
+.ff-wipe[data-phase='full'] { animation: ff-wipe-full var(--wipe-total) var(--ease-wipe) forwards; }
+@keyframes ff-wipe-in { to { transform: translateX(0) skewX(-12deg); } }
+@keyframes ff-wipe-out { to { transform: translateX(140%) skewX(-12deg); } }
+@keyframes ff-wipe-full {
+  0% { transform: translateX(-140%) skewX(-12deg); }
+  42%, 58% { transform: translateX(0) skewX(-12deg); }
+  100% { transform: translateX(140%) skewX(-12deg); }
+}
+
+/* เนื้อหาของหน้าพุ่งเข้าแบบสปริงทีละช่วง (ลูกโดยตรงของ <main> ยกเว้นแถบโหมดทดลองที่อยู่ตลอด) */
+/* fill = backwards: จบแล้วไม่เหลือ transform ค้าง (ไม่งั้นลูกที่เป็น position: fixed จะอ้างอิงผิดกล่อง) */
+main > :not(.ff-static) {
+  animation: ff-in-left calc(.6s * var(--ff-slow)) var(--ease-spring) backwards;
+  animation-delay: calc(calc(120ms * var(--ff-slow)) + var(--ff-i, 6) * calc(70ms * var(--ff-slow)));
+}
+main > :nth-child(1) { --ff-i: 0; } main > :nth-child(2) { --ff-i: 1; } main > :nth-child(3) { --ff-i: 2; }
+main > :nth-child(4) { --ff-i: 3; } main > :nth-child(5) { --ff-i: 4; } main > :nth-child(6) { --ff-i: 5; }
+@keyframes ff-in-left { from { opacity: 0; transform: translateX(-24px); } }
+
+/* รายการที่ไหลเข้าทีละแถว: ใส่ class ff-stagger ที่ตัวแม่ (สูงสุด 12 แถวแรก) */
+.ff-stagger > * { animation: ff-in-up calc(.5s * var(--ff-slow)) var(--ease-spring) backwards; animation-delay: calc(calc(260ms * var(--ff-slow)) + var(--ff-j, 12) * calc(45ms * var(--ff-slow))); }
+.ff-stagger > :nth-child(1) { --ff-j: 0; } .ff-stagger > :nth-child(2) { --ff-j: 1; } .ff-stagger > :nth-child(3) { --ff-j: 2; }
+.ff-stagger > :nth-child(4) { --ff-j: 3; } .ff-stagger > :nth-child(5) { --ff-j: 4; } .ff-stagger > :nth-child(6) { --ff-j: 5; }
+.ff-stagger > :nth-child(7) { --ff-j: 6; } .ff-stagger > :nth-child(8) { --ff-j: 7; } .ff-stagger > :nth-child(9) { --ff-j: 8; }
+.ff-stagger > :nth-child(10) { --ff-j: 9; } .ff-stagger > :nth-child(11) { --ff-j: 10; } .ff-stagger > :nth-child(12) { --ff-j: 11; }
+@keyframes ff-in-up { from { opacity: 0; transform: translateY(12px); } }
+
+/* ช่องที่กรอกผิดสั่น 0.3 วิ ทุกครั้งที่ขึ้น error */
+[aria-invalid='true'] { animation: ff-shake calc(.3s * var(--ff-slow)) ease-in-out; }
+.ff-shake { animation: ff-shake calc(.35s * var(--ff-slow)) ease-in-out; }
+@keyframes ff-shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+/* ข้อความผลลัพธ์ / การ์ดแจ้งผล เด้งเข้าจากขวา */
+.ff-pop-in { animation: ff-pop-in calc(.5s * var(--ff-slow)) var(--ease-spring) backwards; }
+@keyframes ff-pop-in { from { opacity: 0; transform: translateX(24px) scale(.96); } }
+.ff-pop { animation: ff-pop calc(.45s * var(--ff-slow)) var(--ease-spring-hard); }
+@keyframes ff-pop { 40% { transform: scale(1.3) rotate(-8deg); } }
+
+/* จุด "สด" เต้นตลอด */
+.ff-live { position: relative; }
+.ff-live::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: inherit; animation: ff-ping calc(1.4s * var(--ff-slow)) ease-out infinite; }
+@keyframes ff-ping { to { transform: scale(3); opacity: 0; } }
+
+/* แสงวิ่งผ่านการ์ด/บัตรครั้งเดียว */
+.ff-sheen { position: relative; overflow: hidden; }
+.ff-sheen::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / .35) 50%, transparent 70%); transform: translateX(-100%); animation: ff-sheen calc(1.2s * var(--ff-slow)) ease-in-out calc(.9s * var(--ff-slow)) backwards; }
+@keyframes ff-sheen { to { transform: translateX(100%); } }
+
+/* แท่งกราฟเด้งขึ้นทีละแท่ง · แถบความคืบหน้าวิ่ง */
+.ff-grow { transform-origin: bottom; animation: ff-grow calc(.8s * var(--ff-slow)) var(--ease-spring-hard) backwards; animation-delay: calc(calc(450ms * var(--ff-slow)) + var(--ff-b, 0) * calc(35ms * var(--ff-slow))); }
+@keyframes ff-grow { from { transform: scaleY(0); } }
+.ff-grow-x { transform-origin: left; animation: ff-grow-x calc(.9s * var(--ff-slow)) var(--ease-spring) calc(.4s * var(--ff-slow)) backwards; }
+@keyframes ff-grow-x { from { transform: scaleX(0); } }
+.ff-beat { animation: ff-grow calc(.8s * var(--ff-slow)) var(--ease-spring-hard) backwards, ff-beat calc(1.2s * var(--ff-slow)) ease-in-out calc(1.4s * var(--ff-slow)) infinite; animation-delay: calc(calc(450ms * var(--ff-slow)) + var(--ff-b, 0) * calc(35ms * var(--ff-slow))), calc(1.4s * var(--ff-slow)); }
+@keyframes ff-beat { 50% { filter: drop-shadow(0 0 10px var(--color-lime)); } }
+
+/* วงแหวน (SVG) หมุนเติมจาก 0 */
+.ff-ring { animation: ff-ring calc(1.2s * var(--ff-slow)) cubic-bezier(.2, .7, .2, 1) calc(.35s * var(--ff-slow)) backwards; }
+@keyframes ff-ring { from { stroke-dasharray: 0 999; } }
+
+/* เส้นชีพจรวิ่งตลอด (PulseMark run): ช่วงสว่างยาว 35% ของเส้น เลื่อนไปตามเส้นวนไม่หยุด */
+.ff-pulse-run { stroke-dasharray: .35 .65; animation: ff-pulse-run calc(1.6s * var(--ff-slow)) linear infinite; }
+@keyframes ff-pulse-run { from { stroke-dashoffset: .35; } to { stroke-dashoffset: -.65; } }
+
+/* ค่อย ๆ ลอยขึ้น ไม่มีสปริงเลยตำแหน่ง (ฟอร์ม login) */
+.ff-rise { animation: ff-in-up calc(.6s * var(--ff-slow)) cubic-bezier(.2, .7, .2, 1) calc(.25s * var(--ff-slow)) backwards; }
+
+/* หน้า login: คำใหญ่ตกลงมาทีละคำ · แถบเฉียงเลื่อนช้า ๆ */
+.ff-drop { animation: ff-drop calc(.7s * var(--ff-slow)) var(--ease-spring) backwards; animation-delay: calc(calc(150ms * var(--ff-slow)) + var(--ff-w, 0) * calc(140ms * var(--ff-slow))); }
+@keyframes ff-drop { from { opacity: 0; transform: translateY(-40px) rotate(-3deg); } }
+.ff-drift { animation: ff-drift calc(18s * var(--ff-slow)) ease-in-out infinite alternate; }
+@keyframes ff-drift { to { translate: -80px 40px; } }
+
+/* บัตรสมาชิกพลิกเข้าแบบ 3 มิติ */
+.ff-flip-in { animation: ff-flip-in calc(.9s * var(--ff-slow)) var(--ease-spring) calc(.15s * var(--ff-slow)) backwards; transform-origin: center; }
+@keyframes ff-flip-in { from { opacity: 0; transform: perspective(900px) rotateY(-65deg) scale(.9); } }
+
+/* ใบเสร็จเลื่อนขึ้นเหมือนพิมพ์ออกจากเครื่อง · ตราประทับ */
+.ff-print { animation: ff-print calc(.8s * var(--ff-slow)) cubic-bezier(.2, .7, .2, 1) calc(.1s * var(--ff-slow)) backwards; }
+@keyframes ff-print { from { opacity: 0; transform: translateY(40px); clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+.ff-stamp { animation: ff-stamp calc(.5s * var(--ff-slow)) var(--ease-spring-hard) calc(1s * var(--ff-slow)) backwards; }
+@keyframes ff-stamp { from { opacity: 0; transform: scale(1.8) rotate(-6deg); } to { transform: rotate(-6deg); } }
+
+/* แถบข้อความวิ่ง MOVE. TRAIN. REPEAT. */
+.ff-marquee > span { display: inline-block; animation: ff-marquee calc(16s * var(--ff-slow)) linear infinite; }
+@keyframes ff-marquee { to { transform: translateX(-50%); } }
+
+/* กล้ามเนื้อที่เลือกบนภาพร่างกาย: เด้ง + เรืองแสง */
+.ff-muscle-on { transform-box: fill-box; transform-origin: center; animation: ff-muscle calc(.45s * var(--ff-slow)) var(--ease-spring-hard); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-lime) 70%, transparent)); }
+@keyframes ff-muscle { 40% { transform: scale(1.12); } }
+
+/* พลุกระดาษ (components/confetti.tsx) */
+.ff-confetti-piece { position: absolute; top: -12px; width: 8px; height: 12px; border-radius: 2px; animation: ff-fall var(--fall, calc(1.6s * var(--ff-slow))) cubic-bezier(.2, .6, .4, 1) var(--fall-delay, calc(0s * var(--ff-slow))) forwards; }
+@keyframes ff-fall { to { transform: translate(var(--drift, 0), 105vh) rotate(var(--spin, 540deg)); opacity: .2; } }
+
+/* ปุ่มสัมผัส: ชี้ = ยกขึ้น · กด = ยุบแบบสปริง (ใช้กับ btn.* ใน components/ui.tsx) */
+/* ไม่คูณ --ff-slow: ปุ่มต้องตอบสนองทันที ไม่งั้นรู้สึกหน่วง */
+.ff-press { transition: transform .25s var(--ease-spring), filter .2s, background-color .2s, border-color .2s, color .2s; }
+.ff-press:not(:disabled):hover { transform: translateY(-2px); }
+.ff-press:not(:disabled):active { transform: scale(.94); transition-duration: .08s; }
+
+@media print {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .ff-wipe, .ff-confetti { display: none !important; }
+}
+
+/* ใบเสร็จพิมพ์เป็น A4 ได้ (§15.2.8) — ส่วนอื่นของหน้าซ่อนด้วย print:hidden */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 14mm;
+  }
+  /* พิมพ์ด้วยโทนสว่างเสมอไม่ว่าจะใช้ธีมไหน (ประหยัดหมึก อ่านง่าย) */
+  :root,
+  [data-theme] {
+    color-scheme: light !important;
+    --color-bg: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-2: #f4f6f8;
+    --color-line: #e3e6ea;
+    --color-ink: #14161a;
+    --color-muted: #5b6270;
+    --color-faint: #848b97;
+    --color-lime: #15803d;
+    --color-cyan: #0e7490;
+  }
+  body {
+    background: #fff !important;
+  }
+  .receipt-paper {
+    border: 0 !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* §15.2.5 ลิงก์ข้อความในรายการต้องแตะได้อย่างน้อย 44px บนจอสัมผัส/จอเล็ก (เติม padding ให้สูงครบ 44px ตามความสูงบรรทัด) */
+@utility tap {
+  @media screen and (max-width: 1023.98px), screen and (pointer: coarse) {
+    padding-block: max(0px, calc((44px - 1lh) / 2));
+  }
+}
+
+/* แถบเลื่อนแนวนอน (แท็บวัน/ตัวกรอง/เมนู) เลื่อนได้แต่ไม่แสดง scrollbar */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

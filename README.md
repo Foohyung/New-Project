@@ -5,10 +5,9 @@
 | โปรเจกต์ | โฟลเดอร์ | สถานะ |
 |---|---|---|
 | ระบบจัดการฟิตเนส | [`apps/fitness`](apps/fitness) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 1 Pulse · http://localhost:3001 |
-| ระบบจัดการหอพัก | [`apps/dormitory`](apps/dormitory) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 2 Garden · http://localhost:3002 |
-| ระบบอสังหาริมทรัพย์ | [`apps/real-estate`](apps/real-estate) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 3 Hearth · http://localhost:3003 |
-| เว็บไซต์บริษัท | [`apps/company-website`](apps/company-website) | ⏸ พักไว้ (ยังมี 3 แบบ) |
+| ระบบอสังหาริมทรัพย์ | [`apps/real-estate`](apps/real-estate) | 🚧 ระยะที่ 1 เสร็จ — เว็บตามแบบ 3 Hearth · http://localhost:3002 |
 | ระบบจองทัวร์ | [`apps/tour-booking`](apps/tour-booking) | 🎨 รอเลือก design (Horizon · Journey · Getaway) |
+| โพสต์อัตโนมัติหลายแบรนด์ (TechForce Social) | [`apps/techforce-social`](apps/techforce-social) | 🧪 หน้าเว็บ HTML + เซิร์ฟเวอร์ Node · เชื่อม FB/IG/TikTok/LINE/X (รอทดสอบกับบัญชีจริง) · http://localhost:8787 |
 
 **ระยะที่ 1 (เสร็จแล้ว):** หน้าเว็บตาม design ที่เลือก, business logic พร้อม unit test, ข้อมูลตัวอย่างผ่าน Data Access Layer, security headers + CSP แบบ nonce, E2E 3 ขนาดจอ และ CI
 **ระยะที่ 2 (ถัดไป):** PostgreSQL + Prisma, login ด้วย Better Auth + 2FA, RBAC, audit log ลงฐานข้อมูล, Redis rate limit และแจ้งเตือนผ่าน LINE OA
@@ -19,14 +18,13 @@
 
 ```bash
 pnpm install
-pnpm dev          # เปิดทั้ง 3 เว็บพร้อมกัน
+pnpm dev          # เปิดทุกเว็บพร้อมกัน (ฟิตเนส + อสังหาฯ)
 ```
 
 | เว็บ | URL | หน้าที่มี |
 |---|---|---|
 | ฟิตเนส | http://localhost:3001 | แดชบอร์ด, รายชื่อสมาชิก, เช็กอิน |
-| หอพัก | http://localhost:3002 | ภาพรวม + ผังห้อง, รายการห้อง, ใบแจ้งหนี้, รายละเอียดห้อง |
-| อสังหาฯ | http://localhost:3003 | หน้าแรก + ค้นหา/กรอง, หน้าประกาศ + ฟอร์มนัดชม, sitemap/robots |
+| อสังหาฯ | http://localhost:3002 | หน้าแรก + ค้นหา/กรอง, หน้าประกาศ + ฟอร์มนัดชม, sitemap/robots |
 
 ค่า env ของแต่ละเว็บดูได้ใน `apps/<project>/.env.example`
 
@@ -37,7 +35,7 @@ pnpm dev          # เปิดทั้ง 3 เว็บพร้อมกั
 | `pnpm check` | lint + typecheck + unit test ทุกโปรเจกต์ |
 | `pnpm build` | build production ทุกเว็บ |
 | `pnpm test:e2e` | E2E ด้วย Playwright ที่ขนาดมือถือ / แท็บเล็ต / เดสก์ท็อป (ต้องมี Google Chrome ในเครื่อง) |
-| `pnpm --filter @app/fitness dev` | รันเฉพาะเว็บเดียว (`@app/dormitory`, `@app/real-estate`) |
+| `pnpm --filter @app/fitness dev` | รันเฉพาะเว็บเดียว (หรือ `@app/real-estate`) |
 
 CI อยู่ที่ [`.github/workflows/ci.yml`](.github/workflows/ci.yml): lint · typecheck · unit · build · E2E และ security scan (pnpm audit, license, gitleaks, Semgrep) ส่วน dependency อัปเดตผ่าน Renovate ([`renovate.json`](renovate.json))
 
@@ -62,3 +60,5 @@ packages/
   testing/         # Playwright config ร่วม + ตรวจ scroll แนวนอน
 docs/              # มาตรฐานกลางและเอกสารร่วม
 ```
+
+ฟิตเนส (`apps/fitness`) ใช้โครง `src/web` (Frontend) + `src/api` (Backend) แบ่งเป็น ชนิด (app, components, actions, dal, …) > เรื่อง > โฟลเดอร์ > ไฟล์ — ดู [apps/fitness/docs/STRUCTURE.md](apps/fitness/docs/STRUCTURE.md)

@@ -1,38 +1,33 @@
 import type { Metadata, Viewport } from 'next';
-import { Pridi, Sarabun } from 'next/font/google';
+import { Anuphan, Noto_Sans_Thai } from 'next/font/google';
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
-import { SiteHeader } from '@/components/site-header';
+import { currentTheme } from '@/server/agent/theme';
 import { siteUrl } from '@/server/site';
 import './globals.css';
 
-const sarabun = Sarabun({ subsets: ['thai', 'latin'], weight: ['400', '500', '600'], variable: '--font-sarabun', display: 'swap' });
-const pridi = Pridi({ subsets: ['thai', 'latin'], weight: ['500', '600'], variable: '--font-pridi', display: 'swap' });
+// หน้าสาธารณะใช้แบบ 5E Portal Mix (ฟอนต์ Noto Sans Thai แบบเดียวกับพอร์ทัลประกาศยอดนิยม)
+const noto = Noto_Sans_Thai({ subsets: ['thai', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-noto-thai', display: 'swap' });
+// หลังบ้าน agent ใช้แบบ 2 Marketplace (ฟอนต์ Anuphan)
+const anuphan = Anuphan({ subsets: ['thai', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-anuphan', display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: 'BaanHub — หาบ้านจากไลฟ์สไตล์', template: '%s · BaanHub' },
-  description: 'ค้นหาบ้าน คอนโด และที่ดินที่เข้ากับชีวิตของคุณ ดูคะแนนย่านน่าอยู่ และคำนวณค่าผ่อนได้ในที่เดียว',
+  title: { default: 'BaanHub — ประกาศซื้อ ขาย เช่า บ้าน คอนโด ที่ดิน ลงประกาศฟรี', template: '%s · BaanHub' },
+  description: 'ค้นหาบ้าน คอนโด ที่ดิน ใกล้รถไฟฟ้า ทั่วไทย จากเจ้าของและ agent ที่ตรวจสอบแล้ว เทียบราคาต่อ ตร.ม. และคำนวณค่าผ่อนได้ในที่เดียว',
   openGraph: { siteName: 'BaanHub', locale: 'th_TH', type: 'website' },
 };
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#c65d3b' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#0e2a57' };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // render ทุก request เพื่อให้ CSP nonce ใช้ได้ (§10.5)
   await connection();
+  // ธีมของหลังบ้านอยู่ใน cookie แล้ว render ฝั่ง server เพื่อไม่ให้จอกะพริบ (§15.3) — หน้าสาธารณะใช้ธีมสว่างเสมอ
+  const theme = await currentTheme();
   return (
-    <html lang="th" className={`${sarabun.variable} ${pridi.variable}`}>
-      <body>
-        <SiteHeader />
-        {children}
-        <footer className="mx-auto max-w-6xl px-4 pt-6 pb-10 text-sm text-muted sm:px-7">
-          <p className="flex flex-wrap justify-between gap-3 border-t border-line pt-6">
-            <span>© 2026 BaanHub · ข้อมูลประกาศและคะแนนย่านในเว็บนี้เป็นข้อมูลตัวอย่าง</span>
-            <span>นโยบายความเป็นส่วนตัว · ข้อกำหนดการใช้งาน</span>
-          </p>
-        </footer>
-      </body>
+    <html lang="th" data-theme={theme} className={`${noto.variable} ${anuphan.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

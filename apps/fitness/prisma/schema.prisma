@@ -1,0 +1,696 @@
+// โครงสร้างฐานข้อมูล FitFlow — MySQL 8 (utf8mb4) ผ่าน Prisma 7 + adapter mariadb
+// - model เป็น PascalCase เอกพจน์ · ตาราง/คอลัมน์เป็น snake_case ผ่าน @@map / @map
+// - id เป็นข้อความ (UUIDv7 เมื่อสร้างใหม่) · เงินเป็นสตางค์ (Int) ห้ามใช้ทศนิยม
+// - วันที่ล้วนใช้ @db.Date · เวลาใช้ DATETIME(3) เก็บเป็น UTC เสมอ · รายการ (array) เก็บเป็น JSON
+// - URL ฐานข้อมูลอยู่ใน prisma.config.ts (DATABASE_URL ใน .env)
+// - ข้อมูลตั้งต้น: prisma/seed.mjs (แพ็กเกจ + รอบแจ้งเตือน + บัญชีเจ้าของ/admin) · ข้อมูลตัวอย่าง: prisma/sample-data.mjs (รันแยกเอง)
+// - Track log: ทุกตารางมี created_at/updated_at + created_by_id/created_by_name + updated_by_id/updated_by_name · ประวัติทุกครั้งพร้อมชื่อผู้แก้อยู่ใน audit_logs (docs/AUDIT.md)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/api/lib/db/db/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ---------- enum ----------
+
+enum PackageKind {
+  time
+  pt
+  daypass
+}
+
+enum BookingStatus {
+  booked
+  cancelled
+}
+
+enum PtStatus {
+  booked
+  done
+  cancelled
+}
+
+enum PaymentKind {
+  signup
+  renew
+  pt
+  daypass
+}
+
+enum PaymentMethod {
+  promptpay
+  card
+  cash
+  transfer
+}
+
+/// pending = รอชำระ · review = แนบสลิปแล้ว รอตรวจ · paid = ชำระแล้ว
+enum PaymentStatus {
+  pending
+  review
+  paid
+}
+
+enum CouponType {
+  percent
+  baht
+  days
+}
+
+enum CouponKind {
+  promo
+  referral
+  winback
+}
+
+enum ChargeStatus {
+  retrying
+  failed
+  paid
+}
+
+enum FollowUpStage {
+  todo
+  contacted
+  won
+}
+
+enum CardBrand {
+  visa
+  mastercard
+}
+
+enum Sex {
+  male
+  female
+}
+
+enum Goal {
+  lose
+  maintain
+  gain
+}
+
+enum Activity {
+  sedentary
+  light
+  moderate
+  active
+}
+
+// ---------- บัญชีผู้ใช้ / session / audit ----------
+
+/// บัญชีเข้าสู่ระบบ ทั้งพนักงานและสมาชิก
+model User {
+  id           String   @id @default(uuid(7)) @db.VarChar(40)
+  /// lowercase — อีเมล เบอร์มือถือ (ตัวเลขล้วน) หรือรหัสพนักงาน
+  login        String   @unique @db.VarChar(120)
+  /// scrypt 'salt:hash' (hex) — ห้ามเก็บรหัสผ่านตรง ๆ
+  passwordHash String   @map("password_hash") @db.VarChar(200)
+  role         String   @db.VarChar(40)
+  name         String   @db.VarChar(120)
+  nickname     String   @db.VarChar(60)
+  branch       String   @db.VarChar(120)
+  /// เฉพาะ role = trainer
+  trainerId    String?  @map("trainer_id") @db.VarChar(40)
+  /// เฉพาะ role = member
+  memberId     String?  @unique @map("member_id") @db.VarChar(40)
+  active       Boolean  @default(true)
+  /// ช่วงวันที่ใช้งานบัญชีได้ (รวมทั้งสองวัน ตามเวลาไทย) — null = ไม่จำกัด
+  activeFrom   DateTime? @map("active_from") @db.Date
+  activeTo     DateTime? @map("active_to") @db.Date
+  /// true = ต้องเปลี่ยนรหัสผ่านก่อนใช้งาน (บัญชีใหม่หรือบัญชีที่ใช้รหัสผ่านชั่วคราว)
+  mustChangePassword Boolean @default(false) @map("must_change_password")
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  trainer  Trainer?  @relation(fields: [trainerId], references: [id])
+  member   Member?   @relation(fields: [memberId], references: [id])
+  sessions Session[]
+  /// สาขาเพิ่มเติมที่เจ้าของดูแล (สาขาหลักอยู่ที่ branch)
+  ownedBranches OwnerBranch[]
+  passwordResetRequests PasswordResetRequest[]
+  roleDefinition RoleDefinition @relation(fields: [role], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("users")
+}
+
+/// คำขอรีเซ็ตรหัสผ่านจากหน้า "ลืมรหัสผ่าน" — พนักงานเป็นคนรีเซ็ตให้ (ระบบยังไม่มีช่องทางส่ง SMS/อีเมล)
+model PasswordResetRequest {
+  id             String    @id @default(uuid(7)) @db.VarChar(40)
+  userId         String    @map("user_id") @db.VarChar(40)
+  requestedAt    DateTime  @default(now()) @map("requested_at") @db.DateTime(3)
+  /// null = ยังรอดำเนินการ
+  resolvedAt     DateTime? @map("resolved_at") @db.DateTime(3)
+  /// reset = รีเซ็ตแล้ว · dismissed = ปิดคำขอโดยไม่รีเซ็ต
+  resolution     String?   @db.VarChar(20)
+  resolvedById   String?   @map("resolved_by_id") @db.VarChar(40)
+  resolvedByName String?   @map("resolved_by_name") @db.VarChar(120)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([resolvedAt, requestedAt])
+  @@index([userId])
+  @@map("password_reset_requests")
+}
+
+/// เจ้าของ 1 คนดูแลได้หลายสาขา — สาขาหลักคือ users.branch แถวนี้คือสาขาเพิ่มเติม (admin เป็นคนกำหนด)
+model OwnerBranch {
+  ownerId       String   @map("owner_id") @db.VarChar(40)
+  branch        String   @db.VarChar(120)
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, branch])
+  @@index([branch])
+  @@map("owner_branches")
+}
+
+/// กำหนดชื่อและสิทธิ์ของแต่ละ role; built-in role ห้ามลบ
+model RoleDefinition {
+  id            String   @id @db.VarChar(40)
+  name          String   @db.VarChar(80)
+  system        Boolean  @default(false)
+  permissions   Json
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  users User[]
+
+  @@map("role_definitions")
+}
+
+/// สีหลักและโลโก้ที่เจ้าของกำหนด แยกตามสาขา
+model BranchBranding {
+  branch           String   @id @db.VarChar(120)
+  gymName          String?  @map("gym_name") @db.VarChar(120)
+  primaryColor     String?  @map("primary_color") @db.Char(7)
+  logoUrl          String?  @map("logo_url") @db.VarChar(2048)
+  /// Base64 ของไฟล์ภาพ raster ขนาดไม่เกิน 5 MB (base64 ≈ 6.7 MB ใน MEDIUMTEXT 16 MB)
+  logoData         String?  @map("logo_data") @db.MediumText
+  logoContentType  String?  @map("logo_content_type") @db.VarChar(40)
+  createdAt        DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById      String?  @map("created_by_id") @db.VarChar(40)
+  createdByName    String?  @map("created_by_name") @db.VarChar(120)
+  updatedById      String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName    String?  @map("updated_by_name") @db.VarChar(120)
+
+  @@map("branch_branding")
+}
+
+/// session ฝั่ง server — cookie เก็บ token สุ่ม ตารางเก็บแค่ SHA-256 ของ token
+model Session {
+  id        String   @id @default(uuid(7)) @db.VarChar(40)
+  tokenHash String   @unique @map("token_hash") @db.Char(64)
+  userId    String   @map("user_id") @db.VarChar(40)
+  expiresAt     DateTime @map("expires_at") @db.DateTime(3)
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// ประวัติการแก้ไข (ใคร · ทำอะไร · แถวไหน · ค่าเดิม/ค่าใหม่) — append-only ด้วย trigger ใน migration · แถวสร้างผ่าน auditRecord() (src/api/services/audit/audit/audit.trail.ts, docs/AUDIT.md)
+/// ไม่ผูก FK เพื่อให้ log อยู่ได้แม้ข้อมูลต้นทางถูกลบ
+model AuditLog {
+  id         String   @id @default(uuid(7)) @db.VarChar(40)
+  occurredAt DateTime @default(now()) @map("occurred_at") @db.DateTime(3)
+  /// null = ระบบ (cron, webhook)
+  actorId    String?  @map("actor_id") @db.VarChar(40)
+  /// ชื่อผู้แก้ ณ ตอนนั้น — ผู้ใช้ถูกลบหรือเปลี่ยนชื่อภายหลังยังอ่านออก
+  actorName  String   @map("actor_name") @db.VarChar(120)
+  actorRole  String?  @map("actor_role") @db.VarChar(40)
+  branchId   String?  @map("branch_id") @db.VarChar(40)
+  /// create / update / delete หรือ action ธุรกิจ เช่น payment.confirm
+  action     String   @db.VarChar(80)
+  entityType String   @map("entity_type") @db.VarChar(40)
+  entityId   String   @map("entity_id") @db.VarChar(80)
+  /// เฉพาะฟิลด์ที่เปลี่ยน · ค่าลับและข้อมูลสุขภาพเป็น [redacted]
+  before     Json?
+  after      Json?
+  ip         String?  @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.VarChar(255)
+  requestId  String?  @map("request_id") @db.VarChar(40)
+
+  @@index([entityType, entityId, occurredAt])
+  @@index([actorId, occurredAt])
+  @@map("audit_logs")
+}
+
+/// ตัวนับเลขต่อเนื่อง (รหัสสมาชิก, เลขใบเสร็จ) — เพิ่มค่าใน transaction
+model Counter {
+  name          String   @id @db.VarChar(40)
+  value         Int      @default(0)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  @@map("counters")
+}
+
+// ---------- แพ็กเกจ / สมาชิก ----------
+
+model Package {
+  /// slug อ่านง่าย เช่น monthly, 3m, pt10
+  id          String      @id @db.VarChar(40)
+  name        String      @db.VarChar(120)
+  kind        PackageKind
+  /// kind = time
+  months      Int?
+  /// kind = daypass
+  days        Int?
+  /// kind = pt
+  sessions    Int?
+  priceSatang Int         @map("price_satang")
+  description String      @db.Text
+  active      Boolean     @default(true)
+  sortOrder   Int         @default(0) @map("sort_order")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?     @map("created_by_id") @db.VarChar(40)
+  createdByName String?     @map("created_by_name") @db.VarChar(120)
+  updatedById   String?     @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?     @map("updated_by_name") @db.VarChar(120)
+
+  members  Member[]
+  payments Payment[]
+  charges  Charge[]
+
+  @@map("packages")
+}
+
+/// สมาชิก (ข้อมูลส่วนบุคคล PDPA)
+model Member {
+  id               String     @id @default(uuid(7)) @db.VarChar(40)
+  /// รหัสบนบัตร เช่น FF-002318
+  code             String     @unique @db.VarChar(20)
+  name             String     @db.VarChar(120)
+  /// ตัวเลข 10 หลัก
+  phone            String     @unique @db.VarChar(20)
+  email            String?    @db.VarChar(160)
+  joinedOn         DateTime   @map("joined_on") @db.Date
+  /// แพ็กเกจปัจจุบัน
+  packageId        String     @map("package_id") @db.VarChar(40)
+  expiresOn        DateTime   @map("expires_on") @db.Date
+  /// ช่วงพักสมาชิก (วันสุดท้ายของการพัก = freeze_until)
+  freezeFrom       DateTime?  @map("freeze_from") @db.Date
+  freezeUntil      DateTime?  @map("freeze_until") @db.Date
+  ptSessionsLeft   Int        @default(0) @map("pt_sessions_left")
+  lastCheckInAt    DateTime?  @map("last_check_in_at") @db.DateTime(3)
+  note             String?    @db.Text
+  /// ยินยอมรับข่าวสาร/โปรโมชัน แยกจากความยินยอมใช้บริการ (PDPA)
+  marketingConsent Boolean    @default(false) @map("marketing_consent")
+  /// บัตรสำหรับต่ออายุอัตโนมัติ — เก็บแค่ยี่ห้อ/4 หลักท้าย (ระบบจริงเก็บ token จาก payment gateway)
+  cardBrand        CardBrand? @map("card_brand")
+  cardLast4        String?    @map("card_last4") @db.Char(4)
+  cardExp          String?    @map("card_exp") @db.VarChar(5)
+  /// null = ไม่ได้ต่ออายุอัตโนมัติ
+  autoRenewSince   DateTime?  @map("auto_renew_since") @db.Date
+  createdAt        DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById      String?    @map("created_by_id") @db.VarChar(40)
+  createdByName    String?    @map("created_by_name") @db.VarChar(120)
+  updatedById      String?    @map("updated_by_id") @db.VarChar(40)
+  updatedByName    String?    @map("updated_by_name") @db.VarChar(120)
+
+  package      Package       @relation(fields: [packageId], references: [id])
+  user         User?
+  checkIns     CheckIn[]
+  bookings     Booking[]
+  ptSessions   PtSession[]
+  payments     Payment[]
+  ownedCoupons Coupon[]
+  reminderLogs ReminderLog[]
+  charges      Charge[]
+  followUp     FollowUp?
+
+  @@index([expiresOn])
+  @@map("members")
+}
+
+/// การเข้ายิม (รวมครั้งที่ถูกปฏิเสธ)
+model CheckIn {
+  id          String   @id @default(uuid(7)) @db.VarChar(40)
+  memberId    String   @map("member_id") @db.VarChar(40)
+  at          DateTime @db.DateTime(3)
+  allowed       Boolean
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId, at])
+  @@index([at])
+  @@map("check_ins")
+}
+
+// ---------- เทรนเนอร์ / คลาส ----------
+
+model Trainer {
+  id          String   @id @default(uuid(7)) @db.VarChar(40)
+  name        String   @db.VarChar(120)
+  nickname    String   @db.VarChar(60)
+  /// string[]
+  specialties Json
+  bio         String   @db.Text
+  /// สี CSS เช่น var(--color-lime)
+  color       String   @db.VarChar(40)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  users      User[]
+  classes    GymClass[]
+  ptSessions PtSession[]
+
+  @@map("trainers")
+}
+
+/// คลาสกลุ่มแต่ละรอบ
+model GymClass {
+  id          String   @id @default(uuid(7)) @db.VarChar(60)
+  title       String   @db.VarChar(120)
+  trainerId   String   @map("trainer_id") @db.VarChar(40)
+  room        String   @db.VarChar(60)
+  startsAt    DateTime @map("starts_at") @db.DateTime(3)
+  minutes     Int
+  capacity    Int
+  /// ง่าย / กลาง / หนัก
+  level       String   @db.VarChar(10)
+  /// ผู้จองที่จองนอกระบบ (เช่น walk-in ที่เคาน์เตอร์จดไว้) — ค่าปกติ 0
+  otherBooked Int      @default(0) @map("other_booked")
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  trainer  Trainer   @relation(fields: [trainerId], references: [id])
+  bookings Booking[]
+
+  @@index([startsAt])
+  @@map("classes")
+}
+
+model Booking {
+  id          String        @id @default(uuid(7)) @db.VarChar(40)
+  classId     String        @map("class_id") @db.VarChar(60)
+  memberId    String        @map("member_id") @db.VarChar(40)
+  status      BookingStatus @default(booked)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?       @map("created_by_id") @db.VarChar(40)
+  createdByName String?       @map("created_by_name") @db.VarChar(120)
+  updatedById   String?       @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?       @map("updated_by_name") @db.VarChar(120)
+
+  class  GymClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  member Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([classId, status])
+  @@index([memberId, status])
+  @@map("bookings")
+}
+
+/// นัดเทรนเนอร์ส่วนตัว (หักครั้งจาก members.pt_sessions_left เมื่อ done)
+model PtSession {
+  id          String   @id @default(uuid(7)) @db.VarChar(40)
+  trainerId   String   @map("trainer_id") @db.VarChar(40)
+  memberId    String   @map("member_id") @db.VarChar(40)
+  startsAt    DateTime @map("starts_at") @db.DateTime(3)
+  minutes     Int
+  status      PtStatus @default(booked)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  trainer Trainer @relation(fields: [trainerId], references: [id])
+  member  Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([trainerId, startsAt])
+  @@index([memberId, startsAt])
+  @@map("pt_sessions")
+}
+
+// ---------- การเงิน ----------
+
+/// รายการชำระ / ใบเสร็จ
+model Payment {
+  id              String        @id @default(uuid(7)) @db.VarChar(40)
+  /// เลขใบเสร็จต่อเนื่อง (ออกจาก counters ใน transaction)
+  receiptNo       String        @unique @map("receipt_no") @db.VarChar(30)
+  memberId        String        @map("member_id") @db.VarChar(40)
+  packageId       String        @map("package_id") @db.VarChar(40)
+  kind            PaymentKind
+  /// ยอดสุทธิหลังหักส่วนลด
+  amountSatang    Int           @map("amount_satang")
+  method          PaymentMethod
+  status          PaymentStatus @default(pending)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  paidAt          DateTime?     @map("paid_at") @db.DateTime(3)
+  /// ผลของการชำระ (ต่ออายุ / เพิ่มครั้ง PT) ถูกใช้แล้วหรือยัง — กันต่ออายุซ้ำ
+  applied         Boolean       @default(false)
+  /// ช่วงสิทธิ์ที่ได้จากการชำระ — พิมพ์ในใบเสร็จ
+  coverageFrom    DateTime?     @map("coverage_from") @db.Date
+  coverageTo      DateTime?     @map("coverage_to") @db.Date
+  /// ชื่อเจ้าหน้าที่ที่รับเงิน/ยืนยันสลิป (พิมพ์ในใบเสร็จ)
+  receivedBy      String?       @map("received_by") @db.VarChar(120)
+  listPriceSatang Int           @map("list_price_satang")
+  discountSatang  Int           @default(0) @map("discount_satang")
+  couponCode      String?       @map("coupon_code") @db.VarChar(40)
+  /// วันใช้งานที่แถมจากคูปอง
+  bonusDays       Int           @default(0) @map("bonus_days")
+  updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById     String?       @map("created_by_id") @db.VarChar(40)
+  createdByName   String?       @map("created_by_name") @db.VarChar(120)
+  updatedById     String?       @map("updated_by_id") @db.VarChar(40)
+  updatedByName   String?       @map("updated_by_name") @db.VarChar(120)
+
+  member       Member        @relation(fields: [memberId], references: [id])
+  package      Package       @relation(fields: [packageId], references: [id])
+  reminderLogs ReminderLog[]
+  charges      Charge[]
+
+  @@index([status, createdAt])
+  @@index([memberId, createdAt])
+  @@index([paidAt])
+  @@index([couponCode])
+  @@map("payments")
+}
+
+model Coupon {
+  /// ตัวพิมพ์ใหญ่
+  code          String     @id @db.VarChar(40)
+  description   String     @db.Text
+  type          CouponType
+  /// percent = %, baht = สตางค์, days = จำนวนวันที่แถม
+  value         Int
+  kind          CouponKind @default(promo)
+  /// string[] ของ package id — null = ใช้ได้ทุกแพ็กเกจ
+  packageIds    Json?      @map("package_ids")
+  renewOnly     Boolean    @default(false) @map("renew_only")
+  newOnly       Boolean    @default(false) @map("new_only")
+  /// null = ไม่จำกัดจำนวนสิทธิ์
+  usageLimit    Int?       @map("usage_limit")
+  used          Int        @default(0)
+  perMember     Int        @default(1) @map("per_member")
+  expiresOn     DateTime?  @map("expires_on") @db.Date
+  active        Boolean    @default(true)
+  /// เจ้าของโค้ดชวนเพื่อน / คูปองดึงกลับ
+  ownerMemberId String?    @map("owner_member_id") @db.VarChar(40)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?    @map("created_by_id") @db.VarChar(40)
+  createdByName String?    @map("created_by_name") @db.VarChar(120)
+  updatedById   String?    @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?    @map("updated_by_name") @db.VarChar(120)
+
+  ownerMember Member? @relation(fields: [ownerMemberId], references: [id], onDelete: SetNull)
+
+  @@map("coupons")
+}
+
+/// รอบตัดบัตรต่ออายุอัตโนมัติ
+model Charge {
+  id           String       @id @default(uuid(7)) @db.VarChar(40)
+  memberId     String       @map("member_id") @db.VarChar(40)
+  packageId    String       @map("package_id") @db.VarChar(40)
+  amountSatang Int          @map("amount_satang")
+  dueOn        DateTime     @map("due_on") @db.Date
+  /// { on: 'YYYY-MM-DD', ok: boolean, reason: string | null }[]
+  attempts     Json
+  status       ChargeStatus @default(retrying)
+  /// payment ที่เกิดเมื่อตัดผ่าน
+  paymentId    String?      @map("payment_id") @db.VarChar(40)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime     @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?      @map("created_by_id") @db.VarChar(40)
+  createdByName String?      @map("created_by_name") @db.VarChar(120)
+  updatedById   String?      @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?      @map("updated_by_name") @db.VarChar(120)
+
+  member  Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  package Package  @relation(fields: [packageId], references: [id])
+  payment Payment? @relation(fields: [paymentId], references: [id])
+
+  @@index([status, dueOn])
+  @@index([memberId, dueOn])
+  @@map("charges")
+}
+
+// ---------- แจ้งเตือน / ติดตามสมาชิก ----------
+
+/// รอบแจ้งเตือนต่ออายุ — id = before-7 / before-3 / on-day / after-7
+model ReminderRound {
+  id          String   @id @db.VarChar(20)
+  /// -7 = ก่อนหมด 7 วัน, 7 = หลังหมด 7 วัน
+  offsetDays  Int      @map("offset_days")
+  enabled     Boolean  @default(true)
+  /// Channel[] (line / sms / email)
+  channels    Json
+  template    String   @db.Text
+  couponCode  String?  @map("coupon_code") @db.VarChar(40)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  @@map("reminder_rounds")
+}
+
+/// ข้อความที่ส่งแล้ว
+model ReminderLog {
+  id          String   @id @default(uuid(7)) @db.VarChar(40)
+  memberId    String   @map("member_id") @db.VarChar(40)
+  /// id ของรอบ หรือ manual = ส่งเอง
+  roundId     String   @map("round_id") @db.VarChar(20)
+  /// Channel[]
+  channels    Json
+  sentAt      DateTime @map("sent_at") @db.DateTime(3)
+  clicked     Boolean  @default(false)
+  /// รายการชำระที่เกิดจากลิงก์ในข้อความ
+  paymentId   String?  @map("payment_id") @db.VarChar(40)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  member  Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([memberId, sentAt])
+  @@index([sentAt])
+  @@map("reminder_logs")
+}
+
+/// ติดตามสมาชิกที่หายไป (สมาชิกละ 1 แถว)
+model FollowUp {
+  memberId    String        @id @map("member_id") @db.VarChar(40)
+  stage       FollowUpStage
+  note        String        @db.Text
+  /// ชื่อเจ้าหน้าที่ที่บันทึกล่าสุด
+  by          String        @db.VarChar(120)
+  updatedAt   DateTime      @map("updated_at") @db.DateTime(3)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  createdById   String?       @map("created_by_id") @db.VarChar(40)
+  createdByName String?       @map("created_by_name") @db.VarChar(120)
+  updatedById   String?       @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?       @map("updated_by_name") @db.VarChar(120)
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@map("follow_ups")
+}
+
+// ---------- ฝึก & อาหาร (ข้อมูลของแต่ละบัญชี) ----------
+
+/// โปรแกรมฝึกต่อวัน — ท่าเป็นรหัสจาก src/api/services/workouts/workouts/workouts.catalog.ts
+model WorkoutPlan {
+  userId      String   @map("user_id") @db.VarChar(40)
+  date        DateTime @db.Date
+  /// string[] เรียงตามลำดับที่เพิ่ม
+  exerciseIds Json     @map("exercise_ids")
+  /// string[]
+  doneIds     Json     @map("done_ids")
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  @@id([userId, date])
+  @@map("workout_plans")
+}
+
+/// ข้อมูลสุขภาพ (PDPA ม.26) — ถอนความยินยอม = ลบจริงพร้อม meal_logs
+model HealthProfile {
+  userId        String   @id @map("user_id") @db.VarChar(40)
+  sex           Sex
+  birthYear     Int      @map("birth_year")
+  heightCm      Float    @map("height_cm")
+  weightKg      Float    @map("weight_kg")
+  goal          Goal
+  activity      Activity
+  consentAt     DateTime @map("consent_at") @db.DateTime(3)
+  noticeVersion String   @map("notice_version") @db.VarChar(40)
+  updatedAt     DateTime @map("updated_at") @db.DateTime(3)
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  @@map("health_profiles")
+}
+
+model MealLog {
+  id          String   @id @default(uuid(7)) @db.VarChar(40)
+  userId      String   @map("user_id") @db.VarChar(40)
+  date        DateTime @db.Date
+  name        String   @db.VarChar(160)
+  kcal        Int
+  proteinG    Float    @map("protein_g")
+  carbG       Float    @map("carb_g")
+  fatG        Float    @map("fat_g")
+  loggedAt    DateTime @map("logged_at") @db.DateTime(3)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdById   String?  @map("created_by_id") @db.VarChar(40)
+  createdByName String?  @map("created_by_name") @db.VarChar(120)
+  updatedById   String?  @map("updated_by_id") @db.VarChar(40)
+  updatedByName String?  @map("updated_by_name") @db.VarChar(120)
+
+  @@index([userId, date])
+  @@map("meal_logs")
+}

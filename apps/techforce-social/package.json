@@ -1,0 +1,13 @@
+{
+  "name": "@app/techforce-social",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "โพสต์อัตโนมัติหลายแบรนด์ — หน้าเว็บ HTML + เซิร์ฟเวอร์ Node (ไม่มี dependency)",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "DRY_RUN=1 node server/index.mjs",
+    "test": "node --test \"server/test/*.test.mjs\""
+  }
+}

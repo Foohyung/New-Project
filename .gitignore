@@ -10,3 +10,7 @@ next-env.d.ts
 .env.*
 !.env.example
 .DS_Store
+
+# Prisma client ที่ generate อัตโนมัติ (pnpm install / pnpm build)
+src/generated/
+apps/fitness/src/api/lib/db/db/generated/

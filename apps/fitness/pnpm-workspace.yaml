@@ -1,0 +1,12 @@
+# ตั้งค่า pnpm เมื่อยกโฟลเดอร์ fitness ไปใช้เดี่ยว ๆ (ใน monorepo ใช้ค่าจาก pnpm-workspace.yaml ที่ root แทน)
+
+# §2.3 ไม่ติดตั้ง package ที่เพิ่งปล่อยไม่ถึง 3 วัน (หน่วยเป็นนาที) — ป้องกัน supply-chain attack
+minimumReleaseAge: 4320
+
+# §2.3 อนุญาต install script เฉพาะที่ระบุ (true = อนุญาต, false = ไม่ต้องรัน)
+allowBuilds:
+  # binary ของแต่ละ OS มากับ optional dependency แล้ว ไม่ต้องรัน postinstall
+  unrs-resolver: false
+  # Prisma ดาวน์โหลด schema engine (ใช้ตอน migrate) ตอนติดตั้ง
+  prisma: true
+  '@prisma/engines': true
