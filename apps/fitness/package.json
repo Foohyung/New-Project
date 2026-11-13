@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "next dev --port 7070",
     "build": "prisma generate && next build",
     "start": "node scripts/start.mjs",
     "lint": "eslint .",
@@ -24,10 +24,11 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "7.10.1",
     "@prisma/client": "7.10.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.56.0",
     "mariadb": "3.5.4",
     "next": "^16.4.0",
-    "nodemailer": "^10.2.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",
@@ -38,7 +39,6 @@
     "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.0.0",
-    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^10.12.0",

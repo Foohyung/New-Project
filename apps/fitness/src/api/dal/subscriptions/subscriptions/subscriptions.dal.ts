@@ -8,7 +8,7 @@ import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { now, today } from '@/api/lib/clock/clock/clock';
 import { asDay, bangkokSpan, packagesById, prismaAs, toCharge, toMember, transaction, type ChargeRecord, type MemberRecord, type PackageRecord, type Tx } from '@/api/lib/db/db/db';
 import { authorize, ForbiddenError } from '@/api/lib/auth/auth/auth.rbac';
-import { createPaymentRecord } from '@/api/dal/payments/payments/payments.dal';
+import { assertPaymentMethodEnabled, createPaymentRecord } from '@/api/dal/payments/payments/payments.dal';
 
 const AUTO = 'ตัดบัตรอัตโนมัติ';
 const cardLabel = (m: MemberRecord) => (m.autoRenew ? `${m.autoRenew.card.brand === 'visa' ? 'Visa' : 'Mastercard'} •••• ${m.autoRenew.card.last4}` : '—');
@@ -108,7 +108,8 @@ export async function sendPayLinkForCharge(session: Session, chargeId: string): 
   return transaction(session, async tx => {
     const c = await tx.charge.findUnique({ where: { id: chargeId } });
     if (!c || c.status === 'paid') throw new Error('NOT_FOUND');
-    const p = await createPaymentRecord(tx, { memberId: c.memberId, packageId: c.packageId, kind: 'renew', method: 'promptpay', receivedBy: null });
+    await assertPaymentMethodEnabled(tx, session.branch, 'promptpay');
+    const p = await createPaymentRecord(tx, { branch: session.branch, memberId: c.memberId, packageId: c.packageId, kind: 'renew', method: 'promptpay', receivedBy: null });
     await tx.reminderLog.create({ data: { memberId: c.memberId, roundId: 'manual', channels: ['line', 'sms'], sentAt: now(), paymentId: p.id } });
     await tx.charge.update({ where: { id: chargeId }, data: { status: 'failed' } });
     return p.id;

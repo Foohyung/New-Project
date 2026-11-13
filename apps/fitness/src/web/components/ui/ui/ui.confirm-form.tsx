@@ -3,6 +3,7 @@
 import { TriangleAlert } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { btn } from '@/web/components/ui/ui/ui';
+import { useBodyScrollLock } from '@/web/hooks/ui/ui/ui.use-body-scroll-lock';
 
 export function ConfirmForm({ action, onSubmitData, confirm, confirmTitle = 'ยืนยันการทำรายการ', confirmLabel = 'ยืนยัน', confirmTone = 'primary', className = '', autoComplete, noValidate, encType, children }: {
   action?: (formData: FormData) => void | Promise<void>;
@@ -25,6 +26,7 @@ export function ConfirmForm({ action, onSubmitData, confirm, confirmTitle = 'ย
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const descriptionId = useId();
+  useBodyScrollLock(open);
 
   useEffect(() => {
     const dialog = dialogRef.current;

@@ -2,11 +2,12 @@ import { formatThaiTime } from '@/api/lib/utils/utils/utils';
 import type { Metadata } from 'next';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { CustomMealForm, HealthProfileForm } from '@/web/components/nutrition/nutrition/nutrition';
-import { Card, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { Card, PageHeader } from '@/web/components/ui/ui/ui';
 import { deleteMealAction, logCustomMealAction, logMenuMealAction, saveHealthProfileAction, withdrawHealthConsentAction } from '@/api/actions/nutrition/nutrition/nutrition.actions';
 import { GOAL_INFO, SLOT_LABEL, type Macros } from '@/api/services/nutrition/nutrition/nutrition.service';
 import { getMyNutrition } from '@/api/dal/nutrition/nutrition/nutrition.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'อาหาร' };
 
@@ -56,7 +57,7 @@ function TargetCard({ target, eaten, goal }: { target: Macros; eaten: Macros; go
 /** ตัวช่วยเรื่องการกิน: เป้าพลังงาน/โปรตีนต่อวัน + เมนูไทยแนะนำ + บันทึกมื้อที่กิน (ต้องยินยอมเก็บข้อมูลสุขภาพก่อน) */
 export default async function MyFoodPage() {
   const { session, allowed } = await pageGuard('coach.use');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const n = await getMyNutrition(session);
 
   if (!n.profile || !n.target) {

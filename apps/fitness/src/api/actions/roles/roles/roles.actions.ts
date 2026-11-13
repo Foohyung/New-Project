@@ -24,7 +24,7 @@ export async function createRoleAction(_prev: ActionResult, formData: FormData):
   try {
     await createRoleDefinition(session, parsed.data);
     await audit(session, 'role.create', 'role', parsed.data.id, { after: { name: parsed.data.name, permissions: parsed.data.permissions } });
-    revalidatePath('/roles');
+    revalidatePath('/roles', 'layout');
     revalidatePath('/users');
     return { ok: true, message: `สร้าง role ${parsed.data.name} แล้ว` };
   } catch (error) {
@@ -40,7 +40,7 @@ export async function updateRoleAction(_prev: ActionResult, formData: FormData):
   try {
     await updateRoleDefinition(session, parsed.data);
     await audit(session, 'role.update', 'role', parsed.data.id, { after: { name: parsed.data.name, permissions: parsed.data.permissions } });
-    revalidatePath('/roles');
+    revalidatePath('/roles', 'layout');
     revalidatePath('/users');
     return { ok: true, message: `บันทึก role ${parsed.data.name} แล้ว` };
   } catch (error) {
@@ -55,7 +55,7 @@ export async function deleteRoleAction(_prev: ActionResult, formData: FormData):
   try {
     await deleteRoleDefinition(session, parsed.data.id);
     await audit(session, 'role.delete', 'role', parsed.data.id);
-    revalidatePath('/roles');
+    revalidatePath('/roles', 'layout');
     revalidatePath('/users');
     return { ok: true, message: 'ลบ role แล้ว' };
   } catch (error) {

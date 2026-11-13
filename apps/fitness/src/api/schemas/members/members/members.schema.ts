@@ -32,7 +32,11 @@ export const CouponCodeSchema = z.string().trim().max(24, 'โค้ดยาว
 export const MemberCreateSchema = MemberFieldsSchema.extend({
   packageId: z.string().min(1, 'เลือกแพ็กเกจ'),
   method: PaymentMethodSchema,
+  startsOn: z.iso.date({ error: 'เลือกวันที่เริ่มสิทธิ์ให้ถูกต้อง' }),
+  paymentDate: z.iso.date({ error: 'เลือกวันที่ชำระเงินให้ถูกต้อง' }),
   couponCode: CouponCodeSchema,
+  // เคาน์เตอร์ยืนยันว่าตรวจหลักฐานของคูปองแล้ว (คูปองที่กำหนดหลักฐาน)
+  couponProof: z.literal('on').optional().transform(v => v === 'on'),
   // ยินยอมรับข่าวสาร/โปรโมชัน แยกจากความยินยอมหลัก และไม่บังคับ (PDPA)
   marketingConsent: z.literal('on').optional().transform(v => v === 'on'),
   // ต้องได้รับความยินยอมก่อนเก็บข้อมูลส่วนบุคคล (PDPA §11)
@@ -43,6 +47,8 @@ export const RenewSchema = z.object({
   packageId: z.string().min(1, 'เลือกแพ็กเกจ'),
   method: PaymentMethodSchema,
   couponCode: CouponCodeSchema,
+  // เคาน์เตอร์ยืนยันว่าตรวจหลักฐานของคูปองแล้ว (คูปองที่กำหนดหลักฐาน)
+  couponProof: z.literal('on').optional().transform(v => v === 'on'),
 });
 
 export const FreezeSchema = z.object({

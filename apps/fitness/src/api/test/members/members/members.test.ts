@@ -46,6 +46,9 @@ describe('membershipPeriod (A.1 ต่ออายุ)', () => {
     expect(membershipPeriod(monthly, '2026-10-09', today)).toEqual({ startsOn: today, expiresOn: '2026-11-14' });
     expect(membershipPeriod({ kind: 'time', months: 12 }, null, today)).toEqual({ startsOn: today, expiresOn: '2027-10-14' });
   });
+  it('รองรับกำหนดวันเริ่มสิทธิ์ย้อนหลัง', () => {
+    expect(membershipPeriod(monthly, null, today, '2026-09-01')).toEqual({ startsOn: '2026-09-01', expiresOn: '2026-09-30' });
+  });
   it('Day pass ใช้ได้เฉพาะวันนี้ และแพ็กเกจ PT ไม่เปลี่ยนวันหมดอายุ', () => {
     expect(membershipPeriod({ kind: 'daypass', days: 1 }, null, today)).toEqual({ startsOn: today, expiresOn: today });
     expect(membershipPeriod({ kind: 'pt', sessions: 10 }, '2026-12-01', today)).toBeNull();

@@ -3,7 +3,7 @@ import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { prisma } from '@/api/lib/db/db/db';
 import { bookClass, cancelBooking, getClassDetail } from '@/api/dal/classes/classes/classes.dal';
 import { getDashboard } from '@/api/dal/dashboard/dashboard/dashboard.dal';
-import { createMember, deleteMember, findMemberForCheckIn, selfCheckIn, freezeMember, getMemberDetail, listMembers, renewMember, unfreezeMember } from '@/api/dal/members/members/members.dal';
+import { countByStatus, createMember, deleteMember, findMemberForCheckIn, selfCheckIn, freezeMember, getMemberBranches, getMemberDetail, listMembers, renewMember, unfreezeMember } from '@/api/dal/members/members/members.dal';
 import { confirmPayment, getPayment, submitSlip } from '@/api/dal/payments/payments/payments.dal';
 import { getPortal } from '@/api/dal/portal/portal/portal.dal';
 import { bookPt, completePt } from '@/api/dal/trainers/trainers/trainers.dal';
@@ -70,6 +70,39 @@ describeDb('ค้นหาสมาชิก', () => {
   });
 });
 
+describeDb('แยกข้อมูลสมาชิกตามสาขา', () => {
+  it('จำกัดพนักงานไว้ที่สาขาตัวเอง และให้ admin เลือกกรองรายชื่อกับจำนวนตามสาขาได้', async () => {
+    const branch = 'สาขาทดสอบสมาชิก';
+    await prisma().branch.create({ data: { name: branch } });
+    const cashier = await prisma().user.create({
+      data: { login: 'member-branch-desk', passwordHash: 'test-hash', role: 'front-desk', name: 'พนักงานสาขาทดสอบ', nickname: 'ทดสอบ', branch },
+    });
+    const branchSession: Session = { ...frontDesk, userId: cashier.id, name: cashier.name, branch };
+    const created = await createMember(branchSession, {
+      name: 'สมาชิกสาขาทดสอบ',
+      phone: '0899999002',
+      email: null,
+      note: null,
+      packageId: 'monthly',
+      method: 'cash',
+      couponCode: null,
+      marketingConsent: false,
+    });
+
+    const staffRows = await listMembers(manager);
+    expect(staffRows.some(row => row.id === created.memberId)).toBe(false);
+    expect(await getMemberDetail(manager, created.memberId)).toBeNull();
+    await expect(renewMember(manager, created.memberId, 'monthly', 'cash')).rejects.toThrow('NOT_FOUND');
+    expect(await getMemberBranches(manager)).toEqual([manager.branch]);
+
+    const adminRows = await listMembers(USERS.admin, { branch });
+    expect(adminRows.map(row => row.id)).toEqual([created.memberId]);
+    expect((await countByStatus(USERS.admin, { branch })).all).toBe(1);
+    expect(await getMemberBranches(USERS.admin)).toContain(branch);
+    expect((await listMembers(USERS.admin)).some(row => row.id === created.memberId)).toBe(true);
+  });
+});
+
 describeDb('สมัครและต่ออายุ', () => {
   const newbie = { name: 'ทดสอบ ระบบ', phone: '0899999999', email: null, note: null, couponCode: null, marketingConsent: true };
 
@@ -77,6 +110,23 @@ describeDb('สมัครและต่ออายุ', () => {
     const { memberId, paid } = await createMember(frontDesk, { ...newbie, packageId: 'monthly', method: 'cash' });
     expect(paid).toBe(true);
     expect(await getMemberDetail(frontDesk, memberId)).toMatchObject({ status: 'active', expiresOn: '2026-11-14' });
+  });
+
+  it('สมัครสมาชิกย้อนหลังและบันทึกวันที่ชำระย้อนหลังได้', async () => {
+    const { memberId, paymentId, paid } = await createMember(frontDesk, {
+      ...newbie,
+      phone: '0899999998',
+      packageId: 'monthly',
+      method: 'cash',
+      startsOn: '2026-09-01',
+      paymentDate: '2026-09-02',
+    });
+    expect(paid).toBe(true);
+    expect(await getMemberDetail(frontDesk, memberId)).toMatchObject({ joinedOn: '2026-09-01', expiresOn: '2026-09-30', status: 'expired' });
+    const payment = await getPayment(frontDesk, paymentId);
+    expect(payment?.paymentDate).toBe('2026-09-02');
+    expect(payment?.paidAt).toBe('2026-09-01T17:00:00.000Z');
+    expect(payment?.coverage).toEqual({ from: '2026-09-01', to: '2026-09-30' });
   });
 
   it('จ่าย PromptPay ต้องรอยืนยันก่อนจึงจะเช็กอินได้', async () => {
@@ -90,6 +140,23 @@ describeDb('สมัครและต่ออายุ', () => {
     expect((await getMemberDetail(manager, memberId))?.expiresOn).toBe('2026-11-14');
   });
 
+  it('การชำระที่รอตรวจเก็บวันเริ่มย้อนหลังไว้จนกว่าจะยืนยัน', async () => {
+    const { memberId, paymentId } = await createMember(frontDesk, {
+      ...newbie,
+      phone: '0899999997',
+      packageId: 'monthly',
+      method: 'promptpay',
+      startsOn: '2026-09-01',
+      paymentDate: '2026-09-02',
+    });
+    await confirmPayment(manager, paymentId);
+    expect(await getMemberDetail(manager, memberId)).toMatchObject({ joinedOn: '2026-09-01', expiresOn: '2026-09-30', status: 'expired' });
+    expect(await getPayment(manager, paymentId)).toMatchObject({
+      paymentDate: '2026-09-02',
+      coverage: { from: '2026-09-01', to: '2026-09-30' },
+    });
+  });
+
   it('เบอร์ซ้ำสมัครไม่ได้', async () => {
     await expect(createMember(frontDesk, { ...newbie, phone: '0800000101', packageId: 'monthly', method: 'cash' })).rejects.toThrow('PHONE_TAKEN');
   });
@@ -101,7 +168,8 @@ describeDb('สมัครและต่ออายุ', () => {
 
   it('สมาชิกแจ้งโอนแล้ว สถานะเปลี่ยนเป็นรอตรวจ', async () => {
     const { paymentId } = await renewMember(manager, member.memberId ?? '', 'monthly', 'promptpay');
-    await expect(submitSlip(member, paymentId)).resolves.toMatchObject({ status: 'review' });
+    await expect(submitSlip(member, paymentId)).rejects.toThrow('SLIP_REQUIRED');
+    await expect(submitSlip(member, paymentId, { data: 'c2xpcA==', contentType: 'image/png' })).resolves.toMatchObject({ status: 'review', hasSlip: true });
   });
 });
 
@@ -165,13 +233,16 @@ describeDb('PT', () => {
     expect(await prisma().member.count({ where: { phone: '0899990001' } })).toBe(0);
   });
 
-  it('สมาชิกเช็กอินเอง: ใช้ memberId จาก session · กดซ้ำใน 60 นาทีไม่บันทึกเพิ่ม · พนักงานใช้ไม่ได้', async () => {
+  it('สมาชิกสลับเช็กอิน/เช็กเอาต์ได้หลายรอบในวันเดียว · ใช้ memberId จาก session · พนักงานใช้ไม่ได้', async () => {
     const before = await prisma().checkIn.count({ where: { memberId: '01' } });
     const first = await selfCheckIn(member, new Date('2026-10-15T11:00:00Z'));
-    expect(first).toMatchObject({ allowed: true, repeated: false });
-    const again = await selfCheckIn(member, new Date('2026-10-15T11:30:00Z'));
-    expect(again).toMatchObject({ allowed: true, repeated: true });
-    expect(await prisma().checkIn.count({ where: { memberId: '01' } })).toBe(before + 1);
+    expect(first).toMatchObject({ allowed: true, action: 'checkin' });
+    const checkout = await selfCheckIn(member, new Date('2026-10-15T11:30:00Z'));
+    expect(checkout).toMatchObject({ allowed: true, action: 'checkout', at: new Date('2026-10-15T11:00:00Z'), checkedOutAt: new Date('2026-10-15T11:30:00Z') });
+    const secondVisit = await selfCheckIn(member, new Date('2026-10-15T12:00:00Z'));
+    expect(secondVisit).toMatchObject({ allowed: true, action: 'checkin' });
+    expect(await prisma().checkIn.count({ where: { memberId: '01' } })).toBe(before + 2);
+    expect(await prisma().checkIn.findFirst({ where: { memberId: '01', at: new Date('2026-10-15T11:00:00Z') } })).toMatchObject({ checkedOutAt: new Date('2026-10-15T11:30:00Z') });
     await expect(selfCheckIn(frontDesk, new Date())).rejects.toThrow('FORBIDDEN');
   });
 });

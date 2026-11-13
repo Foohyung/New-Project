@@ -8,12 +8,13 @@ import { monthStart, parseRange, rangeLabel, sameRange } from '@/api/services/sh
 import { today } from '@/api/lib/clock/clock/clock';
 import { RoundEditor } from '@/web/components/reminders/reminders/reminders.marketing';
 import { MarketingTabs } from '@/web/components/reminders/reminders/reminders.marketing-tabs';
-import { Badge, Card, EmptyState, Forbidden, PageHeader, Stat, type Tone } from '@/web/components/ui/ui/ui';
+import { Badge, Card, EmptyState, PageHeader, Stat, type Tone } from '@/web/components/ui/ui/ui';
 import { CHANNEL_LABEL } from '@/api/services/reminders/reminders/reminders.service';
 import { runRemindersAction, updateRoundAction } from '@/api/actions/reminders/reminders/reminders.actions';
 import { listCoupons } from '@/api/dal/coupons/coupons/coupons.dal';
 import { getReminderCenter } from '@/api/dal/reminders/reminders/reminders.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'แจ้งเตือนต่ออายุ' };
 
@@ -26,7 +27,7 @@ const OUTCOME: Record<string, { label: string; tone: Tone }> = {
 
 export default async function RemindersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('marketing.manage');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const date = today();
   const defaultRange = { from: monthStart(date), to: date };
   const range = parseRange(await searchParams, date, defaultRange) ?? defaultRange;
@@ -40,7 +41,7 @@ export default async function RemindersPage({ searchParams }: { searchParams: Pr
       <PageHeader kicker={session.branch} title="การตลาด" />
       <MarketingTabs current="reminders" />
 
-      <DateRangeFilter path="/marketing" params={isMonth ? {} : { from: range.from, to: range.to }} range={range} today={date} defaultRange={defaultRange} label="ช่วงผลการแจ้งเตือน" />
+      <DateRangeFilter path="/reminders" params={isMonth ? {} : { from: range.from, to: range.to }} range={range} today={date} defaultRange={defaultRange} label="ช่วงผลการแจ้งเตือน" />
 
       <section aria-label="ผลการแจ้งเตือน" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Stat tone="lime" label={isMonth ? 'ต่ออายุจากลิงก์ เดือนนี้' : 'ต่ออายุจากลิงก์ ในช่วงนี้'} value={formatBaht(center.stats.revenueSatang)} hint={`${String(center.stats.paidCount)} คน`} />

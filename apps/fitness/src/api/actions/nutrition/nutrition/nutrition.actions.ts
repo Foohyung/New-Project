@@ -10,7 +10,7 @@ import { CustomMealSchema, healthProfileSchema } from '@/api/schemas/nutrition/n
 import { findMeal } from '@/api/services/nutrition/nutrition/nutrition.service';
 
 const refresh = () => {
-  revalidatePath('/me/food');
+  revalidatePath('/me/nutrition');
 };
 
 export async function saveHealthProfileAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {

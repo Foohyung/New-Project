@@ -1,20 +1,21 @@
 import { formatThaiDate } from '@/api/lib/utils/utils/utils';
 import type { Metadata } from 'next';
-import { Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
-import { PlanItem, WorkoutPicker } from '@/web/components/workouts/workouts/workouts';
+import { PageHeader } from '@/web/components/ui/ui/ui';
+import { ClearWorkoutPlanButton, PlanItem, WorkoutPicker } from '@/web/components/workouts/workouts/workouts';
 import { MUSCLE_LABEL } from '@/api/services/workouts/workouts/workouts.catalog';
-import { addToPlanAction, removeFromPlanAction, toggleDoneAction } from '@/api/actions/workouts/workouts/workouts.actions';
+import { addToPlanAction, clearWorkoutPlanAction, removeFromPlanAction, toggleWorkoutSetAction } from '@/api/actions/workouts/workouts/workouts.actions';
 import { planMinutes } from '@/api/services/workouts/workouts/workouts.service';
 import { getMyWorkout } from '@/api/dal/workouts/workouts/workouts.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { Confetti } from '@/web/components/layout/layout/layout.motion';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'ฝึก' };
 
 /** ตัวช่วยออกกำลังกาย (แบบ A Body Map): เลือกกล้ามเนื้อทีละมัด → ได้ท่าฝึก → เพิ่มลงโปรแกรมวันนี้แล้วติ๊กตามที่ทำ */
 export default async function MyWorkoutPage() {
   const { session, allowed } = await pageGuard('coach.use');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const workout = await getMyWorkout(session);
   const done = workout.items.filter(i => i.done).length;
   const total = workout.items.length;
@@ -26,9 +27,14 @@ export default async function MyWorkoutPage() {
         <WorkoutPicker addAction={addToPlanAction} planned={workout.items.map(i => i.id)} />
 
         <section aria-labelledby="plan-title" className="rounded-2xl border border-line bg-surface p-4 sm:p-5 lg:sticky lg:top-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="plan-title" className="font-display text-lg font-semibold">โปรแกรมวันนี้</h2>
-            {total > 0 && <span className="text-sm text-muted">เสร็จ {done}/{total} ท่า · ราว {planMinutes(total)} นาที</span>}
+            {total > 0 && (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <span className="text-sm text-muted">เสร็จ {done}/{total} ท่า · ราว {planMinutes(total)} นาที</span>
+                <ClearWorkoutPlanButton action={clearWorkoutPlanAction} />
+              </div>
+            )}
           </div>
           {total > 0 && (
             <div role="progressbar" aria-label="ความคืบหน้าวันนี้" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
@@ -45,8 +51,9 @@ export default async function MyWorkoutPage() {
                   name={i.name}
                   detail={`${i.muscles.map(m => MUSCLE_LABEL[m]).join(' · ')} · ${i.equipment}`}
                   sets={i.sets}
+                  completedSets={i.completedSets}
                   done={i.done}
-                  toggleAction={toggleDoneAction.bind(null, i.id, !i.done)}
+                  toggleAction={toggleWorkoutSetAction.bind(null, i.id)}
                   removeAction={removeFromPlanAction.bind(null, i.id)}
                 />
               ))}

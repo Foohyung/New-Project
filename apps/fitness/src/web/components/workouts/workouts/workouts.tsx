@@ -3,6 +3,7 @@
 import { Check, Plus, Trash2 } from 'lucide-react';
 import { useActionState, useState } from 'react';
 import { exercisesFor, MUSCLE_LABEL, MUSCLE_REGIONS, type Muscle } from '@/api/services/workouts/workouts/workouts.catalog';
+import { workoutSetCount } from '@/api/services/workouts/workouts/workouts.service';
 import type { ActionResult } from '@/api/types/shared/shared/shared.action-result';
 import { ResultMessage } from '@/web/components/ui/ui/ui.action-button';
 import { BodyMap } from '@/web/components/workouts/workouts/workouts.body-map';
@@ -102,26 +103,27 @@ export function WorkoutPicker({ addAction, planned }: { addAction: Action; plann
   );
 }
 
-/** หนึ่งท่าในโปรแกรมวันนี้: ติ๊กว่าทำแล้ว หรือลบออก */
-export function PlanItem({ name, detail, sets, done, toggleAction, removeAction }: { name: string; detail: string; sets: string; done: boolean; toggleAction: Action; removeAction: Action }) {
-  const [toggleState, toggleForm, toggling] = useActionState<ActionResult, FormData>(toggleAction, null);
+/** หนึ่งท่าในโปรแกรมวันนี้ พร้อมปุ่มบันทึกเซ็ตที่ทำแล้ว */
+export function PlanItem({ name, detail, sets, completedSets, done, toggleAction, removeAction }: {
+  name: string;
+  detail: string;
+  sets: string;
+  completedSets: number[];
+  done: boolean;
+  toggleAction: (setNumber: number, prev: ActionResult, formData: FormData) => Promise<ActionResult>;
+  removeAction: Action;
+}) {
+  const setCount = workoutSetCount(sets);
+  const [toggleState, toggleForm, toggling] = useActionState<ActionResult, FormData>(
+    async (prev, formData) => toggleAction(Number(formData.get('setNumber')), prev, formData),
+    null,
+  );
   // แจ้งผลทันที — แถวนี้หายไปหลังลบ
   const { state: removeState, run: removeRun, pending: removing } = useNotifyingAction(removeAction, { successTitle: 'ลบสำเร็จ' });
   const failed = [toggleState, removeState].find(s => s && !s.ok) ?? null;
   return (
     <li className="flex flex-col gap-1 py-2.5">
       <div className="flex items-center gap-3">
-        <form action={toggleForm}>
-          <button
-            type="submit"
-            disabled={toggling}
-            aria-pressed={done}
-            aria-label={`${name} ${done ? 'ทำเสร็จแล้ว (กดเพื่อยกเลิก)' : 'ยังไม่ได้ทำ (กดเมื่อทำเสร็จ)'}`}
-            className={`grid size-11 shrink-0 place-items-center rounded-xl border-2 border-line aria-pressed:border-lime aria-pressed:bg-lime aria-pressed:text-bg ${done ? 'ff-pop' : ''}`}
-          >
-            {done && <Check aria-hidden className="size-5" />}
-          </button>
-        </form>
         <span className="min-w-0 flex-1">
           <b className={`block font-semibold ${done ? 'text-muted line-through' : ''}`}>{name}</b>
           <small className="block text-xs text-muted">{detail}</small>
@@ -133,7 +135,44 @@ export function PlanItem({ name, detail, sets, done, toggleAction, removeAction 
           </button>
         </ConfirmForm>
       </div>
+      <form action={toggleForm} className="flex items-center gap-2 pl-1">
+        <span className="text-xs font-medium text-muted">เซ็ต</span>
+        {Array.from({ length: setCount }, (_, index) => {
+          const setNumber = index + 1;
+          const complete = completedSets.includes(setNumber);
+          return (
+            <button
+              key={setNumber}
+              type="submit"
+              name="setNumber"
+              value={setNumber}
+              disabled={toggling}
+              aria-pressed={complete}
+              aria-label={`${name} เซ็ตที่ ${setNumber}${complete ? ' ทำแล้ว' : ''}`}
+              className="grid size-8 place-items-center rounded-lg border border-line bg-surface-2 text-xs font-semibold text-muted aria-pressed:border-lime aria-pressed:bg-lime aria-pressed:text-bg disabled:opacity-50"
+            >
+              {complete ? <Check aria-hidden className="size-4" /> : setNumber}
+            </button>
+          );
+        })}
+        <span className="text-xs tabular-nums text-muted">{completedSets.length}/{setCount}</span>
+      </form>
       {failed && <ResultMessage state={failed} />}
     </li>
+  );
+}
+
+export function ClearWorkoutPlanButton({ action }: { action: Action }) {
+  const { state, run, pending } = useNotifyingAction(action, { successTitle: 'ล้างรายการแล้ว' });
+  return (
+    <>
+      <ConfirmForm onSubmitData={run} confirm="ล้างท่าทั้งหมดและจำนวนเซ็ตที่ทำแล้วของวันนี้หรือไม่?" confirmTitle="ล้างโปรแกรมวันนี้" confirmLabel="ล้างทั้งหมด" confirmTone="danger">
+        <button type="submit" disabled={pending} className={`${btn.ghost} min-h-9 px-2 text-xs text-danger`}>
+          <Trash2 aria-hidden className="size-4" />
+          ล้างทั้งหมด
+        </button>
+      </ConfirmForm>
+      {state && !state.ok && <ResultMessage state={state} />}
+    </>
   );
 }

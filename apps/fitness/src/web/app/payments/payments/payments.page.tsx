@@ -1,5 +1,5 @@
 import { bangkokDate, formatBaht, formatThaiDate, formatThaiDateOf, formatThaiTime } from '@/api/lib/utils/utils/utils';
-import { Banknote, CalendarDays, CreditCard, Landmark, LayoutGrid, QrCode, RefreshCw, Table2, Wallet } from 'lucide-react';
+import { Banknote, Building2, CalendarDays, CreditCard, Landmark, LayoutGrid, QrCode, RefreshCw, Table2, Wallet } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -8,16 +8,18 @@ import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { DateRangeFilter } from '@/web/components/ui/ui/ui.date-range-filter';
 import { parseRange, rangeLabel } from '@/api/services/shared/shared/shared.date-range';
 import { PaymentStatusBadge } from '@/web/components/payments/payments/payments';
-import { btn, EmptyState, Forbidden, PageHeader, Stat } from '@/web/components/ui/ui/ui';
+import { btn, EmptyState, PageHeader, Stat } from '@/web/components/ui/ui/ui';
 import { UrlDropdown } from '@/web/components/ui/ui/ui.url-dropdown';
 import { hrefWith, Toolbar, ViewSwitch } from '@/web/components/ui/ui/ui.view-switch';
 import { confirmPaymentAction } from '@/api/actions/payments/payments/payments.actions';
 import { METHOD_LABEL, PAYMENT_STATUS_LABEL, type PaymentMethod } from '@/api/services/payments/payments/payments.service';
 import { KIND_LABEL, type PaymentDto } from '@/api/types/payments/payments/payments.types';
 import { today } from '@/api/lib/clock/clock/clock';
-import { listPayments, paymentSummary } from '@/api/dal/payments/payments/payments.dal';
+import { listPayments, paymentBranchOptions, paymentSummary } from '@/api/dal/payments/payments/payments.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { can } from '@/api/lib/auth/auth/auth.rbac';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
+import { ReceiptPrintLink } from '@/web/components/payments/payments/receipt-print-link';
 
 export const metadata: Metadata = { title: 'การเงิน' };
 
@@ -30,6 +32,8 @@ const SearchParams = z.object({
   method: z.enum(METHODS).optional().catch(undefined),
   from: z.string().optional().catch(undefined),
   to: z.string().optional().catch(undefined),
+  /** ชื่อสาขา (admin เท่านั้น) — ไม่ใส่ = ทุกสาขา */
+  branch: z.string().max(120).optional().catch(undefined),
 });
 const TABS = [undefined, 'review', 'pending', 'paid'] as const;
 
@@ -50,25 +54,30 @@ const when = (p: PaymentDto) => `${formatThaiDateOf(p.createdAt)} ${formatThaiTi
 
 export default async function PaymentsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('payments.view');
-  if (!allowed) return <Forbidden />;
-  const { status, view, method, from, to } = SearchParams.parse(await searchParams);
+  if (!allowed) return accessDenied();
+  const { status, view, method, from, to, branch: requestedBranch } = SearchParams.parse(await searchParams);
   const range = parseRange({ from, to }, today());
-  const [rows, summary, all] = await Promise.all([listPayments(session, { status, method, range }), paymentSummary(session), listPayments(session, { method, range })]);
+  // admin เห็นทุกสาขาและเลือกกรองได้ · บทบาทอื่นเห็นเฉพาะสาขาของตัวเอง (DAL บังคับ)
+  const branches = await paymentBranchOptions(session);
+  const branch = requestedBranch && branches.includes(requestedBranch) ? requestedBranch : undefined;
+  const [rows, summary, all] = await Promise.all([listPayments(session, { status, method, range, branch }), paymentSummary(session, branch), listPayments(session, { method, range, branch })]);
   const canConfirm = can(session, 'payments.confirm');
   const count = (s?: (typeof TABS)[number]) => (s ? all.filter(p => p.status === s).length : all.length);
-  const current = { status, method, view: view === 'table' ? undefined : view, from: range?.from, to: range?.to };
+  const current = { status, method, branch, view: view === 'table' ? undefined : view, from: range?.from, to: range?.to };
   const href = (patch: Record<string, string | undefined>) => hrefWith('/payments', current, patch);
 
   const action = (p: PaymentDto) =>
     canConfirm && p.status !== 'paid' ? (
       <ActionButton action={confirmPaymentAction.bind(null, p.id)} label="ยืนยันเงินเข้า" variant="primary" confirm={`ยืนยันว่าได้รับเงิน ${formatBaht(p.amountSatang)} จาก ${p.memberName} แล้ว?`} />
     ) : (
-      <Link href={`/payments/${p.id}`} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold whitespace-nowrap text-lime">{p.status === 'paid' ? 'ใบเสร็จ' : 'ดู QR'}</Link>
+      p.status === 'paid'
+        ? <ReceiptPrintLink href={`/payments/${p.id}?print=1`} />
+        : <Link href={`/payments/${p.id}`} className="inline-flex min-h-11 items-center px-2 text-sm font-semibold whitespace-nowrap text-lime">ดู QR</Link>
     );
 
   return (
     <>
-      <PageHeader kicker={session.branch} title="การเงิน" actions={<Link href="/payments/subscriptions" className={btn.secondary}><RefreshCw aria-hidden className="size-5" />ตัดบัตรอัตโนมัติ</Link>} />
+      <PageHeader kicker={branches.length > 0 ? (branch ?? 'ทุกสาขา') : session.branch} title="การเงิน" actions={<Link href="/payments/subscriptions" className={btn.secondary}><RefreshCw aria-hidden className="size-5" />ตัดบัตรอัตโนมัติ</Link>} />
       <section aria-label="สรุปวันนี้" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Stat tone="lime" label="รับเงินวันนี้" value={formatBaht(summary.todaySatang)} hint={`${String(summary.todayCount)} รายการ`} />
         <Stat label="รอตรวจสลิป" value={summary.review} hint="ตรวจยอดแล้วกดยืนยัน" />
@@ -94,7 +103,18 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
 
       <Toolbar>
         <ViewSwitch views={VIEW_OPTIONS} current={view} hrefFor={v => href({ view: v === 'table' ? undefined : v })} />
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+          {branches.length > 0 && (
+            <UrlDropdown
+              label="สาขา"
+              align="end"
+              value={branch ?? ''}
+              options={[
+                { value: '', label: 'ทุกสาขา', icon: <Building2 className="size-4" />, href: href({ branch: undefined }) },
+                ...branches.map(b => ({ value: b, label: b, icon: <Building2 className="size-4" />, href: href({ branch: b }) })),
+              ]}
+            />
+          )}
           <UrlDropdown
             label="ช่องทาง"
             align="end"
@@ -214,6 +234,7 @@ function DailyView({ rows }: { rows: PaymentDto[] }) {
                   <div className="flex flex-col items-end gap-1">
                     <b className="font-display tabular-nums">{formatBaht(p.amountSatang)}</b>
                     <PaymentStatusBadge status={p.status} />
+                    {p.status === 'paid' && <ReceiptPrintLink href={`/payments/${p.id}?print=1`} />}
                   </div>
                 </li>
               ))}

@@ -1,5 +1,5 @@
 import 'server-only';
-import { daysBetween, formatThaiDate } from '@/api/lib/utils/utils/utils';
+import { bangkokDate, daysBetween, formatThaiDate } from '@/api/lib/utils/utils/utils';
 import { monthStart, type DateRange } from '@/api/services/shared/shared/shared.date-range';
 import { isFrozenOn } from '@/api/services/members/members/members.service';
 import { CHANNEL_LABEL, renderTemplate, ROUND_LABEL, roundForDaysLeft, type Channel, type ReminderRound, type RoundId } from '@/api/services/reminders/reminders/reminders.service';
@@ -11,7 +11,7 @@ import { authorize, can, ForbiddenError } from '@/api/lib/auth/auth/auth.rbac';
 
 /** ลิงก์ในข้อความ: เปิดแอปสมาชิกพร้อมคูปอง — ตั้ง APP_URL เป็นโดเมนจริงของเว็บ */
 export function payLink(couponCode: string | null): string {
-  const query = new URLSearchParams({ from: 'reminder', ...(couponCode ? { coupon: couponCode } : {}) });
+  const query = new URLSearchParams({ ref: 'reminder', ...(couponCode ? { coupon: couponCode } : {}) });
   return `${process.env.APP_URL ?? 'https://fitflow.app'}/me?${query.toString()}`;
 }
 
@@ -44,7 +44,7 @@ async function dueToday(db: Tx): Promise<{ member: MemberRecord; round: Reminder
     const m = toMember(row);
     if (isFrozenOn(m.freeze, date) || pkgs.get(m.packageId)?.kind !== 'time') return [];
     const round = roundForDaysLeft(daysBetween(date, m.expiresOn), allRounds);
-    const already = recent.some(l => l.memberId === m.id && l.roundId === round?.id && daysBetween(l.sentAt.toISOString().slice(0, 10), date) < 2);
+    const already = recent.some(l => l.memberId === m.id && l.roundId === round?.id && daysBetween(bangkokDate(l.sentAt), date) < 2);
     return round && !already ? [{ member: m, round }] : [];
   });
 }

@@ -50,8 +50,8 @@ export function connectionConfig(url = process.env.DATABASE_URL) {
     user: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
     database: u.pathname.slice(1),
-    // เก็บ/อ่านเวลาเป็น UTC เหมือน Prisma
-    timezone: 'Z',
+    // คอลัมน์ DATETIME เก็บเป็นเวลาไทยเหมือนแอป (src/api/lib/db/db/db.thai-time.ts) — Date ถูกแปลงเป็นนาฬิกาไทย และ NOW() เป็นเวลาไทย
+    timezone: '+07:00',
   };
 }
 
@@ -76,6 +76,9 @@ async function seedAccount(conn, role, prefix, defaultName) {
     return;
   }
   if (password.length < 8) throw new Error(`${prefix}_PASSWORD ต้องยาวอย่างน้อย 8 ตัวอักษร`);
+  const branch = process.env.SHOP_BRANCH ?? 'สาขาหลัก';
+  // สาขาของบัญชีตั้งต้นต้องอยู่ในตารางสาขา (เลือกได้ในฟอร์มบัญชีผู้ใช้)
+  await conn.query("INSERT IGNORE INTO branches (id, name, created_at, updated_at, created_by_name, updated_by_name) VALUES (UUID(), ?, NOW(3), NOW(3), 'ระบบ', 'ระบบ')", [branch]);
   const [existing] = await conn.query('SELECT id FROM users WHERE login = ?', [login]);
   if (existing) {
     console.log(`มีบัญชี ${login} อยู่แล้ว — ไม่เปลี่ยนรหัสผ่าน`);
@@ -84,7 +87,7 @@ async function seedAccount(conn, role, prefix, defaultName) {
   const name = process.env[`${prefix}_NAME`] ?? defaultName;
   await conn.query(
     'INSERT INTO users (id, login, password_hash, role, name, nickname, branch, active, created_at, updated_at) VALUES (UUID(), ?, ?, ?, ?, ?, ?, 1, NOW(3), NOW(3))',
-    [login, hashPassword(password), role, name, name.split(' ')[0], process.env.SHOP_BRANCH ?? 'สาขาหลัก'],
+    [login, hashPassword(password), role, name, name.split(' ')[0], branch],
   );
   console.log(`สร้างบัญชี ${role} ${login} แล้ว`);
 }

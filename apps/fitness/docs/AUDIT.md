@@ -4,8 +4,8 @@
 
 | ชนิดตาราง | คอลัมน์ |
 |---|---|
-| แก้ไขได้ (users, packages, members, trainers, classes, bookings, pt_sessions, payments, coupons, charges, reminder_rounds, reminder_logs, follow_ups, workout_plans, health_profiles, meal_logs) | `created_at` · `created_by_id` · `created_by_name` · `updated_at` · `updated_by_id` · `updated_by_name` |
-| เพิ่มอย่างเดียว (check_ins) | `at` · `created_by_id` · `created_by_name` (พนักงานที่กด · null = สมาชิกสแกน QR เอง) |
+| แก้ไขได้ (users, packages, members, trainers, classes, bookings, pt_sessions, payments, coupons, charges, reminder_rounds, reminder_logs, follow_ups, workout_plans, health_profiles, meal_logs, courses, course_enrollments, products, sales) | `created_at` · `created_by_id` · `created_by_name` · `updated_at` · `updated_by_id` · `updated_by_name` |
+| เพิ่มอย่างเดียว (check_ins, stock_movements) | `at`/`created_at` · `created_by_id` · `created_by_name` (check_ins: พนักงานที่กด · null = สมาชิกสแกน QR เอง) |
 | ระบบ (sessions, counters, audit_logs) | sessions มี `created_at` · `created_by_name`, counters มี `updated_at` · `updated_by_name`, audit_logs มี `actor_*` ของตัวเอง |
 
 - เพิ่มคอลัมน์ด้วย migration `prisma/migrations/0002_audit_columns` และ `prisma/migrations/0003_audit_names`
@@ -43,6 +43,8 @@ CREATE TRIGGER audit_logs_no_update BEFORE UPDATE ON audit_logs FOR EACH ROW
 CREATE TRIGGER audit_logs_no_delete BEFORE DELETE ON audit_logs FOR EACH ROW
   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_logs is append-only';
 ```
+
+ข้อยกเว้นครั้งเดียว: migration `0024_datetime_thai_time` ปลด trigger `audit_logs_no_update` ชั่วคราวเพื่อเลื่อน `occurred_at` จาก UTC เป็นเวลาไทย แล้วสร้างคืนใน migration เดียวกัน
 
 ## 3. วิธีเขียน log
 
@@ -102,4 +104,20 @@ SELECT * FROM audit_logs WHERE actor_id = ? AND occurred_at >= CURDATE();
 | `user.password.reset` · `user.password.reset-dismiss` | พนักงานรีเซ็ต/ปิดคำขอ "ลืมรหัสผ่าน" | — |
 | `auth.password.change` | ผู้ใช้ตั้งรหัสใหม่ที่ขั้นที่ 2 ของหน้า login | `{ forced }` |
 | `member.create` · `member.update` · `member.delete` | สมัคร (สร้างบัญชีเข้าสู่ระบบให้ด้วย) · แก้ข้อมูลติดต่อ · ลบถาวร | ลบเก็บรหัส ชื่อ เบอร์ และจำนวนรายการชำระไว้ใน `before` เพราะข้อมูลจริงถูกลบหมด |
+| `package.create` · `package.update` · `package.delete` | เจ้าของเพิ่ม/แก้ไข/ลบแพ็กเกจที่หน้า `/packages` | ข้อมูลแพ็กเกจ (ชื่อ ประเภท ระยะ ราคาเป็นสตางค์ รายละเอียด เปิดขาย) · แก้ไขเก็บทั้งค่าเดิมและค่าใหม่ |
+| `trainer.create` · `trainer.update` · `trainer.delete` | เพิ่ม/แก้ไข/ลบเทรนเนอร์ | ข้อมูลเทรนเนอร์ · แก้ไขเก็บค่าเดิมและค่าใหม่ |
+| `course.create` · `course.update` · `course.delete` | เพิ่ม/แก้ไข/ลบคอร์สเรียน | ข้อมูลคอร์ส · แก้ไขเก็บค่าเดิมและค่าใหม่ |
+| `course.enrollment.create` · `.slip` · `.confirm` · `.cancel` | สมาชิกสมัคร/แจ้งโอน · เจ้าหน้าที่ยืนยันเงินเข้า · ยกเลิกการสมัคร | สมัครเก็บ `courseId` และยอด |
+| `product.create` · `product.update` · `product.delete` | เพิ่ม/แก้ไข/ลบสินค้า | ข้อมูลสินค้า (จำนวนสต็อกดูที่ `stock_movements`) · รูปเก็บแค่ `image: uploaded/removed` ไม่เก็บไฟล์ |
+| `stock.receive` · `stock.adjust` | รับของเข้า · ปรับยอดตามที่นับได้ | `{ change, balance, note }` |
+| `sale.create` · `sale.void` | ขายหน้าร้าน · ยกเลิกบิล (คืนสต็อก) | เลขใบเสร็จ ยอดรวม วิธีชำระ รายการสินค้า |
+| `coupon.create` | สร้างคูปอง | เงื่อนไขทั้งหมดของโค้ด (ส่วนลด แพ็กเกจ จำนวนสิทธิ์ ครั้งต่อคน วันสมาชิกขั้นต่ำ หลักฐาน ข้อความเงื่อนไข) |
 | `branch.branding.update` | เจ้าของแก้ชื่อ Gym สี โลโก้ | โลโก้เก็บแค่ `uploaded` ไม่เก็บไฟล์ |
+
+## 6. IP และประวัติการเข้าสู่ระบบ
+
+- `audit()` เติม `ip` และ `user_agent` ของคำขอให้เองทุกแถว (งานนอก request เช่น cron = null)
+- IP มาจาก `X-Forwarded-For` อ่านจากขวาไปซ้าย ข้าม IP ในเครื่อง (IIS → Node) · ผู้ใช้ปลอมได้แค่ค่าด้านซ้าย · ไม่เจอค่อยลอง `Forwarded`, `X-Real-IP`, `X-Client-IP` ตามลำดับ (ข้ามค่า `unknown`) · `clientIp()` ใน `src/api/services/access/access/access.service.ts`
+- `auth.login` / `auth.logout` แจ้งเข้า LINE OA ด้วย (`notifyAuthEvent` ใน `auth.actions.ts` เมื่อตั้ง `LINE_CHANNEL_ACCESS_TOKEN` + `LINE_NOTIFY_TO`) และคำขอรีเซ็ตรหัสผ่านใหม่แจ้งผู้รับชุดเดียวกัน — เป็นการแจ้งเตือนเสริม ไม่แทน audit_logs
+- หน้า `/access-logs` (สิทธิ์ `access.view`) แสดงเฉพาะ `auth.login` และ `auth.logout` ในช่วงวันที่เลือก พร้อม IP และอุปกรณ์ — **เฉพาะ role admin** (สิทธิ์สงวน ให้ role อื่นไม่ได้ · DAL และหน้าตรวจ `role === admin` ซ้ำ) · ค้นด้วย index `(action, occurred_at)` จาก migration 0019
+- IP `127.0.0.1` / `::1` = เปิดเว็บจากตัวเซิร์ฟเวอร์ หรือ IIS ยังไม่ได้ส่ง IP จริง (ARR: Preserve client IP)

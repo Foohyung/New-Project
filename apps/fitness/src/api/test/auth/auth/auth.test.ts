@@ -1,14 +1,46 @@
 import { describe, expect, it } from 'vitest';
-import { accountUsable, isLocked, landingFor, LOCKOUT_MINUTES, MAX_FAILED_ATTEMPTS, normalizeIdentifier, recordFailure, safeNextPath, type AttemptState } from '@/api/services/auth/auth/auth.service';
+import { accountUsable, deniedTarget, isLocked, landingFor, LOCKOUT_MINUTES, MAX_FAILED_ATTEMPTS, normalizeIdentifier, recordFailure, safeNextPath, SESSION_IDLE_MS, SESSION_IDLE_MINUTES, sessionIdleExpired, type AttemptState } from '@/api/services/auth/auth/auth.service';
 import { hasPermission, permissionsAllowedForRole, permissionsForRole } from '@/api/services/auth/auth/auth.roles';
 
 describe('สิทธิ์จัดการระบบ', () => {
-  it('admin และ owner จัดการบัญชีได้ แต่การตั้งค่าแบรนด์เป็นของ owner เท่านั้น', () => {
+  it('admin และ owner จัดการบัญชีและแบรนด์สาขาได้', () => {
     expect(hasPermission('admin', 'users.manage')).toBe(true);
     expect(hasPermission('owner', 'users.manage')).toBe(true);
     expect(hasPermission('owner', 'branding.manage')).toBe(true);
-    expect(hasPermission('admin', 'branding.manage')).toBe(false);
+    expect(hasPermission('admin', 'branding.manage')).toBe(true);
+    expect(hasPermission('admin', 'payments.configure')).toBe(true);
+    expect(hasPermission('owner', 'payments.configure')).toBe(true);
+    expect(hasPermission('manager', 'payments.configure')).toBe(false);
     expect(hasPermission('manager', 'users.manage')).toBe(false);
+  });
+
+  it('จัดการสาขาได้เฉพาะ admin', () => {
+    expect(hasPermission('admin', 'branches.manage')).toBe(true);
+    expect(hasPermission('owner', 'branches.manage')).toBe(false);
+    expect(hasPermission('manager', 'branches.manage')).toBe(false);
+  });
+
+  it('สิทธิ์แบรนด์สาขาถูกกำหนดให้ admin ที่มี role grants อยู่แล้วด้วย', () => {
+    expect(permissionsForRole('admin', ['roles.manage', 'branches.manage'])).toContain('branding.manage');
+  });
+
+  it('กำหนดสิทธิ์ดูประวัติการเข้าสู่ระบบให้ role ได้จากหน้าจัดการ role', () => {
+    expect(hasPermission('admin', 'access.view')).toBe(true);
+    expect(hasPermission('owner', 'access.view')).toBe(false);
+    // ประวัติการเข้าสู่ระบบสงวนให้ admin: role อื่นติ๊กให้ไม่ได้ และสิทธิ์ที่ค้างอยู่ถูกตัดทิ้ง
+    expect(permissionsAllowedForRole('owner', ['access.view'])).toBe(false);
+    expect(permissionsAllowedForRole('supervisor', ['access.view'])).toBe(false);
+    expect(permissionsForRole('owner', ['access.view'])).not.toContain('access.view');
+    expect(permissionsForRole('admin', ['roles.manage', 'access.view'])).toContain('access.view');
+    expect(permissionsAllowedForRole('supervisor', ['branches.manage'])).toBe(false);
+  });
+
+  it('ทุก role ระบบซื้อสินค้าหน้าร้านได้ โดยไม่รับสิทธิ์จัดการสินค้าเพิ่ม', () => {
+    for (const role of ['admin', 'owner', 'manager', 'front-desk', 'trainer', 'member'] as const) {
+      expect(hasPermission(role, 'sales.use')).toBe(true);
+    }
+    expect(hasPermission('trainer', 'products.manage')).toBe(false);
+    expect(hasPermission('member', 'products.manage')).toBe(false);
   });
 
   it('ให้ทุก role รับสิทธิ์ระบบได้ และสงวนการจัดการ role ให้ admin', () => {
@@ -17,10 +49,13 @@ describe('สิทธิ์จัดการระบบ', () => {
     expect(permissionsAllowedForRole('supervisor', ['members.view', 'payments.view'])).toBe(true);
     expect(permissionsAllowedForRole('supervisor', ['portal.use', 'members.view', 'payments.confirm'])).toBe(true);
     expect(permissionsAllowedForRole('supervisor', ['roles.manage'])).toBe(false);
+    expect(permissionsAllowedForRole('owner', ['branches.manage'])).toBe(false);
+    expect(permissionsAllowedForRole('admin', ['roles.manage', 'branches.manage'])).toBe(true);
     expect(permissionsAllowedForRole('member', ['dashboard.view', 'members.manage', 'payments.view'])).toBe(true);
     expect(permissionsAllowedForRole('trainer', ['revenue.view', 'users.manage', 'portal.use'])).toBe(true);
-    expect(permissionsForRole('member', ['portal.use', 'members.view', 'coach.use', 'payments.view'])).toEqual(['portal.use', 'members.view', 'coach.use', 'payments.view']);
-    expect(permissionsForRole('trainer', ['dashboard.view', 'payments.confirm'])).toEqual(['dashboard.view', 'payments.confirm']);
+    expect(permissionsForRole('member', ['portal.use', 'members.view', 'coach.use', 'payments.view'])).toEqual(['portal.use', 'members.view', 'coach.use', 'payments.view', 'sales.use']);
+    expect(permissionsForRole('trainer', ['dashboard.view', 'payments.confirm'])).toEqual(['dashboard.view', 'payments.confirm', 'sales.use']);
+    expect(hasPermission('supervisor', 'sales.use', ['reports.view'])).toBe(true);
   });
 });
 
@@ -36,7 +71,7 @@ describe('landingFor', () => {
   it('ส่งแต่ละบทบาทไปหน้าแรกของตัวเอง', () => {
     expect(landingFor('member')).toBe('/me');
     expect(landingFor('trainer')).toBe('/classes');
-    expect(landingFor('manager')).toBe('/');
+    expect(landingFor('manager')).toBe('/dashboard');
   });
 });
 
@@ -83,5 +118,28 @@ describe('ช่วงวันที่ใช้งานบัญชี (activ
   it('กำหนดแค่ฝั่งเดียวได้', () => {
     expect(accountUsable({ ...base, activeTo: '2026-10-28' }, '2026-10-29')).toBe(false);
     expect(accountUsable({ ...base, activeFrom: '2026-10-29' }, '2026-10-29')).toBe(true);
+  });
+});
+
+describe('deniedTarget', () => {
+  it('กลับหน้าก่อนหน้า (Referer) พร้อม ?denied=1 และคง query เดิม', () => {
+    expect(deniedTarget('https://gym.example/members?status=active', '/reports', '/')).toBe('/members?status=active&denied=1');
+  });
+  it('ไม่มี Referer, เป็นหน้าเดิม, หน้า login หรือมาจากเว็บอื่นแบบ //evil → หน้าแรกของตำแหน่ง', () => {
+    expect(deniedTarget(null, '/reports', '/')).toBe('/?denied=1');
+    expect(deniedTarget('https://gym.example/reports?from=2026-10-01', '/reports', '/')).toBe('/?denied=1');
+    expect(deniedTarget('https://gym.example/login', '/reports', '/classes')).toBe('/classes?denied=1');
+    expect(deniedTarget('not a url', '/reports', '/me')).toBe('/me?denied=1');
+  });
+  it('หน้าแรกของตำแหน่งคือหน้าที่ไม่มีสิทธิ์เอง → null (แสดงกล่องไม่มีสิทธิ์แทน กันวนซ้ำ)', () => {
+    expect(deniedTarget(null, '/', '/')).toBeNull();
+  });
+});
+
+describe('session inactivity timeout', () => {
+  it('กำหนดเวลา idle 15 นาที และหมดอายุเมื่อครบกำหนดพอดี', () => {
+    expect(SESSION_IDLE_MINUTES).toBe(15);
+    expect(sessionIdleExpired(1_000, 1_000 + SESSION_IDLE_MS - 1)).toBe(false);
+    expect(sessionIdleExpired(1_000, 1_000 + SESSION_IDLE_MS)).toBe(true);
   });
 });

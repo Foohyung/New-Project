@@ -5,3 +5,7 @@ export interface BranchBrandingDto {
   logoUrl: string | null;
   hasUploadedLogo: boolean;
 }
+
+export interface BranchBrandingSummaryDto extends BranchBrandingDto {
+  active: boolean;
+}

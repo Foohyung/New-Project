@@ -124,6 +124,20 @@ export async function createClass(session: Session, input: ClassInput): Promise<
   return row.id;
 }
 
+/** ลบคลาสที่ไม่มีการจองหรือผู้จองนอกระบบ เพื่อเก็บประวัติการจองไว้ */
+export async function deleteClass(session: Session, id: string): Promise<{ title: string }> {
+  await authorize(session, 'classes.manage');
+  return transaction(session, async tx => {
+    await tx.$queryRaw`SELECT id FROM classes WHERE id = ${id} FOR UPDATE`;
+    const found = await tx.gymClass.findUnique({ where: { id } });
+    if (!found) throw new Error('NOT_FOUND');
+    const bookingCount = await tx.booking.count({ where: { classId: id } });
+    if (bookingCount > 0 || found.otherBooked > 0) throw new Error('CLASS_IN_USE');
+    await tx.gymClass.delete({ where: { id } });
+    return { title: found.title };
+  });
+}
+
 export async function listRooms(session: Session): Promise<string[]> {
   await authorize(session, 'classes.view');
   const rows = await prismaAs(session).gymClass.findMany({ distinct: ['room'], select: { room: true } });

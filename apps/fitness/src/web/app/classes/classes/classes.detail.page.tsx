@@ -5,12 +5,13 @@ import { notFound } from 'next/navigation';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { BookForMemberForm } from '@/web/components/classes/classes/classes.booking-forms';
 import { classTime } from '@/web/components/dashboard/dashboard/dashboard';
-import { Avatar, Badge, Card, Forbidden, InfoList, PageHeader, StatusBadge } from '@/web/components/ui/ui/ui';
-import { bookForMemberAction, cancelBookingAction } from '@/api/actions/classes/classes/classes.actions';
+import { Avatar, Badge, Card, InfoList, PageHeader, StatusBadge } from '@/web/components/ui/ui/ui';
+import { bookForMemberAction, cancelBookingAction, deleteClassAction } from '@/api/actions/classes/classes/classes.actions';
 import { CANCEL_CUTOFF_MINUTES } from '@/api/services/classes/classes/classes.service';
 import { getClassDetail } from '@/api/dal/classes/classes/classes.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { can } from '@/api/lib/auth/auth/auth.rbac';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'รายละเอียดคลาส' };
 
@@ -18,7 +19,7 @@ const STATE_LABEL = { upcoming: ['cyan', 'ยังไม่เริ่ม'], l
 
 export default async function ClassPage({ params }: { params: Promise<{ id: string }> }) {
   const { session, allowed } = await pageGuard('classes.view');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const c = await getClassDetail(session, (await params).id);
   if (!c) notFound();
   const full = c.booked >= c.capacity;
@@ -27,7 +28,19 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
 
   return (
     <>
-      <PageHeader back={{ href: '/classes', label: 'ตารางคลาส' }} kicker={`${formatThaiDateOf(c.startsAt, 'long')} · ${classTime(c)} น.`} title={c.title} />
+      <PageHeader
+        back={{ href: '/classes', label: 'ตารางคลาส' }}
+        kicker={`${formatThaiDateOf(c.startsAt, 'long')} · ${classTime(c)} น.`}
+        title={c.title}
+        actions={can(session, 'classes.manage') && (
+          <ActionButton
+            action={deleteClassAction.bind(null, c.id)}
+            label="ลบคลาส"
+            variant="danger"
+            confirm={`ลบตารางคลาส "${c.title}"? คลาสที่มีการจองหรือผู้จองนอกระบบจะลบไม่ได้`}
+          />
+        )}
+      />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-5">
         <div className="flex min-w-0 flex-col gap-4 lg:gap-5">
           <Card>

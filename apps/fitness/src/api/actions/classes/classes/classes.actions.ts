@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireSession } from '@/api/lib/auth/auth/auth.session';
 import { audit } from '@/api/lib/audit/audit/audit.log';
-import { bookClass, cancelBooking, createClass } from '@/api/dal/classes/classes/classes.dal';
+import { bookClass, cancelBooking, createClass, deleteClass } from '@/api/dal/classes/classes/classes.dal';
 import { findMember } from '@/api/dal/members/members/members.dal';
 import { formObject, knownFailure, validationFailure, type ActionResult } from '@/api/types/shared/shared/shared.action-result';
 import { ClassCreateSchema, MemberQuerySchema } from '@/api/schemas/classes/classes/classes.schema';
@@ -78,4 +78,16 @@ export async function createClassAction(_prev: ActionResult, formData: FormData)
   await audit(session, 'class.create', 'class', id);
   revalidatePath('/classes');
   redirect(`/classes?from=${date}`);
+}
+
+export async function deleteClassAction(classId: string, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
+  const session = await requireSession();
+  try {
+    const { title } = await deleteClass(session, classId);
+    await audit(session, 'class.delete', 'class', classId, { before: { title } });
+    refreshClass(classId);
+  } catch (error) {
+    return knownFailure(error);
+  }
+  redirect('/classes');
 }

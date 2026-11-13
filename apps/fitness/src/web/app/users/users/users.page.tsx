@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { createManagedUserAction, deleteManagedUserAction, resolvePasswordResetAction } from '@/api/actions/users/users/users.actions';
-import { listBranches, listManagedUsers, listOwnerSummaries, listPasswordResetRequests, listUserOptions } from '@/api/dal/users/users/users.dal';
+import { createManagedUserAction, deleteManagedUserAction } from '@/api/actions/users/users/users.actions';
+import { listBranches, listManagedUsers, listOwnerSummaries, listUserOptions } from '@/api/dal/users/users/users.dal';
+import { activeBranchNames } from '@/api/dal/branches/branches/branches.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { ManagedUserForm } from '@/web/components/users/users/users.form';
 import { UserRowActions } from '@/web/components/users/users/users.row-actions';
 import { UserStatusBadge } from '@/web/components/users/users/users.status';
-import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
-import { formatThaiDateOf, formatThaiTime } from '@/api/lib/utils/utils/utils';
 import { today } from '@/api/lib/clock/clock/clock';
-import { Card, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { Card, PageHeader } from '@/web/components/ui/ui/ui';
 import { EmptyState } from '@/web/components/ui/ui/ui';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'บัญชีผู้ใช้' };
 
@@ -22,12 +22,13 @@ const TAB = 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full borde
  */
 export default async function UsersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('users.manage');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const requested = (await searchParams).branch;
   const branch = typeof requested === 'string' && requested ? requested : undefined;
-  const [users, options, branches, summaries, resetRequests] = await Promise.all([listManagedUsers(session, { branch }), listUserOptions(session), listBranches(session), listOwnerSummaries(session), listPasswordResetRequests(session)]);
+  const [users, options, branches, summaries] = await Promise.all([listManagedUsers(session, { branch }), listUserOptions(session), listBranches(session), listOwnerSummaries(session)]);
   const total = branches.reduce((sum, b) => sum + b.userCount, 0);
   const isAdmin = session.role === 'admin';
+  const branchOptions = isAdmin ? await activeBranchNames() : branches.map(item => item.branch);
   const day = today();
   // แท็บสาขาเฉพาะเจ้าของที่ดูแลหลายสาขา (admin ดูพนักงานผ่านหน้าเจ้าของแทน)
   const showTabs = !isAdmin && branches.length > 1;
@@ -49,31 +50,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           ))}
         </nav>
       )}
-      {resetRequests.length > 0 && (
-        <Card title="คำขอรีเซ็ตรหัสผ่าน" subtitle={`${String(resetRequests.length)} คำขอจากหน้า "ลืมรหัสผ่าน" · ตรวจตัวตนก่อนรีเซ็ต แล้วแจ้งรหัสชั่วคราวให้ผู้ใช้`}>
-          <ul className="divide-y divide-line">
-            {resetRequests.map(r => (
-              <li key={r.id} className="flex flex-wrap items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <b className="block">{r.user.name}</b>
-                  <span className="text-xs text-muted">{r.user.login} · {r.user.roleName} · {r.user.branch} · ขอเมื่อ {formatThaiDateOf(r.requestedAt)} {formatThaiTime(r.requestedAt)}</span>
-                </div>
-                <ActionButton
-                  action={resolvePasswordResetAction.bind(null, r.id, 'reset')}
-                  label="รีเซ็ตรหัสผ่าน"
-                  pendingLabel="กำลังรีเซ็ต…"
-                  variant="primary"
-                  confirm={`รีเซ็ตรหัสผ่านของ ${r.user.name} เป็นรหัสชั่วคราว? ผู้ใช้จะออกจากระบบทุกเครื่อง และต้องตั้งรหัสใหม่ตอนเข้าสู่ระบบ`}
-                  successTitle="รีเซ็ตรหัสผ่านสำเร็จ"
-                />
-                <ActionButton action={resolvePasswordResetAction.bind(null, r.id, 'dismissed')} label="ปิดคำขอ" pendingLabel="กำลังปิด…" variant="ghost" confirm={`ปิดคำขอของ ${r.user.name} โดยไม่รีเซ็ต?`} />
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
       <Card title="เพิ่มบัญชีใหม่" subtitle="กำหนดข้อมูลเข้าสู่ระบบและบทบาทที่ต้องการ">
-        <ManagedUserForm key={branch ?? ""} branch={branch && branches.some(b => b.branch === branch) ? branch : session.branch} options={options} canManageRoles={isAdmin} action={createManagedUserAction} today={day} />
+        <ManagedUserForm key={branch ?? ""} branch={branch && branches.some(b => b.branch === branch) ? branch : session.branch} options={options} canManageRoles={isAdmin} branchOptions={branchOptions} action={createManagedUserAction} today={day} />
       </Card>
       <Card
         title={isAdmin ? 'ผู้ดูแลระบบและเจ้าของ' : branch ? `บัญชีใน${branch.startsWith('สาขา') ? '' : 'สาขา '}${branch}` : 'บัญชีในระบบ'}

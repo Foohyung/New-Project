@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { z } from 'zod';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { classTime } from '@/web/components/dashboard/dashboard/dashboard';
-import { Badge, EmptyState, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { Badge, EmptyState, PageHeader } from '@/web/components/ui/ui/ui';
 import { bookSelfAction, cancelBookingAction } from '@/api/actions/classes/classes/classes.actions';
 import { CANCEL_CUTOFF_MINUTES } from '@/api/services/classes/classes/classes.service';
 import { today } from '@/api/lib/clock/clock/clock';
 import { listClasses } from '@/api/dal/classes/classes/classes.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'จองคลาส' };
 
@@ -20,7 +21,7 @@ const dayMonth = new Intl.DateTimeFormat('th-TH', { timeZone: 'UTC', day: 'numer
 /** สมาชิกจองคลาสเอง — มือถือก่อน: เลือกวัน แล้วกดจองจากรายการ */
 export default async function MyClassesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('portal.use');
-  if (!allowed) return <Forbidden message="หน้านี้สำหรับสมาชิก — สลับเป็นบทบาทสมาชิกเพื่อดูตัวอย่าง" />;
+  if (!allowed) return accessDenied("หน้านี้สำหรับสมาชิก — สลับเป็นบทบาทสมาชิกเพื่อดูตัวอย่าง");
   const from = today();
   const { day } = SearchParams.parse(await searchParams);
   const selected = day && day >= from && day < addDays(from, 7) ? day : from;

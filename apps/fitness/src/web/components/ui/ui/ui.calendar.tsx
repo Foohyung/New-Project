@@ -2,9 +2,10 @@
 
 import { addDays, daysBetween } from '@/api/lib/utils/utils/utils';
 import { CalendarDays, ChevronLeft, ChevronRight, MoveRight } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import type { DateRange } from '@/api/services/shared/shared/shared.date-range';
 import { btn } from '@/web/components/ui/ui/ui';
+import { useBodyScrollLock } from '@/web/hooks/ui/ui/ui.use-body-scroll-lock';
 
 /* ---------- ตัวช่วยวันที่ (ปี พ.ศ. · เวลาไทยเป็น YYYY-MM-DD อยู่แล้ว) ---------- */
 const MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -127,11 +128,47 @@ function MonthHeader({ view, onPrev, onNext, hidePrev, hideNext }: { view: Month
   );
 }
 
+const SHEET_QUERY = '(max-width: 639px)';
+const subscribeSheet = (onChange: () => void) => {
+  const query = window.matchMedia(SHEET_QUERY);
+  query.addEventListener('change', onChange);
+  return () => { query.removeEventListener('change', onChange); };
+};
+
 /** popover บนจอใหญ่ · sheet จากด้านล่างบนมือถือ — ปิดด้วย Esc / คลิกข้างนอก */
-function Popover({ open, onClose, align = 'end', children, label }: { open: boolean; onClose: () => void; align?: 'start' | 'end'; children: ReactNode; label: string }) {
+function Popover({ open, onClose, anchorRef, align = 'end', children, label }: { open: boolean; onClose: () => void; anchorRef: RefObject<HTMLButtonElement | null>; align?: 'start' | 'end'; children: ReactNode; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const [above, setAbove] = useState(false);
+  const [desktopMaxHeight, setDesktopMaxHeight] = useState<number>();
+  const [sheetDrag, setSheetDrag] = useState(0);
+  // ล็อกการเลื่อนเฉพาะตอนเป็น sheet เต็มจอ (มือถือ) — บนจอใหญ่เป็น popover ที่ขยับตามหน้า ถ้าล็อก body จะเป็น position:fixed ทำ layout หน้าเพี้ยน
+  const sheet = useSyncExternalStore(subscribeSheet, () => window.matchMedia(SHEET_QUERY).matches, () => false);
+  useBodyScrollLock(open && sheet);
   useEffect(() => {
     if (!open) return;
+    let frame = 0;
+    let first = true;
+    const position = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        let anchor = anchorRef.current?.getBoundingClientRect();
+        const popover = ref.current;
+        if (!anchor || !popover) return;
+        // เปิดครั้งแรกแล้วล้นทั้งบนและล่าง → เลื่อนหน้าลงให้เห็นปฏิทินครบ (รวมปุ่ม "ใช้ช่วงนี้") ก่อนจะยอมให้เลื่อนในกล่อง
+        const need = popover.scrollHeight + 8;
+        if (first && window.matchMedia('(min-width: 640px)').matches && need > window.innerHeight - anchor.bottom - 16 && need > anchor.top - 16) {
+          window.scrollBy({ top: Math.min(need - (window.innerHeight - anchor.bottom - 16), anchor.top - 16) });
+          anchor = anchorRef.current?.getBoundingClientRect() ?? anchor;
+        }
+        first = false;
+        const spaceBelow = window.innerHeight - anchor.bottom - 16;
+        const spaceAbove = anchor.top - 16;
+        const openAbove = popover.scrollHeight > spaceBelow && spaceAbove > spaceBelow;
+        setAbove(openAbove);
+        setDesktopMaxHeight(Math.max(160, Math.min(window.innerHeight - 32, openAbove ? spaceAbove : spaceBelow)));
+      });
+    };
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -140,13 +177,17 @@ function Popover({ open, onClose, align = 'end', children, label }: { open: bool
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onDown);
-    // ป๊อปอัปที่เปิดใกล้ขอบล่างจอ เลื่อนหน้าให้เห็นครบ
-    ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    position();
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('resize', position);
+      window.removeEventListener('scroll', position, true);
     };
-  }, [open, onClose]);
+  }, [open, onClose, anchorRef]);
   if (!open) return null;
   return (
     <>
@@ -155,18 +196,62 @@ function Popover({ open, onClose, align = 'end', children, label }: { open: bool
         ref={ref}
         role="dialog"
         aria-label={label}
-        className={`fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-3xl border border-line bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[0_-20px_40px_-20px_#000] sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:mt-2 sm:max-h-none sm:rounded-2xl sm:p-0 sm:shadow-[0_30px_60px_-30px_#000] ${align === 'end' ? 'sm:right-0' : 'sm:left-0'}`}
+        onTouchStart={event => {
+          if (!sheet || event.currentTarget.scrollTop > 0) return;
+          const touch = event.touches[0];
+          if (touch) swipeStart.current = { x: touch.clientX, y: touch.clientY };
+        }}
+        onTouchMove={event => {
+          const start = swipeStart.current;
+          const touch = event.touches[0];
+          if (!sheet || !start || !touch || event.currentTarget.scrollTop > 0) return;
+          const deltaY = touch.clientY - start.y;
+          if (deltaY > Math.abs(touch.clientX - start.x)) setSheetDrag(Math.min(deltaY, ref.current?.clientHeight ?? window.innerHeight));
+        }}
+        onTouchEnd={event => {
+          const start = swipeStart.current;
+          const touch = event.changedTouches[0];
+          swipeStart.current = null;
+          if (!start || !touch) return;
+          const deltaY = touch.clientY - start.y;
+          const sheetHeight = ref.current?.clientHeight ?? window.innerHeight;
+          const dismissDistance = Math.min(Math.max(160, sheetHeight * 0.65), sheetHeight - 24);
+          if (sheet && deltaY >= dismissDistance && deltaY > Math.abs(touch.clientX - start.x)) {
+            setSheetDrag(0);
+            onClose();
+            return;
+          }
+          setSheetDrag(0);
+        }}
+        onTouchCancel={() => {
+          swipeStart.current = null;
+          setSheetDrag(0);
+        }}
+        style={{
+          '--calendar-max-height': desktopMaxHeight ? `${String(desktopMaxHeight)}px` : 'calc(100dvh - 2rem)',
+          transform: sheet && sheetDrag ? `translateY(${String(sheetDrag)}px)` : undefined,
+          transition: sheetDrag ? 'none' : 'transform 180ms ease-out',
+        } as CSSProperties}
+        className={`fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] touch-pan-y overscroll-contain overflow-y-auto rounded-t-3xl border border-line bg-surface p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[0_-20px_40px_-20px_#000] sm:absolute sm:inset-x-auto sm:max-h-[var(--calendar-max-height)] sm:max-w-[calc(100vw-2rem)] sm:rounded-2xl sm:p-0 sm:shadow-[0_30px_60px_-30px_#000] ${above ? 'sm:top-auto sm:bottom-full sm:mb-2' : 'sm:top-full sm:bottom-auto sm:mt-2'} ${align === 'end' ? 'sm:right-0' : 'sm:left-0'}`}
       >
-        <div aria-hidden className="mx-auto mb-3 h-1 w-10 rounded-full bg-line sm:hidden" />
+        <button
+          type="button"
+          aria-label="แตะเพื่อปิดตัวเลือกวันที่"
+          onClick={onClose}
+          className="mx-auto mb-3 grid h-7 w-14 place-items-center sm:hidden"
+        >
+          <span aria-hidden className="h-1 w-10 rounded-full bg-line" />
+        </button>
         {children}
       </div>
     </>
   );
 }
 
-function TriggerButton({ open, onClick, children, id, invalid, describedBy }: { open: boolean; onClick: () => void; children: ReactNode; id?: string; invalid?: boolean; describedBy?: string }) {
+function TriggerButton({ ref, open, onClick, children, id, invalid, describedBy }: { ref: RefObject<HTMLButtonElement | null>; open: boolean; onClick: () => void; children: ReactNode; id?: string; invalid?: boolean; describedBy?: string }) {
   return (
     <button
+      ref={ref}
       id={id}
       type="button"
       data-cal-trigger
@@ -205,6 +290,7 @@ export function DateRangePicker({ value, onApply, today, variant, presets, maxDa
   const [view, setView] = useState<Month>(variant === 'dual' ? shift(ym(anchor), -1) : ym(anchor));
   const [focus, setFocus] = useState(value?.from ?? today);
   const dialogId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const openPicker = () => {
     setDraft({ from: value?.from ?? null, to: value?.to ?? null });
@@ -266,10 +352,10 @@ export function DateRangePicker({ value, onApply, today, variant, presets, maxDa
 
   return (
     <div className="relative">
-      <TriggerButton open={open} onClick={openPicker} id={dialogId}>
+      <TriggerButton ref={triggerRef} open={open} onClick={openPicker} id={dialogId}>
         {value ? <>{thaiRange(value)} <span className="font-normal text-muted">· {daysBetween(value.from, value.to) + 1} วัน</span></> : <span className="font-normal text-muted">ทุกช่วงเวลา — แตะเพื่อเลือก</span>}
       </TriggerButton>
-      <Popover open={open} onClose={() => { setOpen(false); }} label={label}>
+      <Popover open={open} onClose={() => { setOpen(false); }} anchorRef={triggerRef} label={label}>
         {variant === 'dual' && (
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-0">
             {presetButtons(true)}
@@ -321,7 +407,14 @@ export function DateRangePicker({ value, onApply, today, variant, presets, maxDa
 
 /* ---------- เลือกวันเดียว (แบบ B) สำหรับฟอร์ม ---------- */
 
-export function DatePickerField({ name, label, defaultValue, min, max, today, error, optional, placeholder = 'เลือกวันที่' }: {
+const DatePickerGroupContext = createContext<{ openId: string | null; setOpenId: (id: string | null) => void } | null>(null);
+
+export function DatePickerGroup({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return <div className={className}><DatePickerGroupContext.Provider value={{ openId, setOpenId }}>{children}</DatePickerGroupContext.Provider></div>;
+}
+
+export function DatePickerField({ name, label, defaultValue, min, max, today, error, optional, required, placeholder = 'เลือกวันที่', onSelect }: {
   name: string;
   label: string;
   defaultValue?: string;
@@ -330,14 +423,23 @@ export function DatePickerField({ name, label, defaultValue, min, max, today, er
   today: string;
   error?: string;
   optional?: boolean;
+  required?: boolean;
   placeholder?: string;
+  onSelect?: (date: string) => void;
 }) {
+  const group = useContext(DatePickerGroupContext);
   const [value, setValue] = useState(defaultValue ?? '');
   const [draft, setDraft] = useState(value);
-  const [open, setOpen] = useState(false);
   const [view, setView] = useState<Month>(ym(value || today));
   const [focus, setFocus] = useState(value || today);
   const id = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = group ? group.openId === id : localOpen;
+  const setOpen = (next: boolean) => {
+    if (group) group.setOpenId(next ? id : null);
+    else setLocalOpen(next);
+  };
   const isDisabled = (date: string) => (min !== undefined && date < min) || (max !== undefined && date > max);
   const focusDate = (date: string) => {
     setFocus(date);
@@ -345,20 +447,35 @@ export function DatePickerField({ name, label, defaultValue, min, max, today, er
   };
   return (
     <div className="relative flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold">{label} {optional && <span className="font-normal text-faint">(ไม่บังคับ)</span>}</label>
-      <TriggerButton id={id} open={open} invalid={Boolean(error)} describedBy={error ? `${id}-error` : undefined} onClick={() => { setDraft(value); setView(ym(value || today)); setOpen(o => !o); }}>
+      <label htmlFor={id} className="text-sm font-semibold">{label} {required && <span aria-hidden className="text-danger">*</span>} {optional && <span className="font-normal text-faint">(ไม่บังคับ)</span>}</label>
+      <TriggerButton ref={triggerRef} id={id} open={open} invalid={Boolean(error)} describedBy={error ? `${id}-error` : undefined} onClick={() => { setDraft(value); setView(ym(value || today)); setOpen(!open); }}>
         {value ? thaiDate(value) : <span className="font-normal text-faint">{placeholder}</span>}
       </TriggerButton>
       <input type="hidden" name={name} value={value} />
-      <Popover open={open} onClose={() => { setOpen(false); }} align="start" label={label}>
+      <Popover open={open} onClose={() => { setOpen(false); }} anchorRef={triggerRef} align="start" label={label}>
         <div className="flex flex-col gap-3 sm:w-[310px] sm:p-4">
           <p className="font-display text-[15px] font-semibold sm:hidden">{label}</p>
           <MonthHeader view={view} onPrev={() => { setView(v => shift(v, -1)); }} onNext={() => { setView(v => shift(v, 1)); }} />
-          <MonthGrid view={view} today={today} selected={{ from: draft || null, to: draft || null }} isDisabled={isDisabled} onPick={d => { setDraft(d); setFocus(d); }} focus={focus} onFocusDate={focusDate} label={label} />
-          <div className="flex gap-2 border-t border-line pt-3">
-            {optional && <button type="button" onClick={() => { setValue(''); setOpen(false); }} className={btn.ghost}>ล้าง</button>}
-            <button type="button" disabled={!draft} onClick={() => { setValue(draft); setOpen(false); }} className={`${btn.primary} flex-1`}>{draft ? `เลือก ${thaiDate(draft)}` : 'เลือกวันที่'}</button>
-          </div>
+          <MonthGrid
+            view={view}
+            today={today}
+            selected={{ from: draft || null, to: draft || null }}
+            isDisabled={isDisabled}
+            onPick={date => {
+              setDraft(date);
+              setValue(date);
+              setOpen(false);
+              onSelect?.(date);
+            }}
+            focus={focus}
+            onFocusDate={focusDate}
+            label={label}
+          />
+          {optional && (
+            <div className="border-t border-line pt-3">
+              <button type="button" onClick={() => { setDraft(''); setValue(''); setOpen(false); }} className={btn.ghost}>ล้าง</button>
+            </div>
+          )}
         </div>
       </Popover>
       {error && <p id={`${id}-error`} className="text-sm text-danger">{error}</p>}

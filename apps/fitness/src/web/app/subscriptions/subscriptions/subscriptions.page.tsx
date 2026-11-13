@@ -3,11 +3,12 @@ import { Info } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
-import { Badge, Card, EmptyState, Forbidden, PageHeader, Stat } from '@/web/components/ui/ui/ui';
+import { Badge, Card, EmptyState, PageHeader, Stat } from '@/web/components/ui/ui/ui';
 import { runBillingAction, sendPayLinkAction } from '@/api/actions/subscriptions/subscriptions/subscriptions.actions';
 import { getSubscriptionOverview } from '@/api/dal/subscriptions/subscriptions/subscriptions.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { can } from '@/api/lib/auth/auth/auth.rbac';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'ตัดบัตรอัตโนมัติ' };
 
@@ -15,7 +16,7 @@ const short = (satang: number) => (satang >= 100_000_00 ? `฿${(satang / 100_00
 
 export default async function SubscriptionsPage() {
   const { session, allowed } = await pageGuard('payments.view');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const o = await getSubscriptionOverview(session);
   const max = Math.max(...o.mrrTrend.map(t => t.satang), 1);
   const canRun = can(session, 'payments.confirm');

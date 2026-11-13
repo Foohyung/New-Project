@@ -4,12 +4,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { FollowUpForm } from '@/web/components/retention/retention/retention.follow-up-form';
-import { Avatar, Badge, btn, Card, EmptyState, Forbidden, PageHeader, Stat } from '@/web/components/ui/ui/ui';
+import { Avatar, Badge, btn, Card, EmptyState, PageHeader, Stat } from '@/web/components/ui/ui/ui';
 import { messageAction, recordContactAction, winbackAction } from '@/api/actions/retention/retention/retention.actions';
 import { RISK_LABEL, RISK_WEIGHTS, STAGE_LABEL, type FollowUpStage } from '@/api/services/retention/retention/retention.service';
 import type { AtRiskDto } from '@/api/types/retention/retention/retention.types';
 import { getRetention } from '@/api/dal/retention/retention/retention.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'ติดตามสมาชิก' };
 
@@ -62,7 +63,7 @@ function RiskRow({ r }: { r: AtRiskDto }) {
 
 export default async function RetentionPage() {
   const { session, allowed } = await pageGuard('retention.view');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const data = await getRetention(session);
   const stages: FollowUpStage[] = ['todo', 'contacted', 'won'];
 

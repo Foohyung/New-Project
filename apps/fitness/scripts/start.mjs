@@ -21,7 +21,7 @@ if (existsSync(at('public'))) cpSync(at('public'), path.join(standalone, 'public
 for (const file of ['.env.production.local', '.env.local', '.env.production', '.env']) {
   if (existsSync(at(file))) process.loadEnvFile(at(file));
 }
-process.env.PORT ??= '3001';
+process.env.PORT ??= '7070';
 process.env.HOSTNAME ??= '127.0.0.1';
 
 console.log(`FitFlow → http://${process.env.HOSTNAME === '0.0.0.0' ? '<IP ของเครื่อง>' : process.env.HOSTNAME}${process.env.PORT === '80' ? '' : `:${process.env.PORT}`}${process.env.ALLOW_HTTP === '1' ? '  (ALLOW_HTTP=1: ใช้ผ่าน http ได้ — สำหรับทดสอบเท่านั้น)' : ''}`);

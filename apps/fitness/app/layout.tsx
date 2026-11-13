@@ -5,12 +5,13 @@ import { connection } from 'next/server';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/web/components/layout/layout/layout.app-shell';
 import { PageTransition } from '@/web/components/layout/layout/layout.page-transition';
+import { FaviconSync } from '@/web/components/layout/layout/layout.favicon';
 import { DeletedFlash, Toaster } from '@/web/components/ui/ui/ui.toast';
 import { logoutAction } from '@/api/actions/auth/auth/auth.actions';
-import { setThemeAction } from '@/api/actions/theme/theme/theme.actions';
-import { THEME_INFO } from '@/api/services/theme/theme/theme.themes';
+import { setThemeAction, setThemeModeAction } from '@/api/actions/theme/theme/theme.actions';
+import { THEME_MODE_INFO, themeBackground } from '@/api/services/theme/theme/theme.themes';
 import { getSession } from '@/api/lib/auth/auth/auth.session';
-import { currentTheme } from '@/api/lib/theme/theme/theme.server';
+import { currentTheme, currentThemeMode } from '@/api/lib/theme/theme/theme.server';
 import { getBranchBranding } from '@/api/dal/branding/branding/branding.dal';
 import './globals.css';
 
@@ -26,23 +27,25 @@ export const metadata: Metadata = {
 };
 
 export async function generateViewport(): Promise<Viewport> {
-  return { width: 'device-width', initialScale: 1, themeColor: THEME_INFO[await currentTheme()].bg };
+  const [theme, mode] = await Promise.all([currentTheme(), currentThemeMode()]);
+  return { width: 'device-width', initialScale: 1, themeColor: themeBackground(theme, mode) };
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // render ทุก request เพื่อให้ CSP nonce ใช้ได้ (§10.5)
   await connection();
-  const [session, theme] = await Promise.all([getSession(), currentTheme()]);
+  const [session, theme, mode] = await Promise.all([getSession(), currentTheme(), currentThemeMode()]);
   const branding = session && !session.mustChangePassword ? await getBranchBranding(session) : null;
-  const rootStyle: CSSProperties & { '--color-lime': string } = {
-    colorScheme: THEME_INFO[theme].scheme,
-    '--color-lime': branding?.primaryColor ?? THEME_INFO[theme].accent,
+  const rootStyle: CSSProperties & { '--color-lime'?: string } = {
+    colorScheme: THEME_MODE_INFO[mode].scheme,
+    ...(branding?.primaryColor ? { '--color-lime': branding.primaryColor } : {}),
   };
   const logoSrc = branding?.hasUploadedLogo ? '/api/branding/logo' : branding?.logoUrl ?? null;
   const gymName = branding?.gymName ?? null;
   return (
-    <html lang="th" data-theme={theme} style={rootStyle} className={`${plex.variable} ${kanit.variable} ${athletic.variable}`}>
+    <html lang="th" data-theme={theme} data-mode={mode} style={rootStyle} className={`${plex.variable} ${kanit.variable} ${athletic.variable}`}>
       <body>
+        <FaviconSync />
         <PageTransition />
         <Toaster />
         <Suspense fallback={null}><DeletedFlash /></Suspense>
@@ -50,7 +53,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <AppShell
             user={{ name: session.name, nickname: session.nickname, branch: session.branch, role: session.role, roleName: session.roleName ?? session.role, permissions: session.permissions ?? [] }}
             demo={{ logoutAction }}
-            theme={{ theme, setTheme: setThemeAction }}
+            theme={{ theme, mode, setTheme: setThemeAction, setMode: setThemeModeAction }}
             branding={{ gymName, logoSrc }}
           >
             {children}

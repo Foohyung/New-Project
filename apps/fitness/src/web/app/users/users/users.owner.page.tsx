@@ -2,22 +2,24 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { addOwnerBranchAction, deleteManagedUserAction, removeOwnerBranchAction } from '@/api/actions/users/users/users.actions';
 import { getOwnerDetail } from '@/api/dal/users/users/users.dal';
+import { activeBranchNames } from '@/api/dal/branches/branches/branches.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { today } from '@/api/lib/clock/clock/clock';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
-import { Badge, Card, EmptyState, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { Badge, Card, EmptyState, PageHeader } from '@/web/components/ui/ui/ui';
 import { OwnerBranchForm } from '@/web/components/users/users/users.form';
 import { UserRowActions } from '@/web/components/users/users/users.row-actions';
 import { UserStatusBadge } from '@/web/components/users/users/users.status';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'สาขาของเจ้าของ' };
 
 /** (admin) เจ้าของคนนี้ดูแลสาขาไหนบ้าง และแต่ละสาขามีพนักงานคนไหน */
 export default async function OwnerPage({ params }: { params: Promise<{ id: string }> }) {
   const { session, allowed } = await pageGuard('users.manage');
-  if (!allowed || session.role !== 'admin') return <Forbidden />;
+  if (!allowed || session.role !== 'admin') return accessDenied();
   const { id } = await params;
-  const detail = await getOwnerDetail(session, id);
+  const [detail, allBranches] = await Promise.all([getOwnerDetail(session, id), activeBranchNames()]);
   if (!detail) notFound();
   const { owner, branches } = detail;
   const staffCount = branches.reduce((sum, b) => sum + b.staff.length, 0);
@@ -44,7 +46,8 @@ export default async function OwnerPage({ params }: { params: Promise<{ id: stri
           ))}
         </nav>
         <div className="mt-4 border-t border-line pt-4">
-          <OwnerBranchForm action={addOwnerBranchAction.bind(null, owner.id)} />
+          {/* เลือกได้เฉพาะสาขาที่เจ้าของคนนี้ยังไม่ได้ดูแล */}
+          <OwnerBranchForm action={addOwnerBranchAction.bind(null, owner.id)} branchOptions={allBranches.filter(name => !branches.some(b => b.branch === name))} />
         </div>
       </Card>
 

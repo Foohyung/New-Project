@@ -16,7 +16,7 @@ src/
 ├── web/          ← Frontend
 │   ├── app/          หน้าเว็บ           app/members/members/members.page.tsx · members.detail.page.tsx · members.new.page.tsx
 │   ├── components/   component          components/members/members/members.forms.tsx · components/ui/ui/ui.tsx (Card, Badge, …)
-│   │                                    components/ui/ui/ (ui.action-button · ui.confirm-form · ui.delete-button · ui.toast · ui.file-drop — ดู docs/UI.md)
+│   │                                    components/ui/ui/ (ui.action-button · ui.confirm-form · ui.form-dialog · ui.delete-button · ui.toast · ui.file-drop — ดู docs/UI.md)
 │   │                                    components/layout/layout/ (เมนู โลโก้ แอนิเมชัน ธีม)
 │   ├── hooks/        React hook         hooks/ui/ui/ui.use-form-action.ts
 │   ├── lib/          logic ฝั่งหน้าเว็บ  lib/layout/layout/layout.motion-routes.ts
@@ -39,7 +39,7 @@ src/
 
 | โฟลเดอร์ | หน้าที่ |
 |---|---|
-| `web/app` | หน้าเว็บ 1 หน้า: ตรวจสิทธิ์ (`pageGuard`) → ดึงข้อมูลจาก DAL → ส่ง props ให้ component |
+| `web/app` | หน้าเว็บ 1 หน้า: ตรวจสิทธิ์ (`pageGuard` · ไม่มีสิทธิ์ = `return accessDenied()`) → ดึงข้อมูลจาก DAL → ส่ง props ให้ component |
 | `web/components` · `web/hooks` · `web/lib` | ใช้ได้แค่ `api/actions`, `api/services`, `api/schemas`, `api/types` และ `api/lib/utils` · **ห้าม** import `api/dal` หรือ `api/lib/{db,auth,audit,clock,theme}` (ESLint บังคับ) |
 | `api/actions` | Server Action: session → Zod → DAL → `audit()` |
 | `api/dal` | ตรวจสิทธิ์ก่อน แล้วอ่าน/เขียนฐานข้อมูล คืนค่าเป็น DTO (`server-only`) |
@@ -59,7 +59,7 @@ Next.js อ่านเส้นทาง URL จากโฟลเดอร์�
 export { default, metadata } from '@/web/app/members/members/members.detail.page';
 ```
 
-**หน้าที่มีพารามิเตอร์ซ้อนกัน** เช่น `/users/[id]` (หน้าเจ้าของ) กับ `/users/[id]/edit` (แก้ไขบัญชี) อยู่ใน `app/users/[id]/page.tsx` และ `app/users/[id]/edit/page.tsx` · หน้าที่ไม่ต้องเข้าสู่ระบบ (`/login`, `/forgot-password`) ต้องเพิ่มใน `proxy.ts` ด้วย
+**หน้าที่มีพารามิเตอร์ซ้อนกัน** เช่น `/users/[id]` (หน้าเจ้าของ) กับ `/users/[id]/edit` (แก้ไขบัญชี) อยู่ใน `app/users/[id]/page.tsx` และ `app/users/[id]/edit/page.tsx` · หน้าที่ไม่ต้องเข้าสู่ระบบ (`/` หน้าแรก, `/login`, `/forgot-password`) ต้องเพิ่มใน `proxy.ts` ด้วย (ไฟล์ SEO `robots.txt`, `sitemap.xml`, `llms.txt`, `opengraph-image`, `twitter-image` ยกเว้นไว้ใน matcher ของ `proxy.ts` แล้ว) · `/` ใช้ `src/web/app/landing/landing/landing.home.page.tsx` แสดงหน้าแนะนำระบบเมื่อยังไม่เข้าสู่ระบบ และเมื่อเข้าสู่ระบบจะพาไปหน้าแรกตามตำแหน่ง (`landingFor` → `/dashboard`, `/classes`, `/me`)
 
 **เพิ่มหน้าใหม่:**
 1. สร้าง `src/web/app/<เรื่อง>/<เรื่อง>/<เรื่อง>.<ชื่อ>.page.tsx`

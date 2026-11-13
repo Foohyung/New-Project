@@ -21,8 +21,11 @@ export function ManagedUserForm({
   action,
   today,
   user,
+  branchOptions = [],
 }: {
   branch: string;
+  /** (admin) สาขาที่เปิดใช้งานจากตั้งค่า > สาขา */
+  branchOptions?: string[];
   options: UserOptions;
   canManageRoles: boolean;
   action: (prev: ActionResult, formData: FormData) => Promise<ActionResult>;
@@ -40,12 +43,12 @@ export function ManagedUserForm({
     ...systemRoles.map(value => ({
       value: value.id,
       label: value.name,
-      description: 'บทบาทระบบ',
+      description: `บทบาทระบบ · ${String(value.permissionCount)} สิทธิ์`,
     })),
     ...customRoles.map(value => ({
       value: value.id,
       label: value.name,
-      description: 'บทบาทที่สร้างเอง',
+      description: `บทบาทที่สร้างเอง · ${String(value.permissionCount)} สิทธิ์`,
     })),
   ];
 
@@ -84,12 +87,15 @@ export function ManagedUserForm({
         <TextField name="confirmPassword" label="ยืนยันรหัสผ่าน" optional={editing} type="password" autoComplete="new-password" maxLength={200} error={errors.confirmPassword} required={!editing} />
         <DatePickerField name="activeFrom" label="ใช้งานได้ตั้งแต่ (active from)" optional defaultValue={user?.activeFrom ?? ''} today={today} placeholder="ไม่จำกัด" error={errors.activeFrom} />
         <DatePickerField name="activeTo" label="ใช้งานได้ถึง (active to)" optional defaultValue={user?.activeTo ?? ''} today={today} placeholder="ไม่จำกัด" error={errors.activeTo} />
-        {canManageRoles ? (
-          <TextField name="branch" label="สาขา" defaultValue={user?.branch ?? branch} autoComplete="off" error={errors.branch} required />
-        ) : (
-          // เจ้าของเพิ่มบัญชีได้เฉพาะสาขาของตัวเอง (server บังคับซ้ำ)
-          <TextField name="branch" label="สาขา" value={branch} readOnly hint="เพิ่มได้เฉพาะสาขาที่คุณดูแล · เปลี่ยนสาขาจากแท็บด้านบน" />
-        )}
+        <Dropdown
+          name="branch"
+          label="สาขา"
+          // สาขาเดิมของบัญชีที่ปิดใช้งานแล้ว ยังแสดงให้เลือกค้างไว้
+          options={[...new Set([...branchOptions, ...(user ? [user.branch] : [])])].map(b => ({ value: b, label: b }))}
+          defaultValue={user?.branch ?? (branchOptions.includes(branch) ? branch : branchOptions[0])}
+          hint={canManageRoles ? 'เพิ่มหรือแก้ชื่อสาขาได้ที่เมนูตั้งค่า > สาขา' : 'เลือกได้เฉพาะสาขาที่คุณดูแล'}
+          error={errors.branch}
+        />
         {role === 'trainer' && (
           <Dropdown
             name="trainerId"
@@ -138,13 +144,13 @@ export function ManagedUserForm({
 }
 
 /** (admin) เพิ่มสาขาให้เจ้าของดูแล */
-export function OwnerBranchForm({ action }: { action: (prev: ActionResult, formData: FormData) => Promise<ActionResult> }) {
+export function OwnerBranchForm({ action, branchOptions }: { action: (prev: ActionResult, formData: FormData) => Promise<ActionResult>; branchOptions: string[] }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
   const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
   return (
     <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-end" autoComplete="off">
       <div className="min-w-0 flex-1">
-        <TextField name="branch" label="ชื่อสาขา" placeholder="เช่น สาขาบางนา" hint="พิมพ์ชื่อให้ตรงกับสาขาของพนักงาน" error={errors.branch} required />
+        <Dropdown name="branch" label="สาขา" options={branchOptions.map(b => ({ value: b, label: b }))} defaultValue={branchOptions[0]} hint="เพิ่มสาขาใหม่ได้ที่เมนูตั้งค่า > สาขา" error={errors.branch} />
       </div>
       <div className="flex flex-col gap-1.5 sm:pb-6">
         <button type="submit" disabled={pending} className={btn.primary}>{pending ? 'กำลังเพิ่ม…' : 'เพิ่มสาขา'}</button>

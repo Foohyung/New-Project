@@ -1,12 +1,14 @@
 import { beforeEach, expect, it } from 'vitest';
 import { prisma } from '@/api/lib/db/db/db';
-import { listCoupons, myReferral, previewCoupon } from '@/api/dal/coupons/coupons/coupons.dal';
+import { listCoupons, previewCoupon, updateCoupon } from '@/api/dal/coupons/coupons/coupons.dal';
 import { createMember, getMemberDetail, renewMember } from '@/api/dal/members/members/members.dal';
 import { getPayment } from '@/api/dal/payments/payments/payments.dal';
 import { getReminderCenter, runReminders, sendManualReminder } from '@/api/dal/reminders/reminders/reminders.dal';
 import { getRetention, giveWinbackCoupon } from '@/api/dal/retention/retention/retention.dal';
 import { getMyAutoRenew, getSubscriptionOverview, runBilling, setMyAutoRenew } from '@/api/dal/subscriptions/subscriptions/subscriptions.dal';
 import { describeDb, resetDatabase, USERS } from '@/api/test/db/db/db.test-helpers';
+import { addDays } from '@/api/lib/utils/utils/utils';
+import { today } from '@/api/lib/clock/clock/clock';
 
 const { manager, member, owner } = USERS;
 const frontDesk = USERS['front-desk'];
@@ -15,6 +17,42 @@ const newbie = { name: 'ทดสอบ คูปอง', phone: '0899999998', e
 beforeEach(resetDatabase, 30_000);
 
 describeDb('คูปอง', () => {
+  it('แก้ไขเงื่อนไขและช่วงวันได้ และปฏิเสธโค้ดก่อนวันเริ่มใช้', async () => {
+    const startsOn = addDays(today(), 1);
+    const updated = await updateCoupon(manager, 'RENEW10', {
+      description: 'ต่ออายุลดพิเศษ',
+      type: 'percent',
+      value: 15,
+      packageIds: null,
+      renewOnly: true,
+      newOnly: false,
+      limit: 47,
+      startsOn,
+      expiresOn: addDays(startsOn, 30),
+      perMember: 2,
+      terms: 'ใช้ได้ตามช่วงวัน',
+      minMemberDays: null,
+      proofRequired: null,
+    });
+
+    expect(updated).toMatchObject({ description: 'ต่ออายุลดพิเศษ', label: 'ลด 15%', startsOn, state: 'scheduled' });
+    await expect(updateCoupon(manager, 'RENEW10', {
+      description: 'จำกัดสิทธิ์',
+      type: 'percent',
+      value: 15,
+      packageIds: null,
+      renewOnly: true,
+      newOnly: false,
+      limit: 46,
+      startsOn,
+      expiresOn: addDays(startsOn, 30),
+      perMember: 2,
+      terms: null,
+      minMemberDays: null,
+      proofRequired: null,
+    })).rejects.toThrow('COUPON_LIMIT_BELOW_USED');
+  });
+
   it('ต่ออายุด้วย RENEW10 หักส่วนลด จองสิทธิ์ และใช้ซ้ำไม่ได้', async () => {
     const { paymentId } = await renewMember(frontDesk, '02', 'monthly', 'cash', 'renew10');
     expect(await getPayment(manager, paymentId)).toMatchObject({ listPriceSatang: 120_000, discountSatang: 12_000, amountSatang: 108_000, couponCode: 'RENEW10' });
@@ -29,11 +67,9 @@ describeDb('คูปอง', () => {
     expect((await getMemberDetail(manager, memberId))?.expiresOn).toBe('2026-11-21');
   });
 
-  it('เพื่อนสมัครด้วยโค้ดชวนเพื่อน เจ้าของโค้ดได้ 7 วัน', async () => {
-    const before = (await getMemberDetail(manager, '02'))?.expiresOn;
-    await createMember(frontDesk, { ...newbie, packageId: 'monthly', method: 'cash', couponCode: 'FRIEND-1842' });
-    expect(before).toBe('2026-10-18');
-    expect((await getMemberDetail(manager, '02'))?.expiresOn).toBe('2026-10-25');
+  it('โค้ดชวนเพื่อนปิดไว้ก่อน — โค้ดเดิมในฐานข้อมูลใช้ไม่ได้', async () => {
+    await prisma().coupon.create({ data: { code: 'FRIEND-1842', description: 'ชวนเพื่อน (ปิดแล้ว)', type: 'baht', value: 20_000, kind: 'referral', newOnly: true, startsOn: new Date('2026-10-15T00:00:00Z'), ownerMemberId: '02' } });
+    await expect(createMember(frontDesk, { ...newbie, packageId: 'monthly', method: 'cash', couponCode: 'FRIEND-1842' })).rejects.toThrow('COUPON:inactive');
   });
 
   it('ดูตัวอย่างส่วนลดได้ และบอกเหตุผลเมื่อใช้ไม่ได้', async () => {
@@ -42,9 +78,8 @@ describeDb('คูปอง', () => {
     expect(await previewCoupon(frontDesk, { code: 'NOPE', packageId: '3m', memberId: null })).toMatchObject({ ok: false });
   });
 
-  it('เคาน์เตอร์จัดการคูปองไม่ได้ สมาชิกมีโค้ดชวนเพื่อนของตัวเอง', async () => {
+  it('เคาน์เตอร์จัดการคูปองไม่ได้', async () => {
     await expect(listCoupons(frontDesk)).rejects.toThrow('FORBIDDEN');
-    expect((await myReferral(member)).code).toBe('FRIEND-2318');
   });
 });
 

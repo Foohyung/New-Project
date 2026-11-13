@@ -1,8 +1,8 @@
 'use client';
 
-import { CircleCheck, TicketPercent, X } from 'lucide-react';
+import { CircleCheck, ShieldCheck, TicketPercent, X } from 'lucide-react';
 import { useEffect, useId, useState, useTransition } from 'react';
-import { previewCouponAction } from '@/api/actions/coupons/coupons/coupons.actions';
+import { previewCouponAction, previewPurchaseCouponAction } from '@/api/actions/coupons/coupons/coupons.actions';
 import { inputClass } from '@/web/components/ui/ui/ui';
 
 export interface AppliedCoupon {
@@ -10,38 +10,26 @@ export interface AppliedCoupon {
   discountSatang: number;
   bonusDays: number;
   label: string;
+  terms?: string | null;
+  proofRequired?: string | null;
 }
 
-/**
- * ช่องใส่คูปอง: กด "ใช้โค้ด" เพื่อดูส่วนลดก่อนชำระ แล้วส่งค่าไปกับฟอร์มผ่าน hidden input
- * ระบบตรวจซ้ำอีกครั้งตอนบันทึกจริง (หน้าเว็บแสดงผลเพื่อ UX เท่านั้น)
- */
-export function CouponField({ packageId, memberId, applied, onApplied, error }: { packageId: string; memberId: string | null; applied: AppliedCoupon | null; onApplied: (c: AppliedCoupon | null) => void; error?: string }) {
+export type PurchaseCouponRequest =
+  | { target: 'product'; items: { productId: string; qty: number }[] }
+  | { target: 'course'; courseId: string };
+
+function CouponInput({ code, setCode, check, pending, applied, onApplied, message, placeholder }: {
+  code: string;
+  setCode: (code: string) => void;
+  check: (code: string) => void;
+  pending: boolean;
+  applied: AppliedCoupon | null;
+  onApplied: (coupon: AppliedCoupon | null) => void;
+  message: string | null;
+  placeholder: string;
+}) {
   const id = useId();
-  const [code, setCode] = useState(applied?.code ?? '');
-  const [message, setMessage] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
-  const check = (value: string) => {
-    startTransition(async () => {
-      const r = await previewCouponAction({ code: value, packageId, memberId });
-      if (r.ok) {
-        onApplied({ code: r.code, discountSatang: r.discountSatang, bonusDays: r.bonusDays, label: r.label });
-        setMessage(null);
-      } else {
-        onApplied(null);
-        setMessage(r.message);
-      }
-    });
-  };
-
-  // เปลี่ยนแพ็กเกจแล้วตรวจโค้ดเดิมใหม่ (บางโค้ดใช้ได้เฉพาะบางแพ็กเกจ)
-  useEffect(() => {
-    if (applied) check(applied.code);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- ตรวจใหม่เฉพาะเมื่อแพ็กเกจเปลี่ยน
-  }, [packageId]);
-
-  const shown = error ?? message;
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-semibold">โค้ดส่วนลด <span className="font-normal text-faint">(ไม่บังคับ)</span></label>
@@ -51,20 +39,20 @@ export function CouponField({ packageId, memberId, applied, onApplied, error }: 
           <input
             id={id}
             value={code}
-            onChange={e => {
-              setCode(e.target.value.toUpperCase());
+            onChange={event => {
+              setCode(event.target.value.toUpperCase());
               if (applied) onApplied(null);
             }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
                 check(code);
               }
             }}
-            placeholder="เช่น RENEW10"
+            placeholder={placeholder}
             autoComplete="off"
-            aria-invalid={shown ? true : undefined}
-            aria-describedby={shown ? `${id}-msg` : undefined}
+            aria-invalid={message ? true : undefined}
+            aria-describedby={message ? `${id}-msg` : undefined}
             className={`${inputClass} pl-11 uppercase`}
           />
         </div>
@@ -80,7 +68,72 @@ export function CouponField({ packageId, memberId, applied, onApplied, error }: 
       </div>
       <input type="hidden" name="couponCode" value={applied?.code ?? ''} />
       {applied && <p role="status" className="flex items-center gap-1.5 text-sm text-lime"><CircleCheck aria-hidden className="size-4" />ใช้โค้ด {applied.code} แล้ว · {applied.label}</p>}
-      {shown && !applied && <p id={`${id}-msg`} role="alert" className="text-sm text-danger">{shown}</p>}
+      {applied?.terms && <p className="rounded-xl border border-line bg-bg px-3 py-2 text-sm whitespace-pre-line text-muted"><b className="text-ink">เงื่อนไข:</b> {applied.terms}</p>}
+      {applied?.proofRequired && (
+        <label className="flex min-h-11 items-start gap-3 rounded-xl border border-warn/50 bg-warn/10 px-3 py-2.5 text-sm">
+          <input type="checkbox" name="couponProof" required className="mt-0.5 size-5 shrink-0 accent-lime" />
+          <span><b className="flex items-center gap-1.5"><ShieldCheck aria-hidden className="size-4 text-warn" />ตรวจหลักฐานแล้ว</b><span className="text-muted">{applied.proofRequired}</span></span>
+        </label>
+      )}
+      {message && <p id={`${id}-msg`} role="alert" className="text-sm text-danger">{message}</p>}
     </div>
   );
+}
+
+export function CouponField({ packageId, memberId, applied, onApplied, error }: {
+  packageId: string;
+  memberId: string | null;
+  applied: AppliedCoupon | null;
+  onApplied: (coupon: AppliedCoupon | null) => void;
+  error?: string;
+}) {
+  const [code, setCode] = useState(applied?.code ?? '');
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const check = (value: string) => {
+    startTransition(async () => {
+      const result = await previewCouponAction({ code: value, packageId, memberId });
+      if (result.ok) {
+        onApplied({ code: result.code, discountSatang: result.discountSatang, bonusDays: result.bonusDays, label: result.label, terms: result.terms, proofRequired: result.proofRequired });
+        setMessage(null);
+      } else {
+        onApplied(null);
+        setMessage(result.message);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (applied) check(applied.code);
+    // Recheck only when the selected package changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packageId]);
+
+  return <CouponInput code={code} setCode={setCode} check={check} pending={pending} applied={applied} onApplied={onApplied} message={error ?? message} placeholder="เช่น RENEW10" />;
+}
+
+export function PurchaseCouponField({ purchase, applied, onApplied }: {
+  purchase: PurchaseCouponRequest;
+  applied: AppliedCoupon | null;
+  onApplied: (coupon: AppliedCoupon | null) => void;
+}) {
+  const [code, setCode] = useState(applied?.code ?? '');
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const check = (value: string) => {
+    startTransition(async () => {
+      const result = await previewPurchaseCouponAction({ code: value, ...purchase });
+      if (result.ok) {
+        onApplied({ code: result.code, discountSatang: result.discountSatang, bonusDays: result.bonusDays, label: result.label, terms: result.terms, proofRequired: result.proofRequired });
+        setMessage(null);
+      } else {
+        onApplied(null);
+        setMessage(result.message);
+      }
+    });
+  };
+
+  return <CouponInput code={code} setCode={setCode} check={check} pending={pending} applied={applied} onApplied={onApplied} message={message} placeholder="เช่น SAVE10" />;
 }

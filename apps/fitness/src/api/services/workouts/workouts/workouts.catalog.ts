@@ -39,10 +39,6 @@ export const MUSCLE_REGIONS: readonly { label: string; muscles: readonly Muscle[
   { label: 'ก้นและขา', muscles: ['glutes', 'quads', 'hamstrings', 'adductors', 'calves'] },
 ];
 
-export function isMuscle(value: unknown): value is Muscle {
-  return typeof value === 'string' && (MUSCLES as readonly string[]).includes(value);
-}
-
 export interface Exercise {
   id: string;
   name: string;

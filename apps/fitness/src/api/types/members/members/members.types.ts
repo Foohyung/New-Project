@@ -18,10 +18,11 @@ export interface MemberDto {
 }
 
 export interface MemberDetailDto extends MemberDto {
+  branch: string;
   email: string | null;
   note: string | null;
   freeze: { from: string; until: string } | null;
-  checkIns: { at: string; allowed: boolean }[];
+  checkIns: { at: string; checkedOutAt: string | null; allowed: boolean }[];
   bookings: { id: string; classId: string; title: string; startsAt: string; room: string }[];
   ptSessions: { id: string; trainerName: string; startsAt: string; status: 'booked' | 'done' | 'cancelled' }[];
   /** null เมื่อผู้ใช้ไม่มีสิทธิ์ดูการเงิน */

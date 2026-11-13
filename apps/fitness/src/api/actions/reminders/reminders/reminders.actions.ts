@@ -18,7 +18,7 @@ export async function updateRoundAction(id: RoundId, _prev: ActionResult, formDa
     return knownFailure(error);
   }
   await audit(session, 'reminder.update', 'reminder_round', id);
-  revalidatePath('/marketing');
+  revalidatePath('/reminders');
   return { ok: true, message: 'บันทึกรอบนี้แล้ว' };
 }
 
@@ -27,7 +27,7 @@ export async function runRemindersAction(_prev: ActionResult, _formData: FormDat
   try {
     const count = await runReminders(session);
     await audit(session, 'reminder.run', 'reminder_round', 'today');
-    revalidatePath('/marketing');
+    revalidatePath('/reminders');
     return { ok: true, message: count ? `ส่งแล้ว ${String(count)} คน (จำลอง)` : 'วันนี้ไม่มีใครถึงรอบ หรือส่งไปแล้ว' };
   } catch (error) {
     return knownFailure(error);

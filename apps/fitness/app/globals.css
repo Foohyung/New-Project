@@ -58,6 +58,73 @@
   --color-warn: #fcd34d;
 }
 
+/* โหมดสีแยกจากพาเลตต์ เพื่อให้ทุกธีมใช้ได้ทั้งพื้นหลังมืดและสว่าง */
+[data-mode='dark'] {
+  --color-bg: #0b0d10;
+  --color-surface: #13161b;
+  --color-surface-2: #1a1e25;
+  --color-line: #252a33;
+  --color-ink: #eceff3;
+  --color-muted: #8b94a3;
+  --color-faint: #5d6573;
+  --color-danger: #ff5c7a;
+  --color-warn: #ffb547;
+}
+[data-mode='dark'][data-theme='light'] {
+  --color-lime: #b7e34a;
+  --color-cyan: #3ddcff;
+  --color-violet: #a78bfa;
+}
+[data-mode='dark'][data-theme='ocean'] {
+  --color-bg: #08111c;
+  --color-surface: #0e1a28;
+  --color-surface-2: #142334;
+  --color-line: #1f3247;
+  --color-ink: #e6eef7;
+  --color-muted: #8aa0b8;
+  --color-faint: #5a6f86;
+  --color-danger: #ff5c7a;
+  --color-warn: #ffb547;
+}
+[data-mode='dark'][data-theme='sunset'] {
+  --color-bg: #120d0b;
+  --color-surface: #1b1411;
+  --color-surface-2: #251c17;
+  --color-line: #35281f;
+  --color-ink: #f5ede6;
+  --color-muted: #a8988b;
+  --color-faint: #7a6a5d;
+  --color-danger: #ff5c7a;
+}
+[data-mode='light'] {
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f3;
+  --color-line: #dfe3e8;
+  --color-ink: #14161a;
+  --color-muted: #5b6270;
+  --color-faint: #737b88;
+  --color-danger: #d92d4c;
+  --color-warn: #b45309;
+}
+[data-mode='light'][data-theme='pulse'],
+[data-mode='light'][data-theme='light'] {
+  --color-lime: #4d7c0f;
+  --color-cyan: #0e7490;
+  --color-violet: #6d28d9;
+}
+[data-mode='light'][data-theme='ocean'] {
+  --color-lime: #0e7490;
+  --color-cyan: #1d4ed8;
+  --color-violet: #6d28d9;
+}
+[data-mode='light'][data-theme='sunset'] {
+  --color-lime: #b45309;
+  --color-cyan: #0e7490;
+  --color-violet: #86198f;
+  --color-warn: #92400e;
+}
+
 @theme inline {
   --font-sans: var(--font-plex), system-ui, sans-serif;
   --font-display: var(--font-kanit), var(--font-plex), sans-serif;
@@ -67,6 +134,9 @@
 @layer base {
   html {
     color-scheme: dark;
+  }
+  html[data-mode='light'] {
+    color-scheme: light;
   }
   body {
     @apply bg-bg font-sans text-base text-ink antialiased;
@@ -199,6 +269,16 @@ main > :nth-child(4) { --ff-i: 3; } main > :nth-child(5) { --ff-i: 4; } main > :
 .ff-press:not(:disabled):hover { transform: translateY(-2px); }
 .ff-press:not(:disabled):active { transform: scale(.94); transition-duration: .08s; }
 
+/* หน้าแรก: hero ลอยขึ้นทีละบรรทัดตอนเปิดหน้า (--ff-i = ลำดับ) · การ์ดเช็กอินเด้งขึ้นตามมา — CSS ล้วน ไม่ต้องรอ JavaScript */
+.ff-hero-in { animation: ff-hero-in calc(.7s * var(--ff-slow)) cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(var(--ff-i, 0) * 90ms * var(--ff-slow)); }
+@keyframes ff-hero-in { from { opacity: 0; transform: translateY(22px); } }
+.ff-hero-card { animation: ff-hero-card calc(.9s * var(--ff-slow)) var(--ease-spring) backwards; animation-delay: calc(280ms * var(--ff-slow)); }
+@keyframes ff-hero-card { from { opacity: 0; transform: translateY(36px) scale(.96); } }
+
+/* หน้าแรก: ส่วนที่ยังไม่ถึงจอค่อย ๆ ลอยขึ้นเมื่อเลื่อนถึง (landing.reveal.tsx ใส่ data-hidden แล้วเอาออกเมื่อเลื่อนถึง) */
+[data-reveal] { transition: opacity calc(.6s * var(--ff-slow)) cubic-bezier(.2,.8,.2,1), transform calc(.6s * var(--ff-slow)) cubic-bezier(.2,.8,.2,1); }
+[data-reveal][data-hidden] { opacity: 0; transform: translateY(18px); }
+
 @media print {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -210,6 +290,7 @@ main > :nth-child(4) { --ff-i: 3; } main > :nth-child(5) { --ff-i: 4; } main > :
     transition-duration: 0.01ms !important;
   }
   .ff-wipe, .ff-confetti { display: none !important; }
+  [data-reveal][data-hidden] { opacity: 1; transform: none; }
 }
 
 /* ใบเสร็จพิมพ์เป็น A4 ได้ (§15.2.8) — ส่วนอื่นของหน้าซ่อนด้วย print:hidden */

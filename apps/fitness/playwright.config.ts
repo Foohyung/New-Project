@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = 'http://localhost:3001';
+const baseURL = 'http://localhost:7070';
 
 /**
  * รัน 3 ขนาดจอ (mobile / tablet / desktop) ตาม §15.2.7

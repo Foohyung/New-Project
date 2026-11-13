@@ -27,14 +27,11 @@ function Phrase({ children }: { children: ReactNode }) {
 /* แถบเฉียงแบบลายชุดกีฬา (สีพื้นหลังของธีม บนแผงสีหลัก) */
 const STRIPES = 'bg-[repeating-linear-gradient(90deg,var(--color-bg)_0_26px,transparent_26px_58px)]';
 
-function Brand({ sub, inverse = false }: { sub: string; inverse?: boolean }) {
+function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       <LogoIcon className="size-11 rounded-xl" inverse={inverse} />
-      <span className="leading-tight">
-        <Wordmark className="block text-xl" inverse={inverse} />
-        <small className={`text-xs ${inverse ? 'text-bg/75' : 'text-muted'}`}>{sub}</small>
-      </span>
+      <Wordmark className="block text-xl" inverse={inverse} />
     </div>
   );
 }
@@ -66,7 +63,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div aria-hidden className={`ff-drift pointer-events-none absolute -top-24 -right-36 h-[150%] w-[460px] rotate-[28deg] opacity-[.12] ${STRIPES} [mask-image:linear-gradient(to_bottom,#000_45%,transparent_90%)]`} />
         {/* เส้นชีพจรของโลโก้เป็นลายน้ำ วิ่งตลอดเหมือนจอวัดชีพจร */}
         <PulseMark run strokeWidth={4} className="pointer-events-none absolute top-1/2 -right-24 size-[480px] -translate-y-1/2 text-bg/[.28]" />
-        <div className="relative"><Brand sub="สาขาอารีย์" inverse /></div>
+        <div className="relative"><Brand inverse /></div>
         <Words size="text-[clamp(64px,8.2vw,124px)] relative" />
         <div className="relative flex max-w-xl flex-col gap-4">
           <p className="text-base text-pretty text-bg/80">
@@ -85,7 +82,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="px-4 pt-4 md:hidden">
           <div className="relative overflow-hidden rounded-2xl bg-lime p-4 text-bg">
             <div aria-hidden className={`pointer-events-none absolute -top-10 -right-20 h-[260px] w-[200px] rotate-[28deg] opacity-[.12] ${STRIPES}`} />
-            <div className="relative"><Brand sub="สาขาอารีย์" inverse /></div>
+            <div className="relative"></div>
             <Words size="relative mt-3 text-[44px]" short />
           </div>
         </div>

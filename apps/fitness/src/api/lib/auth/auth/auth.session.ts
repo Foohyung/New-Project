@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import type { Permission, Role } from '@/api/services/auth/auth/auth.roles';
-import { isLocked, recordFailure, REMEMBER_DAYS, SESSION_HOURS, type AttemptState } from '@/api/services/auth/auth/auth.service';
+import { isLocked, recordFailure, REMEMBER_DAYS, SESSION_HOURS, SESSION_IDLE_MS, sessionIdleExpired, type AttemptState } from '@/api/services/auth/auth/auth.service';
 import { requireHttps } from '@/api/lib/security/security/security';
 import { isUsableToday, toAccount, verifyCredentials, type Account } from '@/api/lib/auth/auth/auth.accounts';
 import { prisma } from '@/api/lib/db/db/db';
@@ -74,10 +74,35 @@ export async function signOut(): Promise<void> {
 export const getSession = cache(async (): Promise<Session | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const stored = await prisma().session.findUnique({ where: { tokenHash: hashToken(token) }, include: { user: { include: { roleDefinition: true } } } });
-  if (!stored || stored.expiresAt.getTime() <= Date.now() || !isUsableToday(stored.user)) return null;
+  const tokenHash = hashToken(token);
+  const stored = await prisma().session.findUnique({ where: { tokenHash }, include: { user: { include: { roleDefinition: true } } } });
+  if (!stored) return null;
+  const now = Date.now();
+  if (stored.expiresAt.getTime() <= now || !isUsableToday(stored.user)) return null;
+  if (sessionIdleExpired(stored.lastActivityAt.getTime(), now)) {
+    await prisma().session.deleteMany({
+      where: { tokenHash, expiresAt: { gt: new Date(now) }, lastActivityAt: { lte: new Date(now - SESSION_IDLE_MS) } },
+    });
+    return null;
+  }
   return toSession(toAccount(stored.user));
 });
+
+/** ต่ออายุกิจกรรมเฉพาะ session ที่ยังไม่หมดอายุทั้งแบบปกติและแบบ idle */
+export async function refreshSessionActivity(): Promise<boolean> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token || !(await getSession())) return false;
+  const now = Date.now();
+  const updated = await prisma().session.updateMany({
+    where: {
+      tokenHash: hashToken(token),
+      expiresAt: { gt: new Date(now) },
+      lastActivityAt: { gt: new Date(now - SESSION_IDLE_MS) },
+    },
+    data: { lastActivityAt: new Date(now) },
+  });
+  return updated.count === 1;
+}
 
 /** ทุก entrypoint (หน้า, Server Action, Route Handler) เรียกฟังก์ชันนี้ก่อนเสมอ (§6.1) — ไม่มี session ส่งไปหน้าเข้าสู่ระบบ */
 export async function requireSession(): Promise<Session> {

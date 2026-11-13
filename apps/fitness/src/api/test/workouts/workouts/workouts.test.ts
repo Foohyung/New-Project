@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXERCISES, exercisesFor, MUSCLES } from '@/api/services/workouts/workouts/workouts.catalog';
-import { MAX_PLAN, mergePlan, planMinutes } from '@/api/services/workouts/workouts/workouts.service';
+import { MAX_PLAN, mergePlan, planMinutes, workoutSetCount } from '@/api/services/workouts/workouts/workouts.service';
 
 describe('คลังท่าฝึก', () => {
   it('กล้ามเนื้อทุกมัดมีอย่างน้อย 2 ท่า และ id ไม่ซ้ำ', () => {
@@ -36,5 +36,10 @@ describe('โปรแกรมวันนี้', () => {
   });
   it('ประมาณเวลาท่าละ 8 นาที', () => {
     expect(planMinutes(5)).toBe(40);
+  });
+  it('อ่านจำนวนเซ็ตจากคำแนะนำท่า', () => {
+    expect(workoutSetCount('3×15')).toBe(3);
+    expect(workoutSetCount('4x8')).toBe(4);
+    expect(workoutSetCount('30 วินาที')).toBe(1);
   });
 });

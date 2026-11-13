@@ -4,7 +4,7 @@ import { PERMISSIONS } from '@/api/services/auth/auth/auth.roles';
 const PermissionSchema = z.enum(PERMISSIONS);
 
 export const CreateRoleSchema = z.object({
-  id: z.string().trim().toLowerCase().regex(/^[a-z][a-z0-9-]{1,39}$/, 'ใช้ a-z, ตัวเลข และขีดกลาง เริ่มด้วยตัวอักษร (2–40 ตัว)'),
+  id: z.string().trim().toLowerCase().regex(/^[a-z][a-z0-9-]{1,39}$/, 'ใช้ a-z, ตัวเลข และขีดกลาง เริ่มด้วยตัวอักษร (2–40 ตัว)').refine(id => id !== 'new', 'ใช้ชื่อ new ไม่ได้ (เป็นหน้าเพิ่ม role)'),
   name: z.string().trim().min(2, 'ชื่อ role ต้องมีอย่างน้อย 2 ตัวอักษร').max(80, 'ชื่อ role ยาวเกินไป'),
   permissions: z.array(PermissionSchema).max(PERMISSIONS.length),
 });

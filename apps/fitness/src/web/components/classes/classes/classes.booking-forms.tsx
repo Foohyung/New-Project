@@ -18,6 +18,12 @@ const PT_TIMES = Array.from({ length: 15 }, (_, i) => {
   const hour = 6 + i;
   return { value: `${String(hour).padStart(2, '0')}:00`, label: `${String(hour).padStart(2, '0')}:00 น.`, description: hour < 12 ? 'ช่วงเช้า' : hour < 17 ? 'ช่วงบ่าย' : 'ช่วงเย็น (คนเยอะ)', icon: <Clock className="size-4" /> };
 });
+const CLASS_TIMES = Array.from({ length: 24 * 4 }, (_, i) => {
+  const hour = Math.floor(i / 4);
+  const minute = (i % 4) * 15;
+  const value = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  return { value, label: `${value} น.`, icon: <Clock className="size-4" /> };
+});
 
 const dot = (color: string) => <span className={`size-2.5 rounded-full ${color}`} />;
 const LEVELS = [
@@ -86,7 +92,7 @@ export function ClassCreateForm({ action, trainers, rooms, today }: { action: Ac
       </div>
       <Dropdown name="level" label="ระดับ" defaultValue="กลาง" options={LEVELS} />
       <DatePickerField name="date" label="วันที่" min={today} defaultValue={today} today={today} error={errors.date} />
-      <TextField name="time" label="เวลาเริ่ม" type="time" defaultValue="17:00" step={900} error={errors.time} />
+      <Dropdown name="time" label="เวลาเริ่ม" defaultValue="17:00" options={CLASS_TIMES} error={errors.time} />
       <TextField name="minutes" label="ความยาว (นาที)" type="number" inputMode="numeric" min={30} max={120} defaultValue={45} error={errors.minutes} />
       <TextField name="capacity" label="รับได้ (คน)" type="number" inputMode="numeric" min={1} max={60} defaultValue={20} error={errors.capacity} />
       <div className="flex flex-wrap items-center gap-3 md:col-span-2">

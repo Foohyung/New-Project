@@ -74,12 +74,20 @@ export async function selfCheckInAction(_prev: ActionResult, _formData: FormData
     if (session.memberId) await audit(session, 'checkin.self.rejected', 'member', session.memberId);
     return { ok: false, message: result.reason === 'not-found' ? 'บัญชีนี้ไม่ได้ผูกกับข้อมูลสมาชิก ติดต่อเคาน์เตอร์' : REJECT_MESSAGE[result.reason] };
   }
-  if (!result.repeated && session.memberId) await audit(session, 'checkin.self', 'member', session.memberId);
+  if (session.memberId) {
+    await audit(
+      session,
+      result.action === 'checkout' ? 'checkin.self.checked_out' : 'checkin.self',
+      'member',
+      session.memberId,
+      result.action === 'checkout' ? { before: { checkedOutAt: null }, after: { checkedOutAt: result.checkedOutAt } } : undefined,
+    );
+  }
   revalidatePath('/me');
   revalidatePath('/');
   revalidatePath('/checkin');
-  const time = formatThaiTime(result.at);
-  return result.repeated
-    ? { ok: true, message: `คุณเช็กอินไปแล้วเมื่อ ${time} น. · ใช้ได้อีก ${String(result.daysLeft)} วัน` }
-    : { ok: true, message: `เช็กอินเวลา ${time} น. · ใช้ได้อีก ${String(result.daysLeft)} วัน ขอให้สนุกกับการออกกำลังกาย!` };
+  if (result.action === 'checkout') {
+    return { ok: true, message: `เช็กเอาต์เวลา ${formatThaiTime(result.checkedOutAt)} น. · กลับเข้ายิมใหม่ได้ในวันนี้` };
+  }
+  return { ok: true, message: `เช็กอินเวลา ${formatThaiTime(result.at)} น. · กดปุ่มนี้อีกครั้งเมื่อออกจากยิม` };
 }

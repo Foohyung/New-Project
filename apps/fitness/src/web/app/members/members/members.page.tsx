@@ -1,23 +1,24 @@
 import { formatThaiDate, formatThaiDateOf, formatThaiMobile, formatThaiTime } from '@/api/lib/utils/utils/utils';
-import { ArrowDownWideNarrow, CalendarClock, Columns3, Dumbbell, History, LayoutGrid, Package, Search, Sparkles, Table2, UserPlus } from 'lucide-react';
+import { ArrowDownWideNarrow, Building2, CalendarClock, Columns3, Dumbbell, History, LayoutGrid, Package, Search, Sparkles, Table2, UserPlus } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
 import { DateRangeFilter } from '@/web/components/ui/ui/ui.date-range-filter';
-import { Avatar, btn, Forbidden, StatusBadge } from '@/web/components/ui/ui/ui';
+import { Avatar, btn, StatusBadge } from '@/web/components/ui/ui/ui';
 import { parseRange } from '@/api/services/shared/shared/shared.date-range';
 import { UrlDropdown } from '@/web/components/ui/ui/ui.url-dropdown';
 import { hrefWith, Toolbar, ViewSwitch } from '@/web/components/ui/ui/ui.view-switch';
 import { MEMBER_SORT_LABEL, STATUS_LABEL, type MemberSort, type MembershipStatus } from '@/api/services/members/members/members.service';
 import type { MemberDto } from '@/api/types/members/members/members.types';
 import { today } from '@/api/lib/clock/clock/clock';
-import { canDeleteMember, countByStatus, listMembers } from '@/api/dal/members/members/members.dal';
+import { canDeleteMember, countByStatus, getMemberBranches, listMembers } from '@/api/dal/members/members/members.dal';
 import { deleteMemberAction } from '@/api/actions/members/members/members.actions';
 import { MemberRowActions } from '@/web/components/members/members/members.row-actions';
 import { listPackages } from '@/api/dal/packages/packages/packages.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { can } from '@/api/lib/auth/auth/auth.rbac';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'สมาชิก' };
 
@@ -28,7 +29,10 @@ const SearchParams = z.object({
   q: z.string().trim().max(40).optional().catch(undefined),
   view: z.enum(VIEWS).catch('table'),
   sort: z.enum(['expires', 'name', 'recent', 'newest']).catch('expires'),
-  pkg: z.string().max(20).optional().catch(undefined),
+  package: z.string().max(40).optional().catch(undefined),
+  /** ชื่อเดิมของ package — ลิงก์เก่ายังใช้ได้ */
+  pkg: z.string().max(40).optional().catch(undefined),
+  branch: z.string().max(120).optional().catch(undefined),
   from: z.string().optional().catch(undefined),
   to: z.string().optional().catch(undefined),
 });
@@ -57,19 +61,27 @@ const lastCheckIn = (m: MemberDto) => (m.lastCheckInAt ? `${formatThaiDateOf(m.l
 
 export default async function MembersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('members.view');
-  if (!allowed) return <Forbidden />;
-  const { status, q, view, sort, pkg, from, to } = SearchParams.parse(await searchParams);
+  if (!allowed) return accessDenied();
+  const { status, q, view, sort, package: packageParam, pkg: legacyPkg, branch: branchParam, from, to } = SearchParams.parse(await searchParams);
+  const pkg = packageParam ?? legacyPkg;
   const expires = parseRange({ from, to }, today());
-  const [rows, counts, packages] = await Promise.all([listMembers(session, { status, q, sort, packageId: pkg, expires }), countByStatus(session), listPackages(session)]);
+  const branches = session.role === 'admin' ? await getMemberBranches(session) : [];
+  const branch = session.role === 'admin' && branchParam && branches.includes(branchParam) ? branchParam : undefined;
+  const [rows, counts, packages] = await Promise.all([
+    listMembers(session, { status, q, sort, packageId: pkg, expires, branch }),
+    countByStatus(session, { branch }),
+    listPackages(session),
+  ]);
   // ค่าที่ไม่ใช่ค่าเริ่มต้นเท่านั้นที่อยู่ใน URL
-  const current = { status, q, pkg, view: view === 'table' ? undefined : view, sort: sort === 'expires' ? undefined : sort, from: expires?.from, to: expires?.to };
+  const current = { status, q, package: pkg, branch, view: view === 'table' ? undefined : view, sort: sort === 'expires' ? undefined : sort, from: expires?.from, to: expires?.to };
   const href = (patch: Record<string, string | undefined>) => hrefWith('/members', current, patch);
+  const branchLabel = session.role === 'admin' ? branch ?? 'ทุกสาขา' : session.branch;
 
   return (
     <>
       <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm text-muted">{session.branch}</p>
+          <p className="text-sm text-muted">{branchLabel}</p>
           <h1 className="font-display text-2xl font-semibold lg:text-[28px]">สมาชิก</h1>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -104,12 +116,22 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
       <Toolbar>
         <ViewSwitch views={VIEW_OPTIONS} current={view} hrefFor={v => href({ view: v === 'table' ? undefined : v })} />
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {session.role === 'admin' && branches.length > 1 && (
+            <UrlDropdown
+              label="สาขา"
+              value={branch ?? ''}
+              options={[
+                { value: '', label: 'ทุกสาขา', icon: <Building2 className="size-4" />, href: href({ branch: undefined }) },
+                ...branches.map(name => ({ value: name, label: name, icon: <Building2 className="size-4" />, href: href({ branch: name }) })),
+              ]}
+            />
+          )}
           <UrlDropdown
             label="แพ็กเกจ"
             value={pkg ?? ''}
             options={[
-              { value: '', label: 'ทุกแพ็กเกจ', icon: <Package className="size-4" />, href: href({ pkg: undefined }) },
-              ...packages.map(p => ({ value: p.id, label: p.name, description: p.durationLabel, icon: <Package className="size-4" />, href: href({ pkg: p.id }) })),
+              { value: '', label: 'ทุกแพ็กเกจ', icon: <Package className="size-4" />, href: href({ package: undefined }) },
+              ...packages.map(p => ({ value: p.id, label: p.name, description: p.durationLabel, icon: <Package className="size-4" />, href: href({ package: p.id }) })),
             ]}
           />
           <UrlDropdown
@@ -172,7 +194,7 @@ function TableView({ rows, canEdit, canDelete }: { rows: MemberDto[]; canEdit: b
           </thead>
           <tbody className="ff-stagger divide-y divide-line">
             {rows.map(m => (
-              <tr key={m.id} className="hover:bg-surface-2/50">
+              <tr key={m.id}>
                 <th scope="row" className="sticky left-0 bg-surface px-5 py-3 text-left font-normal">
                   <div className="flex items-center gap-3">
                     <Avatar name={m.name} />

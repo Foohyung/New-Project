@@ -31,20 +31,27 @@ export const PERMISSIONS = [
   'classes.book',
   'classes.manage',
   'trainers.view',
+  'trainers.manage',
   'pt.manage',
   'payments.view',
   'payments.collect',
   'payments.confirm',
+  'payments.configure',
   'reports.view',
   'packages.manage',
+  'courses.manage',
+  'sales.use',
+  'products.manage',
   'portal.use',
   'coach.use',
   'marketing.manage',
   'retention.view',
   'users.manage',
   'roles.manage',
+  'branches.manage',
   'branding.view',
   'branding.manage',
+  'access.view',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -58,33 +65,40 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   'classes.book': 'จองและยกเลิกคลาส',
   'classes.manage': 'สร้างและจัดการคลาส',
   'trainers.view': 'ดูข้อมูลเทรนเนอร์',
+  'trainers.manage': 'เพิ่ม แก้ไข และลบเทรนเนอร์',
   'pt.manage': 'จัดการคิว PT',
   'payments.view': 'ดูรายการชำระ',
   'payments.collect': 'รับชำระเงิน',
   'payments.confirm': 'ยืนยันการชำระเงิน',
+  'payments.configure': 'ตั้งค่าวิธีชำระเงิน',
   'reports.view': 'ดูและส่งออกรายงาน',
   'packages.manage': 'จัดการแพ็กเกจ',
+  'courses.manage': 'สร้างและจัดการคอร์สเรียน',
+  'sales.use': 'ใช้หน้าร้าน POS (ซื้อ/ขายสินค้า)',
+  'products.manage': 'จัดการสินค้าและสต็อก',
   'portal.use': 'ใช้พอร์ทัลสมาชิก',
   'coach.use': 'ใช้ฟีเจอร์ฝึกและอาหารของตัวเอง',
   'marketing.manage': 'จัดการการตลาดและคูปอง',
   'retention.view': 'ติดตามสมาชิก',
   'users.manage': 'ดูและเพิ่มบัญชีผู้ใช้',
   'roles.manage': 'จัดการ role และสิทธิ์',
+  'branches.manage': 'เพิ่ม แก้ไข และลบสาขา',
   'branding.view': 'ดูแบรนด์ของสาขา',
   'branding.manage': 'ปรับแต่งแบรนด์ของสาขา',
+  'access.view': 'ดูประวัติการเข้า/ออกจากระบบ (IP)',
 };
 
 const STAFF_COMMON: Permission[] = ['members.view', 'classes.view', 'trainers.view', 'coach.use', 'branding.view'];
-const OWNER_PERMISSIONS: Permission[] = [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'packages.manage', 'marketing.manage', 'retention.view'];
+const OWNER_PERMISSIONS: Permission[] = [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'trainers.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'packages.manage', 'courses.manage', 'sales.use', 'products.manage', 'marketing.manage', 'retention.view'];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]> = {
-  admin: [...OWNER_PERMISSIONS, 'users.manage', 'roles.manage'],
-  owner: [...OWNER_PERMISSIONS, 'users.manage', 'branding.manage'],
-  manager: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'marketing.manage', 'retention.view'],
-  'front-desk': [...STAFF_COMMON, 'dashboard.view', 'members.manage', 'checkin.use', 'classes.book', 'pt.manage', 'payments.view', 'payments.collect', 'retention.view'],
+  admin: [...OWNER_PERMISSIONS, 'users.manage', 'roles.manage', 'branches.manage', 'branding.manage', 'payments.configure', 'access.view'],
+  owner: [...OWNER_PERMISSIONS, 'users.manage', 'branding.manage', 'payments.configure'],
+  manager: [...STAFF_COMMON, 'dashboard.view', 'revenue.view', 'members.manage', 'checkin.use', 'classes.book', 'classes.manage', 'trainers.manage', 'pt.manage', 'payments.view', 'payments.collect', 'payments.confirm', 'reports.view', 'courses.manage', 'sales.use', 'products.manage', 'marketing.manage', 'retention.view'],
+  'front-desk': [...STAFF_COMMON, 'dashboard.view', 'members.manage', 'checkin.use', 'classes.book', 'pt.manage', 'payments.view', 'payments.collect', 'sales.use', 'retention.view'],
   // เทรนเนอร์จัดการได้เฉพาะ PT ของตัวเอง (ตรวจ ownership ใน DAL)
-  trainer: [...STAFF_COMMON, 'classes.book', 'pt.manage'],
-  member: ['portal.use', 'coach.use', 'branding.view'],
+  trainer: [...STAFF_COMMON, 'classes.book', 'pt.manage', 'sales.use'],
+  member: ['portal.use', 'coach.use', 'branding.view', 'sales.use'],
 };
 
 export function isPermission(value: unknown): value is Permission {
@@ -96,16 +110,25 @@ export function permissionsFromUnknown(value: unknown): Permission[] {
   return [...new Set(value.filter(isPermission))];
 }
 
-export function permissionsForRole(_role: Role, grants: readonly Permission[]): Permission[] {
-  return [...grants];
+export function permissionsForRole(role: Role, grants: readonly Permission[]): Permission[] {
+  const allowed = role === 'admin' ? grants : grants.filter(permission =>
+    !ADMIN_ONLY_PERMISSIONS.includes(permission) && (role === 'owner' || permission !== 'payments.configure'),
+  );
+  const adminPermissions: Permission[] = role === 'admin' ? ['branding.manage'] : [];
+  return [...new Set<Permission>([...allowed, ...adminPermissions, 'sales.use'])];
 }
+
+/** สิทธิ์ที่สงวนไว้ให้ role admin เท่านั้น: จัดการ role, สาขา และดูประวัติการเข้าสู่ระบบ (IP) — role อื่นติ๊กให้ไม่ได้ และถ้ามีค้างในฐานข้อมูลก็ไม่มีผล */
+export const ADMIN_ONLY_PERMISSIONS: readonly Permission[] = ['roles.manage', 'branches.manage', 'access.view'];
 
 export function permissionsAllowedForRole(role: string, grants: readonly Permission[]): boolean {
   if (role === 'admin') return grants.includes('roles.manage');
-  return !grants.includes('roles.manage');
+  if (role !== 'owner' && grants.includes('payments.configure')) return false;
+  return !grants.some(p => ADMIN_ONLY_PERMISSIONS.includes(p));
 }
 
 export function hasPermission(role: Role, permission: Permission, grants?: readonly Permission[]): boolean {
+  if (permission === 'sales.use') return true;
   const permissions = grants ?? (isBuiltInRole(role) ? DEFAULT_ROLE_PERMISSIONS[role] : []);
   return permissions.includes(permission);
 }

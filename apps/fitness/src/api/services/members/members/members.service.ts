@@ -44,9 +44,9 @@ export function addMonths(date: string, months: number): string {
 
 export interface PackageLike {
   kind: 'time' | 'pt' | 'daypass';
-  months?: number;
-  days?: number;
-  sessions?: number;
+  months?: number | null;
+  days?: number | null;
+  sessions?: number | null;
 }
 
 /**
@@ -55,9 +55,9 @@ export interface PackageLike {
  * - หมดอายุแล้วหรือสมัครใหม่: เริ่มนับวันนี้
  * แพ็กเกจ PT ไม่เปลี่ยนวันหมดอายุ (คืน null)
  */
-export function membershipPeriod(pkg: PackageLike, currentExpiresOn: string | null, today: string): { startsOn: string; expiresOn: string } | null {
+export function membershipPeriod(pkg: PackageLike, currentExpiresOn: string | null, today: string, requestedStartOn?: string): { startsOn: string; expiresOn: string } | null {
   if (pkg.kind === 'pt') return null;
-  const startsOn = currentExpiresOn && currentExpiresOn >= today ? addDays(currentExpiresOn, 1) : today;
+  const startsOn = requestedStartOn ?? (currentExpiresOn && currentExpiresOn >= today ? addDays(currentExpiresOn, 1) : today);
   const expiresOn = pkg.kind === 'time' ? addDays(addMonths(startsOn, pkg.months ?? 1), -1) : addDays(startsOn, (pkg.days ?? 1) - 1);
   return { startsOn, expiresOn };
 }

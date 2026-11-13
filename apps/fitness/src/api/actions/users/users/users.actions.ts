@@ -8,6 +8,7 @@ import { addOwnerBranch, createManagedUser, deleteManagedUser, removeOwnerBranch
 import { DEFAULT_MEMBER_PASSWORD } from '@/api/services/members/members/members.service';
 import { CreateUserSchema, OwnerBranchSchema, UpdateUserSchema } from '@/api/schemas/users/users/users.schema';
 import { formObject, knownFailure, validationFailure, type ActionResult } from '@/api/types/shared/shared/shared.action-result';
+import { deletedRedirectPath } from '@/api/lib/flash/flash/flash';
 
 export async function createManagedUserAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
@@ -75,7 +76,7 @@ export async function updateManagedUserAction(id: string, _prev: ActionResult, f
   }
 }
 
-/** (admin) ลบบัญชีถาวร · back = ลบจากหน้าแก้ไข: กลับหน้านั้นพร้อม ?deleted= (หน้าแก้ไขของบัญชีที่ลบแล้วจะเป็น 404) */
+/** (admin) ลบบัญชีถาวร · back = ลบจากหน้าแก้ไข: กลับหน้านั้นพร้อม ?deleted=1 (ชื่ออยู่ใน cookie) (หน้าแก้ไขของบัญชีที่ลบแล้วจะเป็น 404) */
 export async function deleteManagedUserAction(id: string, back: string | null, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
   let name: string;
@@ -90,7 +91,7 @@ export async function deleteManagedUserAction(id: string, back: string | null, _
   if (back) {
     // กลับไปหน้าที่กดมา ยกเว้นหน้าของบัญชีที่เพิ่งลบ (เช่น หน้าเจ้าของคนนั้น) → หน้ารายการบัญชี
     const target = back.startsWith('/users') && !back.startsWith(`/users/${encodeURIComponent(id)}`) ? back : '/users';
-    redirect(`${target}?deleted=${encodeURIComponent(name)}`);
+    redirect(await deletedRedirectPath(target, name));
   }
   return { ok: true, message: `ลบบัญชี ${name} แล้ว` };
 }
@@ -102,6 +103,7 @@ export async function resolvePasswordResetAction(requestId: string, resolution: 
     const { userId, name } = await resolvePasswordReset(session, requestId, resolution, DEFAULT_MEMBER_PASSWORD);
     await audit(session, resolution === 'reset' ? 'user.password.reset' : 'user.password.reset-dismiss', 'user', userId);
     revalidatePath('/users', 'layout');
+    revalidatePath('/password-resets');
     return resolution === 'reset'
       ? { ok: true, message: `รีเซ็ตรหัสผ่านของ ${name} เป็น ${DEFAULT_MEMBER_PASSWORD} แล้ว — แจ้งผู้ใช้ เข้าสู่ระบบแล้วจะถูกบังคับตั้งรหัสใหม่` }
       : { ok: true, message: `ปิดคำขอของ ${name} แล้ว` };

@@ -20,7 +20,7 @@ export async function resetDatabase(): Promise<void> {
   }
 }
 
-const BRANCH = 'สาขาอารีย์';
+const BRANCH = 'สาขาหลัก';
 /** session ของบัญชีตัวอย่างแต่ละบทบาท (ตรงกับ users ใน prisma/sample-data.mjs) */
 export const USERS: Record<BuiltInRole, Session> = {
   admin: { userId: 'staff-admin', name: 'ผู้ดูแลระบบ', nickname: 'แอดมิน', role: 'admin', branch: BRANCH },

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { BellRing, ChevronRight, LogOut, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, HeartPulse, House, IdCard, LayoutDashboard, LayoutGrid, Megaphone, Package, Palette, Salad, RefreshCw, ScanLine, Store, TicketPercent, UserCog, Users, Wallet, type LucideIcon } from 'lucide-react';
+import { BellRing, Boxes, Building2, GraduationCap, ShoppingCart, ChevronRight, LogOut, CalendarDays, CalendarPlus, ChartColumn, Dumbbell, Globe, HeartPulse, House, IdCard, KeyRound, LayoutDashboard, LayoutGrid, Megaphone, Package, Palette, Salad, RefreshCw, ScanLine, Store, TicketPercent, UserCog, Users, Wallet, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -43,7 +43,7 @@ const TONE: Record<NavGroup['tone'], string> = {
 /** เมนูแบ่งเป็นโซนตามงาน — กดเมนูหลักแล้วกางเมนูย่อย */
 const GROUPS: NavGroup[] = [
   { id: 'overview', label: 'ภาพรวม', section: 'ภาพรวม · รายงาน', tone: 'lime', icon: LayoutDashboard, items: [
-    { href: '/', label: 'แดชบอร์ด', icon: House, permission: 'dashboard.view', primary: true },
+    { href: '/dashboard', label: 'แดชบอร์ด', icon: House, permission: 'dashboard.view', primary: true },
     { href: '/reports', label: 'รายงาน', icon: ChartColumn, permission: 'reports.view' },
   ] },
   { id: 'front', label: 'หน้าร้าน', section: 'หน้าร้าน · คลาส', tone: 'cyan', icon: Store, items: [
@@ -54,30 +54,40 @@ const GROUPS: NavGroup[] = [
   { id: 'classes', label: 'คลาสและเทรนเนอร์', short: 'คลาส', section: 'หน้าร้าน · คลาส', tone: 'violet', icon: CalendarDays, items: [
     { href: '/classes', label: 'ตารางคลาส', short: 'คลาส', icon: CalendarDays, permission: 'classes.view', primary: true },
     { href: '/trainers', label: 'เทรนเนอร์', icon: Dumbbell, permission: 'trainers.view' },
+    { href: '/courses', label: 'คอร์สเรียน', icon: GraduationCap, permission: 'courses.manage' },
   ] },
   { id: 'money', label: 'การเงิน', section: 'การเงิน · การตลาด', tone: 'warn', icon: Wallet, items: [
     { href: '/payments', label: 'รายการชำระ', short: 'การเงิน', icon: Wallet, permission: 'payments.view' },
     { href: '/payments/subscriptions', label: 'ตัดบัตรอัตโนมัติ', icon: RefreshCw, permission: 'payments.view' },
     { href: '/packages', label: 'แพ็กเกจ', icon: Package, permission: 'packages.manage' },
   ] },
+  { id: 'shop', label: 'สินค้า', short: 'สินค้า', section: 'การเงิน · การตลาด', tone: 'cyan', icon: ShoppingCart, items: [
+    { href: '/sales', label: 'ซื้อสินค้า', short: 'ซื้อสินค้า', icon: ShoppingCart, permission: 'sales.use', primary: true },
+    { href: '/products', label: 'สินค้าและสต็อก', short: 'สินค้า', icon: Boxes, permission: 'products.manage' },
+  ] },
   { id: 'marketing', label: 'การตลาด', section: 'การเงิน · การตลาด', tone: 'danger', icon: Megaphone, items: [
-    { href: '/marketing', label: 'แจ้งเตือนต่ออายุ', icon: BellRing, permission: 'marketing.manage' },
-    { href: '/marketing/coupons', label: 'คูปอง & ชวนเพื่อน', icon: TicketPercent, permission: 'marketing.manage' },
+    { href: '/reminders', label: 'แจ้งเตือนต่ออายุ', icon: BellRing, permission: 'marketing.manage' },
+    { href: '/coupons', label: 'คูปอง', icon: TicketPercent, permission: 'marketing.manage' },
   ] },
   { id: 'portal', label: 'สมาชิก', short: 'ของฉัน', section: 'สมาชิก', tone: 'lime', icon: IdCard, items: [
     { href: '/me', label: 'บัตรสมาชิก', short: 'บัตร', icon: IdCard, permission: 'portal.use', primary: true },
     { href: '/me/classes', label: 'จองคลาส', icon: CalendarPlus, permission: 'portal.use', primary: true },
+    { href: '/me/courses', label: 'คอร์สเรียน', short: 'คอร์ส', icon: GraduationCap, permission: 'portal.use' },
   ] },
   // ทุกบทบาทใช้ได้ (ข้อมูลของบัญชีตัวเอง) — สมาชิกเห็นทุกเมนูใน tab bar เพราะมีไม่เกิน 5 เมนู ส่วนพนักงานเข้าจากแถบข้าง/เมนูทั้งหมด
   { id: 'coach', label: 'ฝึก & อาหาร', short: 'ฝึก/อาหาร', section: 'สุขภาพของฉัน', tone: 'lime', icon: Dumbbell, items: [
-    { href: '/me/workout', label: 'ฝึก', icon: Dumbbell, permission: 'coach.use' },
-    { href: '/me/food', label: 'อาหาร', icon: Salad, permission: 'coach.use' },
+    { href: '/me/workouts', label: 'ฝึก', icon: Dumbbell, permission: 'coach.use' },
+    { href: '/me/nutrition', label: 'อาหาร', icon: Salad, permission: 'coach.use' },
   ] },
   // ตั้งค่าอยู่ล่างสุดเสมอ
   { id: 'admin', label: 'ตั้งค่า', section: 'ตั้งค่า', tone: 'violet', icon: UserCog, items: [
     { href: '/users', label: 'บัญชีผู้ใช้', icon: Users, permission: 'users.manage' },
     { href: '/roles', label: 'บทบาทและสิทธิ์', icon: UserCog, permission: 'roles.manage' },
+    { href: '/branches', label: 'สาขา', icon: Building2, permission: 'branches.manage' },
     { href: '/branding', label: 'แบรนด์สาขา', icon: Palette, permission: 'branding.manage' },
+    { href: '/payment-settings', label: 'การชำระเงิน', icon: Wallet, permission: 'payments.configure' },
+    { href: '/password-resets', label: 'คำขอรีเซ็ตรหัสผ่าน', short: 'รีเซ็ตรหัส', icon: KeyRound, permission: 'users.manage' },
+    { href: '/access-logs', label: 'ประวัติการเข้าสู่ระบบ', short: 'เข้าสู่ระบบ', icon: Globe, permission: 'access.view' },
   ] },
 ];
 
@@ -138,7 +148,7 @@ export function Sidebar({ user, logoutAction, logoSrc, gymName }: { user: ShellU
             <span className="max-w-full truncate text-base font-bold text-ink">{gymName}</span>
             <span className="text-[11px] font-medium tracking-[.12em] text-faint">FITFLOW</span>
           </span>
-        ) : <Wordmark className={logoSrc ? 'hidden' : 'sr-only lg:not-sr-only'} />}
+        ) : <Wordmark className={logoSrc ? 'hidden lg:inline-flex' : 'sr-only lg:not-sr-only'} />}
       </Link>
       <nav aria-label="เมนูหลัก" className="flex flex-col gap-1">
         {groups.map((g, gi) => {
@@ -212,7 +222,9 @@ export function BottomNav({ role, permissions }: { role: Role; permissions?: rea
   const items = navFor(role, permissions);
   const activeHref = useActiveHref(items);
   const pathname = usePathname();
-  const tabs = items.length <= 5 ? items : items.filter(i => i.primary).slice(0, 4);
+  const memberTabOrder = ['/me', '/me/classes', '/sales'];
+  const memberTabs = role === 'member' ? memberTabOrder.flatMap(href => items.filter(i => i.href === href)) : [];
+  const tabs = role === 'member' ? memberTabs : items.length <= 5 ? items : items.filter(i => i.primary).slice(0, 4);
   const showMore = tabs.length < items.length;
   const cols = tabs.length + (showMore ? 1 : 0);
   return (

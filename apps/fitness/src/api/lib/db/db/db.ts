@@ -1,8 +1,9 @@
 import 'server-only';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { thaiTime } from '@/api/lib/db/db/db.thai-time';
 import { Prisma, PrismaClient } from '@/api/lib/db/db/generated/prisma/client';
 import type * as Row from '@/api/lib/db/db/generated/prisma/client';
-import type { CouponLike } from '@/api/services/coupons/coupons/coupons.service';
+import { COUPON_TARGETS, type CouponLike, type CouponTarget } from '@/api/services/coupons/coupons/coupons.service';
 import type { Channel, ReminderRound, RoundId } from '@/api/services/reminders/reminders/reminders.service';
 import type { BodyProfile } from '@/api/services/nutrition/nutrition/nutrition.service';
 import type { FollowUpStage } from '@/api/services/retention/retention/retention.service';
@@ -20,9 +21,23 @@ export function prisma(): PrismaClient {
   if (!holder.__ffPrisma) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error('ยังไม่ได้ตั้ง DATABASE_URL ใน .env');
-    holder.__ffPrisma = new PrismaClient({ adapter: new PrismaMariaDb(url) });
+    holder.__ffPrisma = new PrismaClient({ adapter: thaiTime(new PrismaMariaDb(thaiSession(url))) });
   }
   return holder.__ffPrisma;
+}
+
+/**
+ * ตั้ง time_zone ของ session เป็นเวลาไทย (+07:00) — คอลัมน์ DATETIME เก็บเป็นเวลาไทย (db.thai-time.ts)
+ * ค่าที่ MySQL สร้างเอง (NOW() / CURRENT_TIMESTAMP) จึงตรงกัน ไม่ว่าเครื่อง DB จะตั้งเขตเวลาไว้อย่างไร
+ */
+export function thaiSession(url: string): string {
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has('timezone')) u.searchParams.set('timezone', '+07:00');
+    return u.toString();
+  } catch {
+    return url;
+  }
 }
 
 export type Tx = Prisma.TransactionClient;
@@ -30,9 +45,9 @@ export type Tx = Prisma.TransactionClient;
 /* ---------- ใครสร้าง/แก้ล่าสุด (created_by_id/name / updated_by_id/name) — docs/AUDIT.md ---------- */
 
 /** ตารางที่มี created_by_id/name + updated_by_id/name */
-const STAMPED: ReadonlySet<string> = new Set(['User', 'Package', 'Member', 'Trainer', 'GymClass', 'Booking', 'PtSession', 'Payment', 'Coupon', 'Charge', 'ReminderRound', 'ReminderLog', 'FollowUp', 'WorkoutPlan', 'HealthProfile', 'MealLog']);
+const STAMPED: ReadonlySet<string> = new Set(['User', 'Package', 'Member', 'Trainer', 'GymClass', 'Booking', 'PtSession', 'Payment', 'Coupon', 'Charge', 'ReminderRound', 'ReminderLog', 'FollowUp', 'WorkoutPlan', 'HealthProfile', 'MealLog', 'Course', 'CourseEnrollment', 'Product', 'Sale']);
 /** ตาราง append-only ที่มีแค่ created_by_id/name */
-const CREATED_ONLY: ReadonlySet<string> = new Set(['CheckIn']);
+const CREATED_ONLY: ReadonlySet<string> = new Set(['CheckIn', 'StockMovement']);
 
 export type ActorInfo = { userId?: string | null; name?: string | null };
 
@@ -150,13 +165,6 @@ export interface MemberRecord {
   autoRenew: { card: SavedCard; since: string } | null;
 }
 
-export interface CheckInRecord {
-  id: string;
-  memberId: string;
-  at: string;
-  allowed: boolean;
-}
-
 export interface TrainerRecord {
   id: string;
   name: string;
@@ -177,14 +185,6 @@ export interface ClassRecord {
   level: 'ง่าย' | 'กลาง' | 'หนัก';
   /** ผู้จองนอกระบบ (walk-in ที่เคาน์เตอร์จดไว้) */
   otherBooked: number;
-}
-
-export interface BookingRecord {
-  id: string;
-  classId: string;
-  memberId: string;
-  createdAt: string;
-  status: 'booked' | 'cancelled';
 }
 
 export interface PtSessionRecord {
@@ -210,6 +210,7 @@ export interface PaymentRecord {
   status: PaymentStatus;
   createdAt: string;
   paidAt: string | null;
+  paymentDate: string | null;
   applied: boolean;
   coverage: { from: string; to: string } | null;
   receivedBy: string | null;
@@ -217,6 +218,8 @@ export interface PaymentRecord {
   discountSatang: number;
   couponCode: string | null;
   bonusDays: number;
+  slipData: string | null;
+  slipContentType: string | null;
 }
 
 export interface CouponRecord extends CouponLike {
@@ -306,8 +309,6 @@ export function toMember(m: Row.Member): MemberRecord {
   };
 }
 
-export const toCheckIn = (c: Row.CheckIn): CheckInRecord => ({ id: c.id, memberId: c.memberId, at: c.at.toISOString(), allowed: c.allowed });
-
 export const toTrainer = (t: Row.Trainer): TrainerRecord => ({ id: t.id, name: t.name, nickname: t.nickname, specialties: strings(t.specialties), bio: t.bio, color: t.color });
 
 const LEVELS = ['ง่าย', 'กลาง', 'หนัก'] as const;
@@ -323,11 +324,9 @@ export const toClass = (c: Row.GymClass): ClassRecord => ({
   otherBooked: c.otherBooked,
 });
 
-export const toBooking = (b: Row.Booking): BookingRecord => ({ id: b.id, classId: b.classId, memberId: b.memberId, createdAt: b.createdAt.toISOString(), status: b.status });
-
 export const toPtSession = (s: Row.PtSession): PtSessionRecord => ({ id: s.id, trainerId: s.trainerId, memberId: s.memberId, startsAt: s.startsAt.toISOString(), minutes: s.minutes, status: s.status });
 
-export function toPayment(p: Row.Payment): PaymentRecord {
+export function toPayment(p: Omit<Row.Payment, 'slipData'> & { slipData?: Row.Payment['slipData'] }): PaymentRecord {
   return {
     id: p.id,
     receiptNo: p.receiptNo,
@@ -339,6 +338,7 @@ export function toPayment(p: Row.Payment): PaymentRecord {
     status: p.status,
     createdAt: p.createdAt.toISOString(),
     paidAt: isoOrNull(p.paidAt),
+    paymentDate: dayOrNull(p.paymentDate),
     applied: p.applied,
     coverage: p.coverageFrom && p.coverageTo ? { from: dayOf(p.coverageFrom), to: dayOf(p.coverageTo) } : null,
     receivedBy: p.receivedBy,
@@ -346,10 +346,15 @@ export function toPayment(p: Row.Payment): PaymentRecord {
     discountSatang: p.discountSatang,
     couponCode: p.couponCode,
     bonusDays: p.bonusDays,
+    slipData: p.slipData ?? null,
+    slipContentType: p.slipContentType,
   };
 }
 
 export function toCoupon(c: Row.Coupon): CouponRecord {
+  const appliesTo = c.appliesTo === null
+    ? []
+    : strings(c.appliesTo).filter((target): target is CouponTarget => (COUPON_TARGETS as readonly string[]).includes(target));
   return {
     code: c.code,
     description: c.description,
@@ -357,14 +362,19 @@ export function toCoupon(c: Row.Coupon): CouponRecord {
     value: c.value,
     kind: c.kind,
     packageIds: c.packageIds === null ? null : strings(c.packageIds),
+    appliesTo: appliesTo.length ? appliesTo : ['membership'],
     renewOnly: c.renewOnly,
     newOnly: c.newOnly,
     limit: c.usageLimit,
     used: c.used,
     perMember: c.perMember,
+    startsOn: dayOf(c.startsOn),
     expiresOn: dayOrNull(c.expiresOn),
     active: c.active,
     ownerMemberId: c.ownerMemberId,
+    terms: c.terms,
+    minMemberDays: c.minMemberDays,
+    proofRequired: c.proofRequired,
     createdAt: c.createdAt.toISOString(),
   };
 }

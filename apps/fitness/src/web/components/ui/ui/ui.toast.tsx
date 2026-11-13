@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { btn } from '@/web/components/ui/ui/ui';
 import { CircleCheck, CircleAlert, X } from 'lucide-react';
 import type { ActionResult } from '@/api/types/shared/shared/shared.action-result';
+import { useBodyScrollLock } from '@/web/hooks/ui/ui/ui.use-body-scroll-lock';
+import { DELETED_FLASH_COOKIE } from '@/api/services/shared/shared/shared.flash';
 
 type Tone = 'success' | 'error';
 interface ToastItem { id: number; message: string; tone: Tone }
@@ -123,6 +125,7 @@ export function Toaster() {
 function SuccessDialogHost() {
   const [item, setItem] = useState<SuccessDialog | null>(null);
   const ref = useRef<HTMLDialogElement>(null);
+  useBodyScrollLock(Boolean(item));
 
   useEffect(() => {
     const show = (next: SuccessDialog) => {
@@ -169,7 +172,9 @@ function SuccessDialogHost() {
 }
 
 /**
- * popup หลัง server redirect: ?deleted=<ชื่อ> (ลบจากหน้ารายละเอียดที่หายไปแล้ว) · ?passwordChanged=1 (เปลี่ยนรหัสผ่าน)
+ * popup หลัง server redirect: ?deleted=1 (ลบจากหน้ารายละเอียดที่หายไปแล้ว — ชื่ออ่านจาก cookie ไม่ใส่ใน URL)
+ * · ?password=changed (เปลี่ยนรหัสผ่าน · รับ ?passwordChanged=1 แบบเดิมด้วย)
+ * · ?denied=1 (เปิดหน้าที่ไม่มีสิทธิ์แล้วถูกพากลับมา — accessDenied())
  * แสดงครั้งเดียวแล้วเอาพารามิเตอร์ออกจาก URL · ต้องอยู่ใน <Suspense> (useSearchParams)
  */
 export function DeletedFlash() {
@@ -177,16 +182,21 @@ export function DeletedFlash() {
   const pathname = usePathname();
   const router = useRouter();
   const deleted = params.get('deleted');
-  const passwordChanged = params.get('passwordChanged');
+  const passwordChanged = params.get('password') === 'changed' || params.get('passwordChanged') === '1';
+  const denied = params.get('denied') === '1';
   useEffect(() => {
-    if (!deleted && !passwordChanged) return;
-    if (deleted) showSuccess('ลบสำเร็จ', `ลบ ${deleted} แล้ว`);
-    else showSuccess('เปลี่ยนรหัสผ่านสำเร็จ', 'เข้าสู่ระบบอีกครั้งด้วยรหัสผ่านใหม่');
+    if (!deleted && !passwordChanged && !denied) return;
+    if (denied) toast('บัญชีนี้ไม่มีสิทธิ์เปิดหน้านั้น จึงพากลับมาหน้าเดิม', 'error');
+    else if (deleted) {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith(`${DELETED_FLASH_COOKIE}=`));
+      const name = cookie ? decodeURIComponent(cookie.slice(DELETED_FLASH_COOKIE.length + 1)) : '';
+      document.cookie = `${DELETED_FLASH_COOKIE}=; path=/; max-age=0`;
+      showSuccess('ลบสำเร็จ', name ? `ลบ ${name} แล้ว` : 'ลบข้อมูลแล้ว');
+    } else showSuccess('เปลี่ยนรหัสผ่านสำเร็จ', 'เข้าสู่ระบบอีกครั้งด้วยรหัสผ่านใหม่');
     const rest = new URLSearchParams(params);
-    rest.delete('deleted');
-    rest.delete('passwordChanged');
+    for (const key of ['deleted', 'password', 'passwordChanged', 'denied']) rest.delete(key);
     const query = rest.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [deleted, passwordChanged, params, pathname, router]);
+  }, [deleted, passwordChanged, denied, params, pathname, router]);
   return null;
 }

@@ -7,7 +7,7 @@ import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { FreezeForm, MemberEditForm, RenewForm } from '@/web/components/members/members/members.forms';
 import { PaymentStatusBadge } from '@/web/components/payments/payments/payments';
 import { QrCode } from '@/web/components/ui/ui/ui.qr-code';
-import { Avatar, Badge, btn, Card, Forbidden, InfoList, PageHeader, StatusBadge } from '@/web/components/ui/ui/ui';
+import { Avatar, Badge, btn, Card, InfoList, PageHeader, StatusBadge } from '@/web/components/ui/ui/ui';
 import { cancelBookingAction } from '@/api/actions/classes/classes/classes.actions';
 import { deleteMemberAction, freezeMemberAction, renewMemberAction, unfreezeMemberAction, updateMemberAction } from '@/api/actions/members/members/members.actions';
 import { memberQrValue } from '@/api/services/members/members/members.service';
@@ -15,9 +15,13 @@ import { METHOD_LABEL } from '@/api/services/payments/payments/payments.service'
 import { today } from '@/api/lib/clock/clock/clock';
 import { canDeleteMember, getMemberDetail } from '@/api/dal/members/members/members.dal';
 import { DeleteMemberButton } from '@/web/components/members/members/members.row-actions';
+import { MemberCreatedDialog } from '@/web/components/members/members/members.created-dialog';
 import { listPackages } from '@/api/dal/packages/packages/packages.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { can } from '@/api/lib/auth/auth/auth.rbac';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
+import { paymentSetupForBranch } from '@/api/dal/payments/payments/payments.dal';
+import { ReceiptPrintLink } from '@/web/components/payments/payments/receipt-print-link';
 
 export const metadata: Metadata = { title: 'ข้อมูลสมาชิก' };
 
@@ -25,13 +29,15 @@ const PT_STATUS = { booked: ['cyan', 'นัดไว้'], done: ['lime', 'เ�
 
 export default async function MemberPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('members.view');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const { id } = await params;
   const member = await getMemberDetail(session, id);
   if (!member) notFound();
   const created = (await searchParams).created === '1';
   const manage = can(session, 'members.manage');
-  const packages = manage ? await listPackages(session, { activeOnly: true }) : [];
+  const [packages, paymentSetup] = manage
+    ? await Promise.all([listPackages(session, { activeOnly: true }), paymentSetupForBranch(member.branch)])
+    : [[], null];
   const date = today();
 
   return (
@@ -43,7 +49,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
         actions={can(session, 'classes.book') && member.status !== 'expired' && member.status !== 'frozen' ? <Link href="/classes" className={btn.secondary}><CalendarPlus aria-hidden className="size-5" />จองคลาส</Link> : undefined}
       />
 
-      {created && <p role="status" className="rounded-2xl border border-lime/40 bg-lime/10 p-4 font-semibold text-lime">สมัครสมาชิกเรียบร้อย ยื่นบัตร QR ด้านล่างให้สมาชิกบันทึกไว้ใช้เช็กอิน</p>}
+      {created && <MemberCreatedDialog memberId={member.id} name={member.name} phone={member.phone} email={member.email} />}
       {member.pendingPaymentId && (
         <p role="status" className="rounded-2xl border border-warn/40 bg-warn/10 p-4 text-warn">
           มีรายการรอชำระ/รอตรวจสลิป — สิทธิ์จะเริ่มหลังยืนยันการชำระ{' '}
@@ -82,7 +88,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
 
           {manage && (
             <Card title="ต่ออายุ / ซื้อแพ็กเกจเพิ่ม" subtitle="ยังไม่หมดอายุจะต่อจากวันหมดอายุเดิม ไม่เสียวันที่เหลือ">
-              <RenewForm packages={packages} action={renewMemberAction.bind(null, member.id)} currentExpiresOn={member.expiresOn} today={date} memberId={member.id} />
+              {paymentSetup && <RenewForm packages={packages} action={renewMemberAction.bind(null, member.id)} currentExpiresOn={member.expiresOn} today={date} memberId={member.id} setup={paymentSetup} />}
             </Card>
           )}
 
@@ -109,7 +115,11 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                         <Link href={`/payments/${p.id}`} className="tap inline-block font-medium hover:underline">{p.receiptNo} · {p.packageName}</Link>
                         <p className="text-xs text-muted">{formatThaiDateOf(p.createdAt)} · {METHOD_LABEL[p.method]}</p>
                       </div>
-                      <div className="flex items-center gap-3"><b className="font-display">{formatBaht(p.amountSatang)}</b><PaymentStatusBadge status={p.status} /></div>
+                      <div className="flex items-center gap-3">
+                        <b className="font-display">{formatBaht(p.amountSatang)}</b>
+                        <PaymentStatusBadge status={p.status} />
+                        {p.status === 'paid' && <ReceiptPrintLink href={`/payments/${p.id}?print=1`} />}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -151,9 +161,9 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
           <Card title="ประวัติเช็กอิน" subtitle="10 ครั้งล่าสุด">
             {member.checkIns.length === 0 ? <p className="text-sm text-muted">ยังไม่เคยเช็กอิน</p> : (
               <ul className="divide-y divide-line">
-                {member.checkIns.map(c => (
-                  <li key={c.at} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span>{formatThaiDateOf(c.at)} · {formatThaiTime(c.at)} น.</span>
+                {member.checkIns.map((c, index) => (
+                  <li key={`${c.at}-${index}`} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span>{formatThaiDateOf(c.at)} · เข้า {formatThaiTime(c.at)} น. · ออก {c.checkedOutAt ? `${formatThaiTime(c.checkedOutAt)} น.` : 'ยังไม่บันทึก'}</span>
                     <Badge tone={c.allowed ? 'lime' : 'danger'}>{c.allowed ? 'ผ่าน' : 'ปฏิเสธ'}</Badge>
                   </li>
                 ))}

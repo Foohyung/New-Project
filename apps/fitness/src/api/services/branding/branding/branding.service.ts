@@ -1,4 +1,4 @@
-export const DEFAULT_BRAND_COLOR = '#c6ff3d';
+export const DEFAULT_BRAND_COLOR = '#ff8a3d';
 
 export function isSafeLogoUrl(value: string): boolean {
   if (!value) return true;

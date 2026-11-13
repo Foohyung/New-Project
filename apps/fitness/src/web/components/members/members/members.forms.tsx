@@ -8,11 +8,13 @@ import { ConfirmForm } from '@/web/components/ui/ui/ui.confirm-form';
 import { DEFAULT_MEMBER_PASSWORD, FREEZE_MAX_DAYS, membershipPeriod, type PackageLike } from '@/api/services/members/members/members.service';
 import { METHOD_LABEL, type PaymentMethod } from '@/api/services/payments/payments/payments.service';
 import type { ActionResult } from '@/api/types/shared/shared/shared.action-result';
+import type { PaymentSetup } from '@/api/types/payments/payments/payments.types';
 import { ResultMessage } from '@/web/components/ui/ui/ui.action-button';
 import { CouponField, type AppliedCoupon } from '@/web/components/coupons/coupons/coupons.field';
 import { Dropdown } from '@/web/components/ui/ui/ui.dropdown';
 import { ChoiceCard, FieldError, TextField } from '@/web/components/ui/ui/ui.field';
 import { btn } from '@/web/components/ui/ui/ui';
+import { DatePickerField, DatePickerGroup } from '@/web/components/ui/ui/ui.calendar';
 
 export interface PackageOption extends PackageLike {
   id: string;
@@ -43,12 +45,12 @@ function PackagePicker({ packages, value, onChange, error }: { packages: Package
   );
 }
 
-function MethodPicker({ value, onChange, error }: { value: PaymentMethod; onChange: (v: PaymentMethod) => void; error?: string }) {
+function MethodPicker({ value, onChange, methods, error }: { value: PaymentMethod; onChange: (v: PaymentMethod) => void; methods: PaymentMethod[]; error?: string }) {
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-1.5 text-sm font-semibold">วิธีชำระเงิน</legend>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {METHODS.map(m => (
+        {METHODS.filter(m => methods.includes(m)).map(m => (
           <ChoiceCard key={m} name="method" value={m} checked={value === m} onChange={v => {
             onChange(v as PaymentMethod);
           }} title={METHOD_LABEL[m]} detail={m === 'cash' || m === 'card' ? 'ยืนยันทันที' : 'รอตรวจสลิป'} />
@@ -60,15 +62,16 @@ function MethodPicker({ value, onChange, error }: { value: PaymentMethod; onChan
 }
 
 /** สมัครสมาชิกใหม่ที่เคาน์เตอร์ */
-export function MemberCreateForm({ packages, action, today }: { packages: PackageOption[]; action: Action; today: string }) {
+export function MemberCreateForm({ packages, action, today, setup }: { packages: PackageOption[]; action: Action; today: string; setup: PaymentSetup }) {
   // onSubmit แทน <form action> — ส่งไม่ผ่านแล้วค่าที่กรอกไม่หาย (React 19 ล้างฟอร์มหลัง action)
   const { state, onSubmit, pending } = useFormAction(action);
   const [packageId, setPackageId] = useState(packages[0]?.id ?? '');
-  const [method, setMethod] = useState<PaymentMethod>('cash');
+  const [method, setMethod] = useState<PaymentMethod>(setup.methods[0] ?? 'cash');
+  const [startsOn, setStartsOn] = useState(today);
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const errors = errorsOf(state);
   const pkg = packages.find(p => p.id === packageId);
-  const period = pkg && membershipPeriod(pkg, null, today);
+  const period = pkg && membershipPeriod(pkg, null, today, startsOn);
   const expiresOn = period && coupon?.bonusDays ? addDays(period.expiresOn, coupon.bonusDays) : period?.expiresOn;
 
   return (
@@ -85,7 +88,34 @@ export function MemberCreateForm({ packages, action, today }: { packages: Packag
           ระบบสร้างบัญชีเข้าสู่ระบบให้สมาชิกอัตโนมัติ — เข้าด้วย<b className="text-ink">เบอร์โทร</b> รหัสผ่านเริ่มต้น <b className="font-mono text-lime">{DEFAULT_MEMBER_PASSWORD}</b>
         </p>
         <PackagePicker packages={packages} value={packageId} onChange={setPackageId} error={errors.packageId} />
-        <MethodPicker value={method} onChange={setMethod} error={errors.method} />
+        <DatePickerGroup className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <DatePickerField
+              name="startsOn"
+              label={pkg?.kind === 'pt' ? 'วันที่สมัครย้อนหลัง' : 'วันที่เริ่มสิทธิ์'}
+              defaultValue={today}
+              max={today}
+              today={today}
+              required
+              error={errors.startsOn}
+              onSelect={setStartsOn}
+            />
+            <p className="text-xs text-muted">เลือกวันที่เริ่มนับแพ็กเกจย้อนหลังได้</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <DatePickerField
+              name="paymentDate"
+              label="วันที่ชำระเงิน"
+              defaultValue={today}
+              max={today}
+              today={today}
+              required
+              error={errors.paymentDate}
+            />
+            <p className="text-xs text-muted">ใช้วันที่นี้เมื่อรับชำระหรือยืนยันยอด</p>
+          </div>
+        </DatePickerGroup>
+        <MethodPicker value={method} onChange={setMethod} methods={setup.methods} error={errors.method} />
         <CouponField packageId={packageId} memberId={null} applied={coupon} onApplied={setCoupon} error={errors.couponCode} />
       </div>
 
@@ -140,10 +170,10 @@ export function MemberEditForm({ member, action }: { member: { name: string; pho
 }
 
 /** ต่ออายุ / ซื้อแพ็กเกจเพิ่ม */
-export function RenewForm({ packages, action, currentExpiresOn, today, memberId }: { packages: PackageOption[]; action: Action; currentExpiresOn: string; today: string; memberId: string }) {
+export function RenewForm({ packages, action, currentExpiresOn, today, memberId, setup }: { packages: PackageOption[]; action: Action; currentExpiresOn: string; today: string; memberId: string; setup: PaymentSetup }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
   const [packageId, setPackageId] = useState(packages[0]?.id ?? '');
-  const [method, setMethod] = useState<PaymentMethod>('cash');
+  const [method, setMethod] = useState<PaymentMethod>(setup.methods[0] ?? 'cash');
   const errors = errorsOf(state);
   const pkg = packages.find(p => p.id === packageId);
   const period = pkg && membershipPeriod(pkg, currentExpiresOn, today);
@@ -152,7 +182,7 @@ export function RenewForm({ packages, action, currentExpiresOn, today, memberId 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <PackagePicker packages={packages} value={packageId} onChange={setPackageId} error={errors.packageId} />
-      <MethodPicker value={method} onChange={setMethod} error={errors.method} />
+      <MethodPicker value={method} onChange={setMethod} methods={setup.methods} error={errors.method} />
       <CouponField packageId={packageId} memberId={memberId} applied={coupon} onApplied={setCoupon} error={errors.couponCode} />
       <p className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl bg-surface-2 p-3 text-sm">
         <span>{pkg?.kind === 'pt' ? `เพิ่มครั้ง PT อีก ${String(pkg.sessions ?? 0)} ครั้ง` : expiresOn ? `หลังชำระ ใช้ได้ถึง ${formatThaiDate(expiresOn, 'long')}${currentExpiresOn >= today ? ' (ต่อจากวันหมดอายุเดิม)' : ''}` : 'เลือกแพ็กเกจ'}</span>

@@ -1,11 +1,12 @@
 import { addDays, bangkokDate, formatThaiDate, formatThaiTime } from '@/api/lib/utils/utils/utils';
-import { CalendarDays, CalendarRange, List, Plus, Users, UserRound } from 'lucide-react';
+import { Calendar, CalendarDays, CalendarRange, List, Plus, Users, UserRound, DoorOpen } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { z } from 'zod';
 import { classTime } from '@/web/components/dashboard/dashboard/dashboard';
 import { ClassChip, dayLabel, WeekSchedule } from '@/web/components/classes/classes/classes.schedule';
-import { Badge, btn, EmptyState, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { ClassMonthPicker } from '@/web/components/classes/classes/classes.month-picker';
+import { Badge, btn, EmptyState, PageHeader } from '@/web/components/ui/ui/ui';
 import { UrlDropdown } from '@/web/components/ui/ui/ui.url-dropdown';
 import { hrefWith, Toolbar, ViewSwitch } from '@/web/components/ui/ui/ui.view-switch';
 import type { ClassDto } from '@/api/types/classes/classes/classes.types';
@@ -15,65 +16,93 @@ import { listClasses } from '@/api/dal/classes/classes/classes.dal';
 import { listTrainers } from '@/api/dal/trainers/trainers/trainers.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { can } from '@/api/lib/auth/auth/auth.rbac';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'ตารางคลาส' };
 
-const VIEWS = ['week', 'day', 'list', 'trainer'] as const;
+const PERIODS = ['day', 'week', 'month'] as const;
+const VIEWS = ['calendar', 'room', 'list', 'trainer'] as const;
 
 const SearchParams = z.object({
   from: z.iso.date().optional().catch(undefined),
-  day: z.iso.date().optional().catch(undefined),
-  view: z.enum(VIEWS).catch('week'),
+  period: z.enum(PERIODS).catch('week'),
+  view: z.enum(VIEWS).catch('calendar'),
   trainer: z.string().max(10).optional().catch(undefined),
 });
 
-const VIEW_OPTIONS = [
+const PERIOD_OPTIONS = [
+  { value: 'day', label: 'วัน', icon: <CalendarDays className="size-4" /> },
   { value: 'week', label: 'สัปดาห์', icon: <CalendarRange className="size-4" /> },
-  { value: 'day', label: 'รายวันตามห้อง', icon: <CalendarDays className="size-4" /> },
+  { value: 'month', label: 'เดือน', icon: <Calendar className="size-4" /> },
+];
+
+const VIEW_OPTIONS = [
+  { value: 'calendar', label: 'ปฏิทิน', icon: <CalendarRange className="size-4" /> },
+  { value: 'room', label: 'ตามห้อง', icon: <DoorOpen className="size-4" /> },
   { value: 'list', label: 'รายการ', icon: <List className="size-4" /> },
   { value: 'trainer', label: 'ตามเทรนเนอร์', icon: <Users className="size-4" /> },
 ];
 
 const LEVEL_TONE = { ง่าย: 'lime', กลาง: 'warn', หนัก: 'danger' } as const;
 const dateOf = (c: ClassDto) => bangkokDate(new Date(c.startsAt));
+const mondayOf = (date: string) => addDays(date, -((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7));
+const monthOf = (date: string, offset: number) => {
+  const [year, month] = date.split('-').map(Number);
+  return new Date(Date.UTC(year ?? 0, (month ?? 1) - 1 + offset, 1)).toISOString().slice(0, 10);
+};
 
 export default async function ClassesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('classes.view');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const params = SearchParams.parse(await searchParams);
-  const from = params.from ?? today();
-  const selected = params.day && params.day >= from && params.day < addDays(from, 7) ? params.day : from;
-  const [all, trainers] = await Promise.all([listClasses(session, from, 7), listTrainers(session)]);
+  const anchor = params.from ?? today();
+  const period = params.period;
+  const from = period === 'week' ? mondayOf(anchor) : period === 'month' ? monthOf(anchor, 0) : anchor;
+  const monthOffset = (new Date(`${from}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const monthLength = new Date(Date.UTC(Number(from.slice(0, 4)), Number(from.slice(5, 7)), 0)).getUTCDate();
+  const rangeFrom = period === 'month' ? addDays(from, -monthOffset) : from;
+  const rangeDays = period === 'day' ? 1 : period === 'week' ? 7 : Math.ceil((monthOffset + monthLength) / 7) * 7;
+  const days = Array.from({ length: rangeDays }, (_, i) => addDays(rangeFrom, i));
+  const rangeEnd = days.at(-1) ?? from;
+  const [classes, trainers] = await Promise.all([listClasses(session, rangeFrom, rangeDays), listTrainers(session)]);
   const trainer = trainers.find(t => t.id === params.trainer);
-  const classes = trainer ? all.filter(c => c.trainerId === trainer.id) : all;
-  const mine = session.role === 'trainer' ? all.filter(c => c.trainerId === session.trainerId && c.state !== 'ended') : [];
+  const filteredClasses = trainer ? classes.filter(c => c.trainerId === trainer.id) : classes;
+  const mine = session.role === 'trainer' ? classes.filter(c => c.trainerId === session.trainerId && c.state !== 'ended') : [];
   const view = params.view;
-  const current = { from: params.from, day: params.day, trainer: trainer?.id, view: view === 'week' ? undefined : view };
+  const current = { from: anchor, period, trainer: trainer?.id, view: view === 'calendar' ? undefined : view };
   const href = (patch: Record<string, string | undefined>) => hrefWith('/classes', current, patch);
-  const days = Array.from({ length: 7 }, (_, i) => addDays(from, i));
+  const rangeLabel = period === 'month'
+    ? new Intl.DateTimeFormat('th-TH', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(new Date(`${from}T00:00:00Z`))
+    : from === rangeEnd ? formatThaiDate(from, 'long') : `${formatThaiDate(from)} – ${formatThaiDate(rangeEnd)}`;
+  const selected = anchor >= rangeFrom && anchor <= rangeEnd ? anchor : from;
 
   return (
     <>
       <PageHeader
-        kicker={`${formatThaiDate(from)} – ${formatThaiDate(addDays(from, 6))}`}
+        kicker={rangeLabel}
         title="ตารางคลาส"
         actions={
           <>
-            <Link href={href({ from: addDays(from, -7), day: undefined })} className={btn.secondary}>← สัปดาห์ก่อน</Link>
-            <Link href={href({ from: addDays(from, 7), day: undefined })} className={btn.secondary}>สัปดาห์ถัดไป →</Link>
+            <Link href={href({ from: today() })} className={btn.secondary}>วันนี้</Link>
             {can(session, 'classes.manage') && <Link href="/classes/new" className={btn.primary}><Plus aria-hidden className="size-5" />เพิ่มคลาส</Link>}
           </>
         }
       />
       {mine.length > 0 && (
         <p className="rounded-2xl border border-lime/30 bg-lime/5 p-4 text-sm">
-          คลาสของคุณสัปดาห์นี้ {mine.length} คลาส · ถัดไป <Link href={`/classes/${mine[0]?.id ?? ''}`} className="tap inline-block font-semibold text-lime underline underline-offset-2">{mine[0]?.title}</Link>
+          คลาสของคุณในช่วงนี้ {mine.length} คลาส · ถัดไป <Link href={`/classes/${mine[0]?.id ?? ''}`} className="tap inline-block font-semibold text-lime underline underline-offset-2">{mine[0]?.title}</Link>
         </p>
       )}
 
       <Toolbar>
-        <ViewSwitch views={VIEW_OPTIONS} current={view} hrefFor={v => href({ view: v === 'week' ? undefined : v })} />
-        <div className="ml-auto">
+        <ViewSwitch views={PERIOD_OPTIONS} current={period} hrefFor={v => href({ period: v, from: anchor })} />
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {period === 'month' && <ClassMonthPicker key={from} value={from.slice(0, 7)} />}
+          <UrlDropdown
+            label="รูปแบบ"
+            value={view}
+            options={VIEW_OPTIONS.map(option => ({ ...option, href: href({ view: option.value === 'calendar' ? undefined : option.value }) }))}
+          />
           <UrlDropdown
             label="เทรนเนอร์"
             align="end"
@@ -86,65 +115,57 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
         </div>
       </Toolbar>
 
-      {view === 'day' ? (
-        <DayByRoom classes={classes} days={days} selected={selected} dayHref={d => href({ day: d })} />
+      {view === 'room' ? (
+        <DayByRoom classes={filteredClasses} days={days} />
       ) : view === 'list' ? (
-        <ListView classes={classes} />
+        <ListView classes={filteredClasses} />
       ) : view === 'trainer' ? (
-        <ByTrainer classes={classes} trainers={trainer ? [trainer] : trainers} days={days} />
+        <ByTrainer classes={filteredClasses} trainers={trainer ? [trainer] : trainers} days={days} />
       ) : (
-        <WeekSchedule classes={classes} from={from} selected={selected} basePath="/classes" hrefFor={c => `/classes/${c.id}`} dayHref={d => href({ day: d })} />
+        <WeekSchedule classes={filteredClasses} days={days} selected={selected} period={period} month={period === 'month' ? from : undefined} />
       )}
     </>
   );
 }
 
-function DayTabs({ days, selected, dayHref }: { days: string[]; selected: string; dayHref: (d: string) => string }) {
+/** จัดคลาสแยกตามวันและห้องในช่วงเวลาที่เลือก */
+function DayByRoom({ classes, days }: { classes: ClassDto[]; days: string[] }) {
+  const activeDays = days.filter(date => classes.some(c => dateOf(c) === date));
+  if (activeDays.length === 0) return <EmptyState>ไม่มีคลาสในช่วงนี้</EmptyState>;
   return (
-    <nav aria-label="เลือกวัน" className="-mx-4 flex gap-2 scrollbar-none overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-      {days.map(d => {
-        const l = dayLabel(d);
+    <div className="flex flex-col gap-4">
+      {activeDays.map(date => {
+        const dayClasses = classes.filter(c => dateOf(c) === date);
+        const rooms = [...new Set(dayClasses.map(c => c.room))].sort();
         return (
-          <Link key={d} href={dayHref(d)} scroll={false} aria-current={d === selected ? 'page' : undefined} className="flex min-h-14 min-w-16 shrink-0 flex-col items-center justify-center rounded-xl border border-line bg-surface px-3 text-sm aria-[current=page]:border-lime aria-[current=page]:bg-lime aria-[current=page]:text-bg">
-            <span className="text-xs">{l.weekday}</span>
-            <b className="font-semibold">{l.day}</b>
-          </Link>
+          <section key={date} className="rounded-2xl border border-line bg-surface/50 p-3 sm:p-4">
+            <h2 className="mb-3 font-semibold">{formatThaiDate(date, 'long')}</h2>
+            {rooms.length === 0 ? <p className="text-sm text-faint">ไม่มีคลาส</p> : (
+              <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
+                {rooms.map(room => {
+                  const items = dayClasses.filter(c => c.room === room);
+                  return (
+                    <section key={room} aria-labelledby={`room-${date}-${room}`} className="flex min-w-0 flex-col gap-2 rounded-xl border border-line bg-surface p-3">
+                      <h3 id={`room-${date}-${room}`} className="flex items-center justify-between px-1 py-1 font-semibold">
+                        {room}
+                        <span className="rounded-full bg-surface-2 px-2 text-xs font-normal text-muted">{items.length} คลาส</span>
+                      </h3>
+                      {items.map(c => <ClassChip key={c.id} c={c} href={`/classes/${c.id}`} />)}
+                    </section>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         );
       })}
-    </nav>
-  );
-}
-
-/** รายวันตามห้อง: คอลัมน์ละห้อง เห็นว่าห้องไหนว่าง/ชนเวลา (มือถือเรียงห้องต่อกัน) */
-function DayByRoom({ classes, days, selected, dayHref }: { classes: ClassDto[]; days: string[]; selected: string; dayHref: (d: string) => string }) {
-  const today = classes.filter(c => dateOf(c) === selected);
-  const rooms = [...new Set(today.map(c => c.room))].sort();
-  return (
-    <>
-      <DayTabs days={days} selected={selected} dayHref={dayHref} />
-      {rooms.length === 0 ? <EmptyState>ไม่มีคลาสในวันนี้</EmptyState> : (
-        <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
-          {rooms.map(room => {
-            const items = today.filter(c => c.room === room);
-            return (
-              <section key={room} aria-labelledby={`room-${room}`} className="flex min-w-0 flex-col gap-2 rounded-2xl border border-line bg-surface/60 p-3">
-                <h2 id={`room-${room}`} className="flex items-center justify-between px-1 py-1 font-semibold">
-                  {room}
-                  <span className="rounded-full bg-surface-2 px-2 text-xs font-normal text-muted">{items.length} คลาส</span>
-                </h2>
-                {items.map(c => <ClassChip key={c.id} c={c} href={`/classes/${c.id}`} />)}
-              </section>
-            );
-          })}
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 
 /** รายการ: ทุกคลาสทั้งสัปดาห์ เรียงตามเวลา — มือถือเป็นการ์ด แท็บเล็ตขึ้นไปเป็นตาราง */
 function ListView({ classes }: { classes: ClassDto[] }) {
-  if (classes.length === 0) return <EmptyState>ไม่มีคลาสในสัปดาห์นี้</EmptyState>;
+  if (classes.length === 0) return <EmptyState>ไม่มีคลาสในช่วงนี้</EmptyState>;
   const seats = (c: ClassDto) => {
     const full = c.booked >= c.capacity;
     return <span className={full ? 'font-semibold text-danger' : ''}>{c.booked}/{c.capacity}{full && ' เต็ม'}</span>;
@@ -198,34 +219,33 @@ function ListView({ classes }: { classes: ClassDto[] }) {
   );
 }
 
-/** ตามเทรนเนอร์: แถวละคน × 7 วัน (≥ xl) — จอเล็กเรียงเป็นกลุ่มต่อคน */
+/** จัดคลาสเป็นกลุ่มตามเทรนเนอร์และวันที่ */
 function ByTrainer({ classes, trainers, days }: { classes: ClassDto[]; trainers: TrainerDto[]; days: string[] }) {
   return (
     <div className="flex flex-col gap-3">
-      <div aria-hidden className="hidden grid-cols-[10rem_repeat(7,minmax(0,1fr))] gap-2 px-3 xl:grid">
-        <span />
-        {days.map(d => <span key={d} className="text-xs text-muted">{dayLabel(d).weekday} <b className="font-semibold text-ink">{dayLabel(d).day}</b></span>)}
-      </div>
       {trainers.map(t => {
         const items = classes.filter(c => c.trainerId === t.id);
         return (
-          <section key={t.id} aria-labelledby={`tr-${t.id}`} className="grid gap-2 rounded-2xl border border-line bg-surface/60 p-3 xl:grid-cols-[10rem_repeat(7,minmax(0,1fr))]">
-            <header className="flex items-center gap-2 xl:flex-col xl:items-start">
+          <section key={t.id} aria-labelledby={`tr-${t.id}`} className="rounded-2xl border border-line bg-surface/60 p-3 sm:p-4">
+            <header className="mb-3 flex items-center gap-2">
               <span aria-hidden className="size-3 rounded-full" style={{ backgroundColor: t.color }} />
               <h2 id={`tr-${t.id}`} className="font-semibold"><Link href={`/trainers/${t.id}`} className="tap inline-block hover:underline">{t.nickname}</Link></h2>
-              <span className="ml-auto text-xs text-muted xl:ml-0">{items.length} คลาส</span>
+              <span className="ml-auto text-xs text-muted">{items.length} คลาส</span>
             </header>
-            {days.map(d => {
-              const dayItems = items.filter(c => dateOf(c) === d);
-              return (
-                <div key={d} className={`flex min-w-0 flex-col gap-2 ${dayItems.length === 0 ? 'hidden xl:flex' : ''}`}>
-                  <span className="text-xs text-muted xl:hidden">{dayLabel(d).weekday} {dayLabel(d).day}</span>
-                  {dayItems.map(c => <ClassChip key={c.id} c={c} href={`/classes/${c.id}`} />)}
-                  {dayItems.length === 0 && <span aria-hidden className="rounded-xl border border-dashed border-line/70 p-3 text-center text-xs text-faint">—</span>}
-                </div>
-              );
-            })}
-            {items.length === 0 && <p className="text-sm text-faint xl:hidden">ไม่มีคลาสสัปดาห์นี้</p>}
+            {items.length === 0 ? <p className="text-sm text-faint">ไม่มีคลาสในช่วงนี้</p> : (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {days.map(d => {
+                  const dayItems = items.filter(c => dateOf(c) === d);
+                  if (dayItems.length === 0) return null;
+                  return (
+                    <section key={d} className="flex min-w-0 flex-col gap-2 rounded-xl border border-line bg-surface p-3">
+                      <h3 className="text-sm font-semibold">{formatThaiDate(d, 'long')}</h3>
+                      {dayItems.map(c => <ClassChip key={c.id} c={c} href={`/classes/${c.id}`} />)}
+                    </section>
+                  );
+                })}
+              </div>
+            )}
           </section>
         );
       })}

@@ -4,12 +4,12 @@ import type { ClassDto } from '@/api/types/classes/classes/classes.types';
 import { monthStart } from '@/api/services/shared/shared/shared.date-range';
 import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { now, today } from '@/api/lib/clock/clock/clock';
-import { asDay, bangkokSpan, bangkokStart, packagesById, prismaAs } from '@/api/lib/db/db/db';
-import { authorize, can } from '@/api/lib/auth/auth/auth.rbac';
+import { asDay, bangkokSpan, bangkokStart, packagesById, prisma, prismaAs } from '@/api/lib/db/db/db';
+import { authorize, can, ForbiddenError } from '@/api/lib/auth/auth/auth.rbac';
 import { listClasses } from '@/api/dal/classes/classes/classes.dal';
 
 export interface DashboardData {
-  inGym: { now: number; capacity: number };
+  inGym: { now: number; capacity: number | null };
   checkInsToday: { count: number; changePct: number };
   activeMembers: { count: number; newThisMonth: number };
   /** null เมื่อผู้ใช้ไม่มีสิทธิ์ดูรายได้ (เช่น เคาน์เตอร์) — รายได้เป็นข้อมูล Internal (§11.1) */
@@ -19,6 +19,11 @@ export interface DashboardData {
   currentHour: number;
   classes: ClassDto[];
   packageMix: { name: string; count: number; color: string }[];
+}
+
+export interface DashboardBranchScope {
+  branch: string | null;
+  creatorIds: string[] | null;
 }
 
 /** ความจุของยิม (คน) — ตั้ง GYM_CAPACITY ใน .env */
@@ -31,23 +36,60 @@ const MIX_COLORS = ['var(--color-cyan)', 'var(--color-warn)', 'var(--color-lime)
 const hourOf = (d: Date) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', hourCycle: 'h23' }).format(d));
 const pct = (current: number, previous: number) => (previous ? Math.round(((current - previous) / previous) * 1000) / 10 : 0);
 
-export async function getDashboard(session: Session): Promise<DashboardData> {
+/** สาขาที่ admin เลือกได้ และบัญชีผู้สร้างรายการในสาขานั้น */
+export async function getDashboardBranchScope(session: Session, requestedBranch?: string): Promise<{ branches: string[]; scope: DashboardBranchScope }> {
   await authorize(session, 'dashboard.view');
+  if (session.role !== 'admin') return { branches: [], scope: { branch: null, creatorIds: null } };
+
+  const db = prisma();
+  const [configuredBranches, users, ownerBranches] = await Promise.all([
+    db.branch.findMany({ select: { name: true }, orderBy: [{ createdAt: 'asc' }, { name: 'asc' }] }),
+    db.user.findMany({ select: { id: true, branch: true }, orderBy: { branch: 'asc' } }),
+    db.ownerBranch.findMany({ select: { branch: true }, orderBy: { branch: 'asc' } }),
+  ]);
+  const configuredNames = new Set(configuredBranches.map(branch => branch.name));
+  const legacyBranches = [...new Set([
+    ...users.map(user => user.branch),
+    ...ownerBranches.map(row => row.branch),
+  ])]
+    .filter(branch => !configuredNames.has(branch))
+    .sort((a, b) => a.localeCompare(b, 'th'));
+  const branches = [
+    session.branch,
+    ...configuredBranches.map(branch => branch.name).filter(branch => branch !== session.branch),
+    ...legacyBranches.filter(branch => branch !== session.branch),
+  ];
+  const branch = requestedBranch && branches.includes(requestedBranch) ? requestedBranch : null;
+  return {
+    branches,
+    scope: {
+      branch,
+      creatorIds: branch ? users.filter(user => user.branch === branch).map(user => user.id) : null,
+    },
+  };
+}
+
+export async function getDashboard(session: Session, scope?: DashboardBranchScope): Promise<DashboardData> {
+  await authorize(session, 'dashboard.view');
+  if (scope && session.role !== 'admin') throw new ForbiddenError();
   const db = prismaAs(session);
+  const creatorIds = scope?.creatorIds ?? null;
+  const creatorFilter = creatorIds ? { createdById: { in: creatorIds } } : {};
   const instant = now();
   const date = today();
   const month = monthStart(date);
   const day = Number(date.slice(8, 10));
   const lastMonthStart = monthStart(addDays(month, -1));
   const lastMonthSameDay = addDays(lastMonthStart, day - 1);
-  const [recent, inGym, active, newThisMonth, pkgs, byPackage] = await Promise.all([
+  const [recent, inGym, active, newThisMonth, pkgs, byPackage, branchClassIds] = await Promise.all([
     // วันนี้ + 4 สัปดาห์ก่อน (ใช้คาดการณ์รายชั่วโมงจากวันเดียวกันของสัปดาห์ก่อน ๆ)
-    db.checkIn.findMany({ where: { allowed: true, at: { gte: bangkokStart(addDays(date, -28)) } }, select: { at: true } }),
-    db.checkIn.count({ where: { allowed: true, at: { gte: new Date(instant.getTime() - STAY_HOURS * 3_600_000), lte: instant } } }),
-    db.member.count({ where: { expiresOn: { gte: asDay(date) } } }),
-    db.member.count({ where: { joinedOn: { gte: asDay(month) } } }),
+    db.checkIn.findMany({ where: { ...creatorFilter, allowed: true, at: { gte: bangkokStart(addDays(date, -28)) } }, select: { at: true } }),
+    db.checkIn.count({ where: { ...creatorFilter, allowed: true, checkedOutAt: null, at: { gte: new Date(instant.getTime() - STAY_HOURS * 3_600_000), lte: instant } } }),
+    db.member.count({ where: { ...creatorFilter, expiresOn: { gte: asDay(date) } } }),
+    db.member.count({ where: { ...creatorFilter, joinedOn: { gte: asDay(month) } } }),
     packagesById(db),
-    db.member.groupBy({ by: ['packageId'], where: { expiresOn: { gte: asDay(date) } }, _count: true }),
+    db.member.groupBy({ by: ['packageId'], where: { ...creatorFilter, expiresOn: { gte: asDay(date) } }, _count: true }),
+    creatorIds ? db.gymClass.findMany({ where: { ...creatorFilter, startsAt: bangkokSpan(date) }, select: { id: true } }) : Promise.resolve(null),
   ]);
   const days = recent.map(c => ({ date: bangkokDate(c.at), hour: hourOf(c.at) }));
   const todayCount = days.filter(d => d.date === date).length;
@@ -64,22 +106,24 @@ export async function getDashboard(session: Session): Promise<DashboardData> {
   let revenueMonth: DashboardData['revenueMonth'] = null;
   if (can(session, 'revenue.view')) {
     const [thisMonth, lastMonth, pendingSlips] = await Promise.all([
-      db.payment.aggregate({ where: { status: 'paid', paidAt: bangkokSpan(month, date) }, _sum: { amountSatang: true } }),
-      db.payment.aggregate({ where: { status: 'paid', paidAt: bangkokSpan(lastMonthStart, lastMonthSameDay) }, _sum: { amountSatang: true } }),
-      db.payment.count({ where: { status: 'review' } }),
+      db.payment.aggregate({ where: { ...creatorFilter, status: 'paid', paidAt: bangkokSpan(month, date) }, _sum: { amountSatang: true } }),
+      db.payment.aggregate({ where: { ...creatorFilter, status: 'paid', paidAt: bangkokSpan(lastMonthStart, lastMonthSameDay) }, _sum: { amountSatang: true } }),
+      db.payment.count({ where: { ...creatorFilter, status: 'review' } }),
     ]);
     const satang = thisMonth._sum.amountSatang ?? 0;
     revenueMonth = { satang, changePct: pct(satang, lastMonth._sum.amountSatang ?? 0), pendingSlips };
   }
 
   return {
-    inGym: { now: inGym, capacity: capacity() },
+    inGym: { now: inGym, capacity: scope && !scope.branch ? null : capacity() },
     checkInsToday: { count: todayCount, changePct: pct(todayCount, lastWeekCount) },
     activeMembers: { count: active, newThisMonth },
     revenueMonth,
     hourly,
     currentHour,
-    classes: (await listClasses(session, date, 1)).filter(c => c.state !== 'ended'),
+    classes: (await listClasses(session, date, 1))
+      .filter(c => c.state !== 'ended')
+      .filter(c => !branchClassIds || branchClassIds.some(row => row.id === c.id)),
     packageMix: byPackage
       .sort((a, b) => b._count - a._count)
       .map((r, i) => ({ name: pkgs.get(r.packageId)?.name ?? r.packageId, count: r._count, color: MIX_COLORS[i % MIX_COLORS.length] ?? 'var(--color-lime)' })),

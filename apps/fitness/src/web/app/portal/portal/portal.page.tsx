@@ -1,47 +1,54 @@
 import { formatBaht, formatThaiDate, formatThaiDateOf, formatThaiTime } from '@/api/lib/utils/utils/utils';
-import { CalendarPlus, Gift, TicketPercent } from 'lucide-react';
+import { CalendarPlus, TicketPercent } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { PaymentStatusBadge } from '@/web/components/payments/payments/payments';
-import { AutoRenewCard, CopyButton, SelfCheckInButton } from '@/web/components/portal/portal/portal.cards';
+import { ReceiptPrintLink } from '@/web/components/payments/payments/receipt-print-link';
+import { AutoRenewCard, SelfCheckInButton } from '@/web/components/portal/portal/portal.cards';
 import { selfCheckInAction } from '@/api/actions/checkin/checkin/checkin.actions';
 import { bangkokDate } from '@/api/lib/utils/utils/utils';
-import { today } from '@/api/lib/clock/clock/clock';
 import { QrCode } from '@/web/components/ui/ui/ui.qr-code';
-import { Badge, btn, Card, EmptyState, Forbidden, inputClass, StatusBadge } from '@/web/components/ui/ui/ui';
-import { REFERRAL } from '@/api/services/coupons/coupons/coupons.service';
+import { Badge, btn, Card, EmptyState, inputClass, StatusBadge } from '@/web/components/ui/ui/ui';
 import { cancelBookingAction } from '@/api/actions/classes/classes/classes.actions';
 import { CANCEL_CUTOFF_MINUTES } from '@/api/services/classes/classes/classes.service';
 import { buyPackageAction } from '@/api/actions/payments/payments/payments.actions';
 import { setAutoRenewAction } from '@/api/actions/subscriptions/subscriptions/subscriptions.actions';
-import { myReferral, previewCoupon } from '@/api/dal/coupons/coupons/coupons.dal';
+import { previewCoupon } from '@/api/dal/coupons/coupons/coupons.dal';
 import { getMyAutoRenew } from '@/api/dal/subscriptions/subscriptions/subscriptions.dal';
 import { getPortal } from '@/api/dal/portal/portal/portal.dal';
 import { listPackages } from '@/api/dal/packages/packages/packages.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { CountUp, Marquee } from '@/web/components/layout/layout/layout.motion';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'บัตรสมาชิก' };
 
 export default async function MyCardPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { session, allowed } = await pageGuard('portal.use');
-  if (!allowed) return <Forbidden message="หน้านี้สำหรับสมาชิก — สลับเป็นบทบาทสมาชิกเพื่อดูตัวอย่าง" />;
-  const [me, packages, autoRenew, referral] = await Promise.all([getPortal(session), listPackages(session, { activeOnly: true }), getMyAutoRenew(session), myReferral(session)]);
+  if (!allowed) return accessDenied("หน้านี้สำหรับสมาชิก — สลับเป็นบทบาทสมาชิกเพื่อดูตัวอย่าง");
+  const [me, packages, autoRenew] = await Promise.all([getPortal(session), listPackages(session, { activeOnly: true }), getMyAutoRenew(session)]);
   if (!me) return <EmptyState>ไม่พบข้อมูลสมาชิกของบัญชีนี้ ติดต่อเคาน์เตอร์</EmptyState>;
-  // ?coupon=RENEW10&from=reminder มาจากลิงก์ในข้อความเตือน — ตรวจโค้ดกับทุกแพ็กเกจเพื่อแสดงราคาหลังหักส่วนลด
+  // ?coupon=RENEW10&ref=reminder มาจากลิงก์ในข้อความเตือน (ลิงก์ที่ส่งไปก่อนหน้าใช้ from=reminder) — ตรวจโค้ดกับทุกแพ็กเกจเพื่อแสดงราคาหลังหักส่วนลด
   const query = await searchParams;
   const couponInput = typeof query.coupon === 'string' ? query.coupon.slice(0, 24) : '';
-  const fromReminder = query.from === 'reminder';
+  const fromReminder = query.ref === 'reminder' || query.from === 'reminder';
   const offers = couponInput ? await Promise.all(packages.map(async p => ({ id: p.id, r: await previewCoupon(session, { code: couponInput, packageId: p.id, memberId: null }) }))) : [];
   const offerFor = (id: string) => offers.find(o => o.id === id)?.r;
   const anyValid = offers.some(o => o.r.ok);
   const firstError = offers.find(o => !o.r.ok)?.r;
   const pending = me.payments.find(p => p.status !== 'paid');
   const m = me.member;
-  // เช็กอินผ่านครั้งล่าสุดของวันนี้ (เวลาไทย)
-  const date = today();
-  const todayCheckIn = me.checkIns.filter(c => c.allowed && bangkokDate(new Date(c.at)) === date).sort((a, b) => b.at.localeCompare(a.at))[0];
+  const checkInDays = Array.from(
+    me.checkIns.reduce((groups, checkIn) => {
+      const date = bangkokDate(new Date(checkIn.at));
+      const visits = groups.get(date) ?? [];
+      visits.push(checkIn);
+      groups.set(date, visits);
+      return groups;
+    }, new Map<string, typeof me.checkIns>()),
+    ([date, visits]) => ({ date, visits }),
+  );
 
   return (
     <>
@@ -58,7 +65,7 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
         </Link>
       )}
 
-      <SelfCheckInButton action={selfCheckInAction} checkedInAt={todayCheckIn ? formatThaiTime(todayCheckIn.at) : null} />
+      <SelfCheckInButton action={selfCheckInAction} checkedInAt={me.openCheckInAt ? formatThaiTime(me.openCheckInAt) : null} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-5">
         {/* บัตรสมาชิก: แสดงที่เคาน์เตอร์ให้สแกน */}
@@ -141,35 +148,33 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
         </ul>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
-        <Card title="ต่ออายุอัตโนมัติ" subtitle="ไม่ต้องจำวันจ่าย สิทธิ์ไม่ขาดช่วง">
-          <AutoRenewCard data={autoRenew} action={setAutoRenewAction} />
-        </Card>
-        <section aria-labelledby="refer-title" className="flex flex-col gap-3 rounded-2xl border border-violet/40 bg-gradient-to-br from-violet/15 to-surface p-4 sm:p-5">
-          <h2 id="refer-title" className="flex items-center gap-2 font-display text-lg font-semibold"><Gift aria-hidden className="size-5 text-violet" />ชวนเพื่อนมาเล่น</h2>
-          <p className="text-sm text-muted">เพื่อนสมัครด้วยโค้ดนี้ได้ส่วนลด {formatBaht(REFERRAL.friendDiscountSatang)} คุณได้วันใช้งานเพิ่ม {REFERRAL.referrerBonusDays} วันต่อเพื่อน 1 คน</p>
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-violet/60 bg-bg p-3">
-            <b className="font-mono text-lg tracking-wide text-violet">{referral.code}</b>
-            <CopyButton text={referral.code} />
-          </div>
-          <dl className="grid grid-cols-3 gap-2 text-center text-xs text-muted">
-            <div><dt>เพื่อนสมัคร</dt><dd className="font-display text-xl text-ink">{referral.friends}</dd></div>
-            <div><dt>วันที่ได้เพิ่ม</dt><dd className="font-display text-xl text-ink">{referral.bonusDays}</dd></div>
-            <div><dt>สิทธิ์ที่เหลือ</dt><dd className="font-display text-xl text-ink">{referral.remaining}</dd></div>
-          </dl>
-        </section>
-      </div>
+      <Card title="ต่ออายุอัตโนมัติ" subtitle="ไม่ต้องจำวันจ่าย สิทธิ์ไม่ขาดช่วง">
+        <AutoRenewCard data={autoRenew} action={setAutoRenewAction} />
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
-        <Card title="ประวัติเข้ายิม">
-          <ul className="divide-y divide-line">
-            {me.checkIns.map(c => (
-              <li key={c.at} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span>{formatThaiDateOf(c.at)} · {formatThaiTime(c.at)} น.</span>
-                <Badge tone={c.allowed ? 'lime' : 'danger'}>{c.allowed ? 'เข้ายิม' : 'ไม่ผ่าน'}</Badge>
-              </li>
-            ))}
-          </ul>
+        <Card title="ประวัติเข้ายิม" subtitle="เวลาเข้า–ออก แยกตามวัน">
+          {checkInDays.length === 0 ? <p className="text-sm text-muted">ยังไม่มีประวัติการเข้าใช้</p> : (
+            <ul className="divide-y divide-line">
+              {checkInDays.map(({ date, visits }) => (
+                <li key={date} className="py-2.5">
+                  <p className="mb-1 text-sm font-medium">{formatThaiDate(date)}</p>
+                  <ul className="space-y-1">
+                    {visits.map((c, index) => (
+                      <li key={`${c.at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        {c.allowed ? (
+                          <span className="text-muted">
+                            เข้า {formatThaiTime(c.at)} น. · ออก {c.checkedOutAt ? `${formatThaiTime(c.checkedOutAt)} น.` : 'ยังไม่บันทึก'}
+                          </span>
+                        ) : <span className="text-muted">ไม่ผ่านเวลา {formatThaiTime(c.at)} น.</span>}
+                        <Badge tone={c.allowed ? 'lime' : 'danger'}>{c.allowed ? 'เข้ายิม' : 'ไม่ผ่าน'}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
         <Card title="การชำระเงิน">
           {me.payments.length === 0 ? <p className="text-sm text-muted">ยังไม่มีรายการ</p> : (
@@ -177,7 +182,11 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
               {me.payments.map(p => (
                 <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
                   <div><Link href={`/me/pay/${p.id}`} className="tap inline-block font-medium hover:underline">{p.packageName}</Link><p className="text-xs text-muted">{p.receiptNo} · {formatThaiDateOf(p.createdAt)}</p></div>
-                  <div className="flex items-center gap-3"><b className="font-display">{formatBaht(p.amountSatang)}</b><PaymentStatusBadge status={p.status} /></div>
+                  <div className="flex items-center gap-3">
+                    <b className="font-display">{formatBaht(p.amountSatang)}</b>
+                    <PaymentStatusBadge status={p.status} />
+                    {p.status === 'paid' && <ReceiptPrintLink href={`/me/pay/${p.id}?print=1`} />}
+                  </div>
                 </li>
               ))}
             </ul>

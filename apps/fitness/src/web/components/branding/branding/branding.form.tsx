@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useActionState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { useActionState, useState } from 'react';
 import type { ActionResult } from '@/api/types/shared/shared/shared.action-result';
 import type { BranchBrandingDto } from '@/api/types/branding/branding/branding.types';
 import { DEFAULT_BRAND_COLOR } from '@/api/services/branding/branding/branding.service';
@@ -20,7 +21,10 @@ export function BrandingForm({
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
   const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
-  const logoSrc = branding.hasUploadedLogo ? '/api/branding/logo' : branding.logoUrl;
+  const logoSrc = branding.hasUploadedLogo ? `/api/branding/logo?branch=${encodeURIComponent(branding.branch)}` : branding.logoUrl;
+  // ยังไม่เคยตั้งสี = ใช้สีตามธีมที่แต่ละคนเลือก
+  const [useTheme, setUseTheme] = useState(branding.primaryColor === null);
+  const [clearLogo, setClearLogo] = useState(false);
 
   return (
     <ConfirmForm action={formAction} confirm="บันทึกการเปลี่ยนชื่อ Gym สี และโลโก้ของสาขา?" confirmTitle="ยืนยันการแก้ไข" confirmLabel="บันทึก" encType="multipart/form-data" className="flex flex-col gap-5">
@@ -35,9 +39,13 @@ export function BrandingForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="primary-color" className="text-sm font-semibold">สีหลักของเว็บ</label>
-          <div className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-bg px-3">
-            <input id="primary-color" name="primaryColor" type="color" defaultValue={branding.primaryColor ?? DEFAULT_BRAND_COLOR} className="size-8 cursor-pointer rounded border-0 bg-transparent p-0" />
-            <span className="text-sm text-muted">สีปุ่ม ไฮไลต์ และโลโก้ FitFlow</span>
+          <label className="flex min-h-11 items-center gap-3 text-sm">
+            <input type="checkbox" name="useThemeColor" checked={useTheme} onChange={e => { setUseTheme(e.target.checked); }} className="size-5 accent-lime" />
+            ใช้สีตามธีม <span className="text-muted">(แต่ละคนเปลี่ยนสีได้จากเมนูธีม)</span>
+          </label>
+          <div className={`flex min-h-12 items-center gap-3 rounded-xl border border-line bg-bg px-3 ${useTheme ? 'opacity-50' : ''}`}>
+            <input id="primary-color" name="primaryColor" type="color" disabled={useTheme} defaultValue={branding.primaryColor ?? DEFAULT_BRAND_COLOR} className="size-8 cursor-pointer rounded border-0 bg-transparent p-0 disabled:cursor-not-allowed" />
+            <span className="text-sm text-muted">{useTheme ? 'ไม่ล็อกสี — ปุ่ม ไฮไลต์ และไอคอนแท็บเปลี่ยนตามธีม' : 'ล็อกสีปุ่ม ไฮไลต์ และไอคอนแท็บของทุกคนในสาขา (ธีมเปลี่ยนได้แค่พื้นหลัง)'}</span>
           </div>
           {errors.primaryColor && <p className="text-sm text-danger">{errors.primaryColor}</p>}
         </div>
@@ -61,15 +69,21 @@ export function BrandingForm({
         error={errors.logoFile}
       />
       {logoSrc && (
-        <div className="flex items-center gap-3 rounded-xl border border-line bg-bg p-3">
+        <div className={`flex items-center gap-3 rounded-xl border border-line bg-bg p-3 ${clearLogo ? 'opacity-50' : ''}`}>
           <Image src={logoSrc} alt={`โลโก้ ${branding.branch}`} width={64} height={64} unoptimized className="size-16 rounded-lg object-contain" />
-          <span className="text-sm text-muted">โลโก้ที่ใช้อยู่</span>
+          <span className="flex-1 text-sm text-muted">{clearLogo ? 'เลือกให้ลบเมื่อบันทึก' : 'โลโก้ที่ใช้อยู่'}</span>
+          <input type="hidden" name="clearLogo" value={clearLogo ? 'on' : ''} />
+          <button
+            type="button"
+            aria-label={clearLogo ? 'ยกเลิกการลบโลโก้' : 'ลบโลโก้'}
+            aria-pressed={clearLogo}
+            onClick={() => { setClearLogo(value => !value); }}
+            className={`${btn.ghost} size-11 px-0 text-danger hover:bg-danger/10 hover:text-danger`}
+          >
+            <Trash2 aria-hidden className="size-5" />
+          </button>
         </div>
       )}
-      {logoSrc && <label className="flex min-h-11 items-center gap-3 text-sm text-muted">
-        <input type="checkbox" name="clearLogo" className="size-5 accent-lime" />
-        ลบโลโก้ปัจจุบัน
-      </label>}
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={btn.primary}>{pending ? 'กำลังบันทึก…' : 'บันทึกแบรนด์สาขา'}</button>
         <ResultMessage state={state} successTitle="แก้ไขสำเร็จ" />

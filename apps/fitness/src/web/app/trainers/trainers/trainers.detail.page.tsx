@@ -5,11 +5,12 @@ import { notFound } from 'next/navigation';
 import { ActionButton } from '@/web/components/ui/ui/ui.action-button';
 import { PtBookForm } from '@/web/components/classes/classes/classes.booking-forms';
 import { classTime } from '@/web/components/dashboard/dashboard/dashboard';
-import { Avatar, Badge, Card, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { Avatar, Badge, Card, PageHeader } from '@/web/components/ui/ui/ui';
 import { bookPtAction, cancelPtAction, completePtAction } from '@/api/actions/trainers/trainers/trainers.actions';
 import { now, today } from '@/api/lib/clock/clock/clock';
 import { getTrainerDetail } from '@/api/dal/trainers/trainers/trainers.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'เทรนเนอร์' };
 
@@ -17,7 +18,7 @@ const STATUS = { booked: ['cyan', 'นัดไว้'], done: ['lime', 'เท�
 
 export default async function TrainerPage({ params }: { params: Promise<{ id: string }> }) {
   const { session, allowed } = await pageGuard('trainers.view');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const t = await getTrainerDetail(session, (await params).id);
   if (!t) notFound();
   const instant = now().toISOString();

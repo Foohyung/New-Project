@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { bangkokHour, decidePtBooking } from '@/api/services/trainers/trainers/trainers.service';
+import { deleteTrainer } from '@/api/dal/trainers/trainers/trainers.dal';
+import { prisma } from '@/api/lib/db/db/db';
+import { describeDb, resetDatabase, USERS } from '@/api/test/db/db/db.test-helpers';
 
 const now = new Date('2026-10-15T11:42:00Z');
 const base = { startsAt: '2026-10-16T10:00:00Z', minutes: 60, now, trainerSessions: [], sessionsLeft: 3, memberUpcoming: 0 };
@@ -24,5 +27,55 @@ describe('decidePtBooking (A.1 จองเทรนเนอร์)', () => {
     expect(decidePtBooking({ ...base, startsAt: '2026-10-15T10:00:00Z' })).toEqual({ ok: false, reason: 'past' });
     expect(decidePtBooking({ ...base, startsAt: '2026-10-16T14:30:00Z' })).toEqual({ ok: false, reason: 'outside-hours' });
     expect(decidePtBooking({ ...base, startsAt: '2026-10-16T22:00:00Z' })).toEqual({ ok: false, reason: 'outside-hours' });
+  });
+});
+
+describeDb('การลบเทรนเนอร์และรักษาตารางคลาส', () => {
+  beforeEach(resetDatabase, 30_000);
+
+  it('ย้ายตารางคลาสไปยังเทรนเนอร์ที่เลือกและคงตารางเดิมไว้', async () => {
+    const source = await prisma().trainer.create({
+      data: { name: 'เทรนเนอร์เดิม', nickname: 'เดิม', specialties: [], bio: '', color: 'var(--color-lime)' },
+    });
+    const replacement = await prisma().trainer.create({
+      data: { name: 'เทรนเนอร์ใหม่', nickname: 'ใหม่', specialties: [], bio: '', color: 'var(--color-cyan)' },
+    });
+    const classRow = await prisma().gymClass.create({
+      data: {
+        title: 'คลาสทดสอบ',
+        trainerId: source.id,
+        room: 'ห้อง A',
+        startsAt: new Date('2026-11-06T04:00:00Z'),
+        minutes: 60,
+        capacity: 10,
+        level: 'ง่าย',
+      },
+    });
+
+    const result = await deleteTrainer(USERS.manager, source.id, replacement.id);
+
+    expect(result).toMatchObject({ name: 'เทรนเนอร์เดิม', replacementTrainerId: replacement.id, replacementTrainerName: 'ใหม่', classIds: [classRow.id] });
+    expect(await prisma().trainer.findUnique({ where: { id: source.id } })).toBeNull();
+    expect(await prisma().gymClass.findUnique({ where: { id: classRow.id } })).toMatchObject({ trainerId: replacement.id });
+  });
+
+  it('บล็อกการลบเมื่อมีตารางคลาสแต่ไม่ได้เลือกผู้สอนใหม่', async () => {
+    const source = await prisma().trainer.create({
+      data: { name: 'เทรนเนอร์เดิม', nickname: 'เดิม', specialties: [], bio: '', color: 'var(--color-lime)' },
+    });
+    await prisma().gymClass.create({
+      data: {
+        title: 'คลาสทดสอบ',
+        trainerId: source.id,
+        room: 'ห้อง A',
+        startsAt: new Date('2026-11-06T04:00:00Z'),
+        minutes: 60,
+        capacity: 10,
+        level: 'ง่าย',
+      },
+    });
+
+    await expect(deleteTrainer(USERS.manager, source.id, null)).rejects.toThrow('TRAINER_REASSIGN_REQUIRED');
+    expect(await prisma().trainer.findUnique({ where: { id: source.id } })).not.toBeNull();
   });
 });

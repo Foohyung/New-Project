@@ -16,7 +16,7 @@ for (const file of ['.env.local', '.env']) {
   if (existsSync(path.join(root, file))) process.loadEnvFile(path.join(root, file));
 }
 
-const BRANCH = 'สาขาอารีย์';
+const BRANCH = 'สาขาหลัก';
 const DAY = 86_400_000;
 const addDays = (date, n) => new Date(Date.parse(`${date}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 const weekday = date => new Date(`${date}T00:00:00Z`).getUTCDay();
@@ -150,7 +150,6 @@ const COUPONS = [
   { code: 'STUDENT', description: 'แสดงบัตรนักศึกษา', type: 'baht', value: 20_000, kind: 'promo', packageIds: null, renewOnly: false, newOnly: false, limit: 50, used: 36, expiresOn: '2027-03-31', ownerMemberId: null, createdAt: '2026-06-01T02:00:00Z' },
   { code: 'WELCOME7', description: 'สมาชิกใหม่ แถม 7 วัน', type: 'days', value: 7, kind: 'promo', packageIds: ['monthly', '3m', '6m', 'gold12'], renewOnly: false, newOnly: true, limit: null, used: 12, expiresOn: null, ownerMemberId: null, createdAt: '2026-08-01T02:00:00Z' },
   { code: 'OCT-FLASH', description: 'โปรสุดสัปดาห์', type: 'percent', value: 15, kind: 'promo', packageIds: null, renewOnly: false, newOnly: false, limit: 20, used: 20, expiresOn: '2026-10-12', ownerMemberId: null, createdAt: '2026-10-09T02:00:00Z' },
-  { code: 'FRIEND-1842', description: 'ชวนเพื่อนของ พิมพ์ชนก ว.', type: 'baht', value: 20_000, kind: 'referral', packageIds: null, renewOnly: false, newOnly: true, limit: 10, used: 3, expiresOn: null, ownerMemberId: '02', createdAt: '2026-07-01T02:00:00Z' },
 ];
 
 /** รอบแจ้งเตือนของข้อมูลตัวอย่าง (ผูกคูปอง RENEW10) */
@@ -178,7 +177,22 @@ const FOLLOW_UPS = [
 
 /* ---------- ใส่ลงฐานข้อมูล ---------- */
 
-const TABLES = ['audit_logs', 'sessions', 'owner_branches', 'password_reset_requests', 'meal_logs', 'health_profiles', 'workout_plans', 'follow_ups', 'reminder_logs', 'charges', 'bookings', 'pt_sessions', 'check_ins', 'payments', 'coupons', 'classes', 'users', 'members', 'trainers', 'reminder_rounds', 'packages', 'counters'];
+const COURSES = [
+  ['course-muaythai', 'มวยไทยพื้นฐาน 8 ครั้ง', 'ท่าพื้นฐาน หมัด เท้า เข่า ศอก และการเต้นฟุตเวิร์ก เหมาะกับผู้เริ่มต้น เตรียมผ้าพันมือมาเอง', 't1', 'Studio A', 'จ./พ. 18:00–19:00', '2026-11-02', '2026-11-25', 8, 12, 250_000],
+  ['course-yoga', 'โยคะแก้ออฟฟิศซินโดรม 6 ครั้ง', 'ยืดเหยียดคอ บ่า ไหล่ หลัง สำหรับคนนั่งทำงานนาน', 't2', 'Studio B', 'อ. 19:00–20:00', '2026-11-03', '2026-12-08', 6, 15, 180_000],
+];
+
+/** [id, ชื่อ, หมวด, ราคา (สตางค์), สต็อก, เตือนเมื่อเหลือ] */
+const PRODUCTS = [
+  ['prod-water', 'น้ำดื่ม 600 มล.', 'เครื่องดื่ม', 1_500, 48, 12],
+  ['prod-electrolyte', 'เครื่องดื่มเกลือแร่', 'เครื่องดื่ม', 2_500, 4, 6],
+  ['prod-protein', 'โปรตีนเชค พร้อมดื่ม', 'อาหารเสริม', 8_900, 20, 5],
+  ['prod-bar', 'โปรตีนบาร์', 'อาหารเสริม', 6_500, 0, 5],
+  ['prod-towel', 'ผ้าขนหนูไมโครไฟเบอร์', 'อุปกรณ์', 19_000, 10, 3],
+  ['prod-gloves', 'ถุงมือยกน้ำหนัก', 'อุปกรณ์', 35_000, 6, 2],
+];
+
+const TABLES = ['stock_movements', 'sale_items', 'sales', 'products', 'course_enrollments', 'courses', 'audit_logs', 'sessions', 'owner_branches', 'branches', 'password_reset_requests', 'meal_logs', 'health_profiles', 'workout_plans', 'follow_ups', 'reminder_logs', 'charges', 'bookings', 'pt_sessions', 'check_ins', 'payments', 'coupons', 'classes', 'users', 'members', 'trainers', 'reminder_rounds', 'packages', 'counters'];
 
 /** ลบข้อมูลทุกตาราง (ยกเว้นประวัติ migration) — audit_logs มี trigger กันลบ จึงใช้ TRUNCATE */
 export async function wipe(conn) {
@@ -211,6 +225,7 @@ export async function loadSampleData(conn) {
       return [m.id, m.code, m.name, m.phone, m.email, m.joinedOn, m.packageId, m.expiresOn, m.freeze?.[0] ?? null, m.freeze?.[1] ?? null, m.pt, at(m.lastCheckInAt), m.note, !NO_MARKETING.has(m.id), card?.[0] ?? null, card?.[1] ?? null, card?.[2] ?? null, card?.[3] ?? null, at(`${m.joinedOn}T03:00:00Z`), now];
     }),
   );
+  await insert(conn, 'branches', ['id', 'name', 'created_at', 'updated_at'], [['01930000-0000-7000-8000-0000000b0001', BRANCH, now, now]]);
   await insert(conn, 'users', ['id', 'login', 'password_hash', 'role', 'name', 'nickname', 'branch', 'trainer_id', 'member_id', 'active', 'created_at', 'updated_at'], USERS.map(([id, login, name, nickname, role, trainerId, memberId]) => [id, login, hashPassword(password), role, name, nickname, BRANCH, trainerId, memberId, true, now, now]));
   await insert(conn, 'classes', ['id', 'title', 'trainer_id', 'room', 'starts_at', 'minutes', 'capacity', 'level', 'other_booked', 'created_at'], classes().map(c => [...c, now]));
   await insert(conn, 'check_ins', ['id', 'member_id', 'at', 'allowed'], checkIns());
@@ -228,8 +243,8 @@ export async function loadSampleData(conn) {
   await insert(
     conn,
     'coupons',
-    ['code', 'description', 'type', 'value', 'kind', 'package_ids', 'renew_only', 'new_only', 'usage_limit', 'used', 'per_member', 'expires_on', 'active', 'owner_member_id', 'created_at'],
-    COUPONS.map(c => [c.code, c.description, c.type, c.value, c.kind, c.packageIds ? JSON.stringify(c.packageIds) : null, c.renewOnly, c.newOnly, c.limit, c.used, 1, c.expiresOn, true, c.ownerMemberId, at(c.createdAt)]),
+    ['code', 'description', 'type', 'value', 'kind', 'package_ids', 'renew_only', 'new_only', 'usage_limit', 'used', 'per_member', 'starts_on', 'expires_on', 'active', 'owner_member_id', 'created_at'],
+    COUPONS.map(c => [c.code, c.description, c.type, c.value, c.kind, c.packageIds ? JSON.stringify(c.packageIds) : null, c.renewOnly, c.newOnly, c.limit, c.used, 1, c.createdAt.slice(0, 10), c.expiresOn, true, c.ownerMemberId, at(c.createdAt)]),
   );
   await insert(conn, 'reminder_logs', ['id', 'member_id', 'round_id', 'channels', 'sent_at', 'clicked', 'payment_id'], REMINDER_LOGS.map(([id, memberId, roundId, sent, clicked, paymentId]) => [id, memberId, roundId, JSON.stringify(roundId === 'before-7' ? ['line'] : ['line', 'sms']), at(sent), clicked, paymentId]));
   await insert(conn, 'charges', ['id', 'member_id', 'package_id', 'amount_satang', 'due_on', 'attempts', 'status', 'payment_id'], CHARGES.map(([id, memberId, packageId, amount, dueOn, attempts, status]) => [id, memberId, packageId, amount, dueOn, JSON.stringify(attempts), status, null]));
@@ -240,6 +255,10 @@ export async function loadSampleData(conn) {
     ['ml-1', 'member-01', '2026-10-15', 'ข้าวต้มไข่ + นมจืด', 380, 22, 48, 10, toInstant('2026-10-15', '07:30')],
     ['ml-2', 'member-01', '2026-10-15', 'ข้าวมันไก่ (ไก่ต้ม ไม่เอาหนัง)', 450, 32, 58, 9, toInstant('2026-10-15', '12:15')],
   ]);
+  // คอร์สเรียนและสินค้าหน้าร้าน — ยังไม่มีผู้สมัครและบิล ให้ทดลองสมัคร/ขายเอง
+  await insert(conn, 'courses', ['id', 'title', 'description', 'trainer_id', 'room', 'schedule', 'starts_on', 'ends_on', 'sessions', 'capacity', 'price_satang', 'active', 'created_at'], COURSES.map(c => [...c, true, now]));
+  await insert(conn, 'products', ['id', 'branch', 'name', 'category', 'price_satang', 'stock', 'low_stock', 'active', 'created_at'], PRODUCTS.map(([id, name, category, price, stock, low]) => [id, BRANCH, name, category, price, stock, low, true, now]));
+  await insert(conn, 'stock_movements', ['id', 'product_id', 'change', 'reason', 'balance', 'note', 'created_at', 'created_by_name'], PRODUCTS.map(([id, , , , stock]) => [`sm-${id}`, id, stock, 'receive', stock, 'สต็อกตั้งต้น', now, 'ระบบ']));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) {

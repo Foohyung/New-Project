@@ -5,20 +5,15 @@ import { requireSession } from '@/api/lib/auth/auth/auth.session';
 import { audit } from '@/api/lib/audit/audit/audit.log';
 import { updateBranchBranding } from '@/api/dal/branding/branding/branding.dal';
 import { BrandingSchema } from '@/api/schemas/branding/branding/branding.schema';
+import { detectedImageType, IMAGE_TYPES } from '@/api/services/shared/shared/shared.image';
 import { formObject, knownFailure, validationFailure, type ActionResult } from '@/api/types/shared/shared/shared.action-result';
 
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
-const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
-function detectedImageType(bytes: Uint8Array): string | null {
-  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a) return 'image/png';
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
-  if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP') return 'image/webp';
-  return null;
-}
-
-export async function saveBranchBrandingAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function saveBranchBrandingAction(branch: string, _prev: ActionResult, formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
+  const targetBranch = branch.trim();
+  if (!targetBranch) return { ok: false, message: 'ไม่พบสาขาที่ต้องการแก้ไข กรุณากลับไปเลือกสาขาใหม่' };
   const parsed = BrandingSchema.safeParse(formObject(formData));
   if (!parsed.success) return validationFailure(parsed.error);
 
@@ -39,16 +34,16 @@ export async function saveBranchBrandingAction(_prev: ActionResult, formData: Fo
   }
 
   try {
-    await updateBranchBranding(session, {
+    await updateBranchBranding(session, targetBranch, {
       gymName: parsed.data.gymName,
-      primaryColor: parsed.data.primaryColor.toLowerCase(),
+      primaryColor: parsed.data.primaryColor,
       ...(logo !== undefined ? { logo } : parsed.data.logoUrl ? { logoUrl: parsed.data.logoUrl } : {}),
     });
-    await audit(session, 'branch.branding.update', 'branch', session.branch, {
+    await audit(session, 'branch.branding.update', 'branch', targetBranch, {
       after: {
-        branch: session.branch,
+        branch: targetBranch,
         gymName: parsed.data.gymName,
-        primaryColor: parsed.data.primaryColor.toLowerCase(),
+        primaryColor: parsed.data.primaryColor ?? 'theme',
         logo: logo === null ? null : logo ? 'uploaded' : parsed.data.logoUrl || 'unchanged',
       },
     });

@@ -36,7 +36,7 @@ export function LoginForm({ action, next }: { action: Action; next?: string }) {
         <label htmlFor="identifier" className="text-sm font-semibold">อีเมลหรือเบอร์มือถือ</label>
         <div className="relative">
           <UserRound aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted" />
-          <input id="identifier" name="identifier" defaultValue={last} key={last} onChange={e => { setTyped(e.target.value); }} autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="name@gym.com หรือ 08X-XXX-XXXX" aria-invalid={errors.identifier ? true : undefined} aria-describedby="identifier-hint" className={`${inputClass} pl-11`} />
+          <input id="identifier" name="identifier" defaultValue={last} key={last} onChange={e => { setTyped(e.target.value); }} autoComplete="username" autoCapitalize="none" spellCheck={false} aria-invalid={errors.identifier ? true : undefined} aria-describedby="identifier-hint" className={`${inputClass} pl-11`} />
         </div>
         <p id="identifier-hint" aria-live="polite" className={`flex min-h-5 flex-wrap items-center gap-1.5 text-xs ${errors.identifier ? 'text-danger' : 'text-muted'}`}>
           {errors.identifier ?? (kind === 'staff'

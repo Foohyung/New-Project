@@ -20,7 +20,7 @@ export interface ManagedUser {
 export interface UserOptions {
   trainers: { id: string; nickname: string }[];
   members: { id: string; code: string; name: string }[];
-  roles: { id: Role; name: string; system: boolean }[];
+  roles: { id: Role; name: string; system: boolean; permissionCount: number }[];
 }
 
 export interface RoleDefinitionDto {

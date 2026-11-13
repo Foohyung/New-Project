@@ -59,6 +59,12 @@ describe('BrandingSchema', () => {
     expect(BrandingSchema.safeParse({ gymName: '', primaryColor: '#aabbcc', logoUrl: '/images/logo.png' }).success).toBe(true);
   });
 
+  it('ติ๊ก "ใช้สีตามธีม" = ไม่ล็อกสี (null) · ไม่ติ๊กต้องเลือกสี', () => {
+    expect(BrandingSchema.parse({ gymName: '', useThemeColor: 'on', primaryColor: '#AABBCC', logoUrl: '' }).primaryColor).toBeNull();
+    expect(BrandingSchema.parse({ gymName: '', primaryColor: '#AABBCC', logoUrl: '' }).primaryColor).toBe('#aabbcc');
+    expect(BrandingSchema.safeParse({ gymName: '', logoUrl: '' }).success).toBe(false);
+  });
+
   it('ปฏิเสธสีผิดรูปแบบ, URL ไม่ปลอดภัย และ path traversal', () => {
     expect(BrandingSchema.safeParse({ gymName: '', primaryColor: 'red', logoUrl: '' }).success).toBe(false);
     expect(BrandingSchema.safeParse({ gymName: '', primaryColor: '#aabbcc', logoUrl: 'javascript:alert(1)' }).success).toBe(false);

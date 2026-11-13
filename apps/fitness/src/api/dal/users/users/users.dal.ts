@@ -5,6 +5,7 @@ import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { hashPassword } from '@/api/lib/auth/auth/auth.accounts';
 import { authorize } from '@/api/lib/auth/auth/auth.rbac';
 import { normalizeIdentifier } from '@/api/services/auth/auth/auth.service';
+import { permissionsFromUnknown } from '@/api/services/auth/auth/auth.roles';
 import type { ManagedUser, UserOptions } from '@/api/types/users/users/users.types';
 
 /**
@@ -127,10 +128,16 @@ export async function getOwnerDetail(session: Session, ownerId: string): Promise
   };
 }
 
+/** สาขาต้องมีในตารางสาขา (admin เพิ่มที่ตั้งค่า > สาขา) — กันพิมพ์ชื่อสาขาผิดแล้วกลายเป็นสาขาใหม่ */
+async function assertBranchExists(name: string): Promise<void> {
+  if (!(await prisma().branch.count({ where: { name } }))) throw new Error('UNKNOWN_BRANCH');
+}
+
 /** (admin) เพิ่มสาขาให้เจ้าของดูแล */
 export async function addOwnerBranch(session: Session, ownerId: string, branch: string): Promise<void> {
   await authorize(session, 'users.manage');
   if (!isAdmin(session)) throw new Error('FORBIDDEN');
+  await assertBranchExists(branch);
   const db = prisma();
   const owner = await db.user.findUnique({ where: { id: ownerId }, select: { role: true, branch: true } });
   if (owner?.role !== 'owner') throw new Error('NOT_FOUND');
@@ -159,9 +166,15 @@ export async function listUserOptions(session: Session, forUserId?: string): Pro
     db.trainer.findMany({ where: { OR: [{ users: { none: {} } }, ...(forUserId ? [{ users: { some: { id: forUserId } } }] : [])] }, select: { id: true, nickname: true }, orderBy: { nickname: 'asc' } }),
     db.member.findMany({ where: { OR: [{ user: null }, ...(forUserId ? [{ user: { id: forUserId } }] : [])] }, select: { id: true, code: true, name: true }, orderBy: { name: 'asc' } }),
     // ให้สิทธิ์ admin ได้เฉพาะ admin (กันเจ้าของสาขายกระดับสิทธิ์ให้คนอื่นเกินตัวเอง)
-    db.roleDefinition.findMany({ where: isAdmin(session) ? {} : { id: { not: 'admin' } }, select: { id: true, name: true, system: true }, orderBy: [{ system: 'desc' }, { name: 'asc' }] }),
+    db.roleDefinition.findMany({ where: isAdmin(session) ? {} : { id: { not: 'admin' } }, select: { id: true, name: true, system: true, permissions: true } }),
   ]);
-  return { trainers, members, roles };
+  return {
+    trainers,
+    members,
+    roles: roles
+      .map(({ permissions, ...role }) => ({ ...role, permissionCount: permissionsFromUnknown(permissions).length }))
+      .sort((a, b) => Number(b.system) - Number(a.system) || b.permissionCount - a.permissionCount || a.name.localeCompare(b.name, 'th')),
+  };
 }
 
 export async function createManagedUser(
@@ -174,6 +187,7 @@ export async function createManagedUser(
   const mine = await managedBranches(session);
   const branch = mine === null || mine.includes(input.branch) ? input.branch : session.branch;
   if (!isAdmin(session) && input.role === 'admin') throw new Error('INVALID_USER_ROLE');
+  if (isAdmin(session)) await assertBranchExists(branch);
   try {
     const role = await checkedRole(input);
     const row = await prisma().user.create({
@@ -245,6 +259,8 @@ export async function updateManagedUser(
   const current = await db.user.findUnique({ where: { id }, include: { roleDefinition: { select: { name: true } } } });
   if (!current) throw new Error('NOT_FOUND');
   if (id === session.userId && (input.role !== current.role || !input.active || input.activeFrom || input.activeTo)) throw new Error('USER_SELF_LOCKOUT');
+  // ย้ายสาขาได้เฉพาะสาขาที่มีอยู่ · สาขาเดิมที่ยังไม่อยู่ในตาราง (ข้อมูลก่อนมีเมนูสาขา) แก้ข้อมูลอื่นได้ตามปกติ
+  if (input.branch !== current.branch) await assertBranchExists(input.branch);
   const role = await checkedRole(input);
   try {
     const row = await db.user.update({
@@ -298,12 +314,14 @@ export interface PasswordResetRequestDto {
  * (สาธารณะ — ไม่ต้องเข้าสู่ระบบ) ส่งคำขอรีเซ็ตรหัสผ่าน
  * ไม่บอกผลว่าบัญชีมีจริงไหม (กันเดาบัญชี) · มีคำขอค้างอยู่แล้วไม่สร้างซ้ำ · ไม่รับคำขอของ admin (ให้ admin อีกคนแก้ที่หน้าแก้ไขบัญชี)
  */
-export async function requestPasswordReset(identifier: string): Promise<void> {
+export async function requestPasswordReset(identifier: string): Promise<{ name: string; login: string; branch: string; requestedAt: Date } | null> {
   const db = prisma();
-  const user = await db.user.findUnique({ where: { login: normalizeIdentifier(identifier) }, select: { id: true, role: true, active: true } });
-  if (!user?.active || user.role === 'admin') return;
+  const user = await db.user.findUnique({ where: { login: normalizeIdentifier(identifier) }, select: { id: true, role: true, active: true, name: true, login: true, branch: true } });
+  if (!user?.active || user.role === 'admin') return null;
   const open = await db.passwordResetRequest.findFirst({ where: { userId: user.id, resolvedAt: null }, select: { id: true } });
-  if (!open) await db.passwordResetRequest.create({ data: { userId: user.id } });
+  if (open) return null;
+  const request = await db.passwordResetRequest.create({ data: { userId: user.id } });
+  return { name: user.name, login: user.login, branch: user.branch, requestedAt: request.requestedAt };
 }
 
 /** คำขอที่ยังค้าง ตามขอบเขตบัญชีที่ session จัดการได้ (admin ทุกสาขา · เจ้าของเฉพาะสาขาที่ดูแล) */

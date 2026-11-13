@@ -3,7 +3,7 @@ import { Prisma } from '@/api/lib/db/db/generated/prisma/client';
 import { ForbiddenError, authorize } from '@/api/lib/auth/auth/auth.rbac';
 import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { prisma } from '@/api/lib/db/db/db';
-import { isPermission, permissionsAllowedForRole, permissionsFromUnknown, type Permission } from '@/api/services/auth/auth/auth.roles';
+import { isPermission, permissionsAllowedForRole, permissionsForRole, permissionsFromUnknown, type Permission } from '@/api/services/auth/auth/auth.roles';
 import type { RoleDefinitionDto } from '@/api/types/users/users/users.types';
 
 async function authorizeRoleManagement(session: Session): Promise<void> {
@@ -27,7 +27,7 @@ export async function listRoleDefinitions(session: Session): Promise<RoleDefinit
     id: row.id,
     name: row.name,
     system: row.system,
-    permissions: permissionsFromUnknown(row.permissions),
+    permissions: permissionsForRole(row.id, permissionsFromUnknown(row.permissions)),
     userCount: row._count.users,
   }));
 }
@@ -44,7 +44,7 @@ export async function createRoleDefinition(
         id: input.id,
         name: input.name,
         system: false,
-        permissions: input.permissions,
+        permissions: permissionsForRole(input.id, input.permissions),
         createdById: session.userId,
         createdByName: session.name,
         updatedById: session.userId,
@@ -70,7 +70,7 @@ export async function updateRoleDefinition(
     where: { id: input.id },
     data: {
       name: input.name,
-      permissions: input.permissions,
+      permissions: permissionsForRole(input.id, input.permissions),
       updatedById: session.userId,
       updatedByName: session.name,
     },

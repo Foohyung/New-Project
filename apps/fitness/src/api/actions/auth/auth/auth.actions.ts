@@ -3,7 +3,8 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { audit } from '@/api/lib/audit/audit/audit.log';
-import { CHANGE_PASSWORD_PATH, getSession, requireSignedIn, signIn, signOut } from '@/api/lib/auth/auth/auth.session';
+import { notifyAuthEvent, notifyPasswordResetRequest } from '@/api/lib/notify/notify/line';
+import { CHANGE_PASSWORD_PATH, getSession, refreshSessionActivity, requireSignedIn, signIn, signOut } from '@/api/lib/auth/auth/auth.session';
 import { changeOwnPassword, MIN_OWN_PASSWORD } from '@/api/lib/auth/auth/auth.accounts';
 import { requestPasswordReset } from '@/api/dal/users/users/users.dal';
 import { formObject, knownFailure, validationFailure, type ActionResult } from '@/api/types/shared/shared/shared.action-result';
@@ -29,6 +30,7 @@ export async function loginAction(_prev: ActionResult, formData: FormData): Prom
       : { ok: false, message: 'อีเมล/เบอร์มือถือ หรือรหัสผ่านไม่ถูกต้อง' };
   }
   await audit(result.session, 'auth.login', 'user', result.session.userId);
+  await notifyAuthEvent('login', result.session);
   // รหัสเริ่มต้น → ต้องเปลี่ยนรหัสผ่านก่อน
   if (result.session.mustChangePassword) redirect(CHANGE_PASSWORD_PATH);
   const target = safeNextPath(next);
@@ -38,9 +40,16 @@ export async function loginAction(_prev: ActionResult, formData: FormData): Prom
 
 export async function logoutAction(): Promise<void> {
   const session = await getSession();
-  if (session) await audit(session, 'auth.logout', 'user', session.userId);
+  if (session) {
+    await audit(session, 'auth.logout', 'user', session.userId);
+    await notifyAuthEvent('logout', session);
+  }
   await signOut();
   redirect('/login');
+}
+
+export async function refreshSessionActivityAction(): Promise<boolean> {
+  return refreshSessionActivity();
 }
 
 const ChangePasswordSchema = z.object({
@@ -62,7 +71,7 @@ export async function changePasswordAction(_prev: ActionResult, formData: FormDa
   }
   await audit(session, 'auth.password.change', 'user', session.userId, { after: { forced: Boolean(session.mustChangePassword) } });
   await signOut();
-  redirect('/login?passwordChanged=1');
+  redirect('/login?password=changed');
 }
 
 const ForgotSchema = z.object({ identifier: z.string().trim().min(3, 'กรอกอีเมลหรือเบอร์โทรที่ใช้เข้าสู่ระบบ').max(120, 'ยาวเกินไป') });
@@ -71,6 +80,7 @@ const ForgotSchema = z.object({ identifier: z.string().trim().min(3, 'กรอ�
 export async function requestPasswordResetAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   const parsed = ForgotSchema.safeParse(formObject(formData));
   if (!parsed.success) return validationFailure(parsed.error);
-  await requestPasswordReset(parsed.data.identifier);
+  const request = await requestPasswordReset(parsed.data.identifier);
+  if (request) notifyPasswordResetRequest(request);
   return { ok: true, message: 'ส่งคำขอแล้ว — ติดต่อเคาน์เตอร์หรือผู้จัดการสาขาเพื่อรับรหัสผ่านชั่วคราว แล้วเข้าสู่ระบบเพื่อตั้งรหัสใหม่' };
 }

@@ -9,6 +9,12 @@ export const LOCKOUT_MINUTES = 15;
 /** อายุ session: ปกติ 12 ชั่วโมง · ติ๊ก "จดจำฉัน" 30 วัน */
 export const SESSION_HOURS = 12;
 export const REMEMBER_DAYS = 30;
+export const SESSION_IDLE_MINUTES = 15;
+export const SESSION_IDLE_MS = SESSION_IDLE_MINUTES * 60_000;
+
+export function sessionIdleExpired(lastActivityAt: number, now: number): boolean {
+  return now - lastActivityAt >= SESSION_IDLE_MS;
+}
 
 /**
  * บัญชีใช้งานได้วันนี้ไหม: เปิดใช้งาน และอยู่ในช่วง activeFrom–activeTo (รวมทั้งสองวัน · null = ไม่จำกัด)
@@ -32,7 +38,7 @@ export function normalizeIdentifier(input: string): string {
 export function landingFor(role: Role): string {
   if (role === 'member') return '/me';
   if (role === 'trainer') return '/classes';
-  return '/';
+  return '/dashboard';
 }
 
 /** รับเฉพาะ path ภายในเว็บ กัน open redirect (เช่น //evil.com หรือ https://...) */
@@ -56,4 +62,25 @@ export function recordFailure(state: AttemptState | undefined, now: number): Att
   const base = state?.lockedUntil && state.lockedUntil <= now ? { failures: 0, lockedUntil: null } : (state ?? { failures: 0, lockedUntil: null });
   const failures = base.failures + 1;
   return failures >= MAX_FAILED_ATTEMPTS ? { failures, lockedUntil: now + LOCKOUT_MINUTES * 60_000 } : { failures, lockedUntil: null };
+}
+
+/** หน้าที่จะเด้งกลับไปเมื่อเปิดหน้าที่ไม่มีสิทธิ์: หน้าก่อนหน้า (Referer) ถ้าไม่ใช่หน้าเดิม ไม่อย่างนั้นหน้าแรกของตำแหน่ง */
+export function deniedTarget(referer: string | null, current: string, fallback: string): string | null {
+  let previous: string | null = null;
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      previous = safeNextPath(url.pathname + url.search);
+    } catch {
+      previous = null;
+    }
+  }
+  const pathOf = (path: string) => path.split('?')[0] ?? path;
+  const candidates = [previous, fallback].filter((path): path is string => !!path && pathOf(path) !== current && !path.startsWith('/login'));
+  const target = candidates[0];
+  if (!target) return null;
+  const url = new URL(target, 'http://local');
+  url.searchParams.delete('denied');
+  url.searchParams.set('denied', '1');
+  return `${url.pathname}${url.search}`;
 }

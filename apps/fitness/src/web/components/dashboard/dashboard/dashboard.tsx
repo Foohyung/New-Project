@@ -35,7 +35,7 @@ export function Topbar({ dateText, greeting }: { dateText: string; greeting: str
 }
 
 interface KpiData {
-  inGym: { now: number; capacity: number };
+  inGym: { now: number; capacity: number | null };
   checkInsToday: { count: number; changePct: number };
   activeMembers: { count: number; newThisMonth: number };
   revenueMonth: { satang: number; changePct: number; pendingSlips: number } | null;
@@ -54,7 +54,7 @@ export function KpiGrid({ data, dateLabel }: { data: KpiData; dateLabel: string 
           กำลังอยู่ในยิม
         </span>
         <CountUp className="font-display text-4xl font-semibold" text={`${String(data.inGym.now)} คน`} />
-        <span className="text-sm text-bg/75">ความจุ {data.inGym.capacity} คน · ช่วงพีค 18:00–20:00</span>
+        <span className="text-sm text-bg/75">{data.inGym.capacity === null ? 'รวมทุกสาขา · เลือกสาขาเพื่อดูความจุ' : `ความจุ ${String(data.inGym.capacity)} คน · ช่วงพีค 18:00–20:00`}</span>
       </div>
       <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-5">
         <span className="text-sm text-muted">เช็กอินวันนี้</span>
@@ -84,46 +84,62 @@ export function KpiGrid({ data, dateLabel }: { data: KpiData; dateLabel: string 
 }
 
 export function HourlyChart({ hourly, currentHour }: { hourly: [number, number, number?][]; currentHour: number }) {
-  const max = Math.max(...hourly.map(([, v, f]) => Math.max(v, f ?? 0))) * 1.1;
+  const max = Math.max(1, ...hourly.map(([, v, f]) => Math.max(v, f ?? 0))) * 1.15;
   const peak = hourly.reduce((best, row) => ((row[2] ?? row[1]) > (best[2] ?? best[1]) ? row : best));
   const total = hourly.reduce((sum, [h, v]) => (h <= currentHour ? sum + v : sum), 0);
+  const currentIndex = hourly.findIndex(([hour]) => hour === currentHour);
   return (
     <Card title="เช็กอินรายชั่วโมง" subtitle="ชั่วโมงที่เหลือเป็นค่าคาดการณ์จาก 4 สัปดาห์ล่าสุด">
-      <div aria-hidden className="flex h-52 items-end gap-[3px] border-b border-dashed border-line pt-8 sm:gap-2">
-        {hourly.map(([hour, value, forecast]) => {
-          const isNow = hour === currentHour;
-          const isFuture = hour > currentHour;
-          const height = ((isNow || isFuture ? (forecast ?? value) : value) / max) * 100;
-          return (
-            <div key={hour} className="flex h-full flex-1 items-end justify-center">
-              <div
-                style={{ height: `${height}%` }}
-                className={`relative w-full max-w-[30px] rounded-t-md ${isNow ? 'bg-lime/15 outline-1 outline-lime/50 outline-dashed' : isFuture ? 'bg-[repeating-linear-gradient(135deg,#1d2229_0_6px,#262c35_6px_12px)]' : 'bg-gradient-to-b from-[#3b4350] to-[#262c35]'}`}
-              >
-                {isNow && forecast && (
-                  <>
-                    <span style={{ height: `${(value / forecast) * 100}%` }} className="absolute inset-x-0 bottom-0 rounded-t-md bg-lime shadow-[0_0_24px_color-mix(in_oklab,var(--color-lime)_40%,transparent)]" />
-                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 rounded-md bg-lime px-1.5 text-[11px] font-bold whitespace-nowrap text-bg">
-                      {value} / ~{forecast}
-                    </span>
-                  </>
+      <div
+        role="img"
+        aria-label={`กราฟเช็กอินรายชั่วโมง ช่วงพีค ${String(peak[0]).padStart(2, '0')}:00 คาดการณ์ ${peak[2] ?? peak[1]} คนต่อชั่วโมง`}
+        className="relative h-52 overflow-hidden rounded-xl bg-bg/45 px-2 pt-8 pb-1"
+      >
+        <div aria-hidden className="pointer-events-none absolute inset-x-2 top-8 bottom-1 flex flex-col justify-between">
+          {[0, 1, 2, 3].map(line => <span key={line} className="border-t border-dashed border-line/70" />)}
+        </div>
+        <div aria-hidden className="relative flex h-full items-end gap-1 border-b border-line sm:gap-2">
+          {hourly.map(([hour, value, forecast]) => {
+            const isNow = hour === currentHour;
+            const isFuture = hour > currentHour;
+            const plottedValue = isNow || isFuture ? (forecast ?? value) : value;
+            const height = plottedValue > 0 ? Math.max(4, (plottedValue / max) * 100) : 0;
+            const tooltipPosition = currentIndex <= 1 ? 'left-0 translate-x-0' : currentIndex >= hourly.length - 2 ? 'right-0 translate-x-0' : 'left-1/2 -translate-x-1/2';
+            return (
+              <div key={hour} className="relative flex h-full min-w-0 flex-1 items-end justify-center">
+                {isNow && forecast !== undefined && (
+                  <span className={`absolute -top-7 z-10 rounded-md bg-lime px-2 py-0.5 text-[11px] font-bold whitespace-nowrap text-bg shadow-sm ${tooltipPosition}`}>
+                    ตอนนี้ {value} / ~{forecast}
+                  </span>
                 )}
+                <div
+                  style={{ height: `${height}%` }}
+                  title={`${String(hour).padStart(2, '0')}:00 · ${value} เช็กอิน${forecast === undefined ? '' : ` · คาดการณ์ ${forecast}`}`}
+                  className={`relative w-full max-w-8 rounded-t-md transition-[height,background-color] duration-300 ${isNow ? 'bg-lime/15 outline-1 outline-lime/70 outline-dashed' : isFuture ? 'bg-lime/10' : 'bg-lime/35'}`}
+                >
+                  {isNow && forecast !== undefined && (
+                    <span style={{ height: `${forecast > 0 ? Math.min(100, (value / forecast) * 100) : 0}%` }} className="absolute inset-x-0 bottom-0 rounded-t-md bg-lime shadow-[0_0_20px_color-mix(in_oklab,var(--color-lime)_35%,transparent)]" />
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-      <div aria-hidden className="mt-2 flex gap-[3px] sm:gap-2">
+      <div aria-hidden className="mt-2 flex gap-1 sm:gap-2">
         {hourly.map(([hour]) => (
-          <span key={hour} className={`flex-1 text-center text-[11px] ${hour === currentHour ? 'font-semibold text-lime' : 'text-faint'} ${hour % 2 && hour !== currentHour ? 'invisible sm:visible' : ''}`}>
+          <span key={hour} className={`min-w-0 flex-1 text-center text-[10px] tabular-nums sm:text-[11px] ${hour === currentHour ? 'font-semibold text-lime' : 'text-faint'} ${hour % 2 && hour !== currentHour ? 'invisible sm:visible' : ''}`}>
             {String(hour).padStart(2, '0')}
           </span>
         ))}
       </div>
       {/* ข้อมูลเดียวกับกราฟในรูปแบบข้อความ — ไม่ต้องพึ่ง hover (§15.2.5) */}
-      <p className="mt-3 text-sm text-muted">
-        ช่วงพีควันนี้ {String(peak[0]).padStart(2, '0')}:00 · คาดการณ์ ~{peak[2] ?? peak[1]} คน/ชม. · เช็กอินแล้วทั้งวัน {total} คน
-      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-sm">
+        <span className="rounded-full bg-lime/10 px-2.5 py-1 font-semibold text-lime">
+          พีค {String(peak[0]).padStart(2, '0')}:00 · ~{peak[2] ?? peak[1]} คน/ชม.
+        </span>
+        <span className="text-muted">เช็กอินแล้ววันนี้ {total} คน</span>
+      </div>
     </Card>
   );
 }

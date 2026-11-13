@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import { CheckInForm } from '@/web/components/checkin/checkin/checkin.form';
 import { LiveFeed } from '@/web/components/dashboard/dashboard/dashboard';
-import { Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { PageHeader } from '@/web/components/ui/ui/ui';
 import { recentCheckIns } from '@/api/dal/members/members/members.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'เช็กอิน' };
 
 export default async function CheckInPage() {
   const { session, allowed } = await pageGuard('checkin.use');
-  if (!allowed) return <Forbidden />;
+  if (!allowed) return accessDenied();
   const feed = await recentCheckIns(session, 8);
   return (
     <>

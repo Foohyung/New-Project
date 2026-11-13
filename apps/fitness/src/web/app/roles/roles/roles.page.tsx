@@ -1,28 +1,37 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { createRoleAction, deleteRoleAction, updateRoleAction } from '@/api/actions/roles/roles/roles.actions';
 import { listRoleDefinitions } from '@/api/dal/roles/roles/roles.dal';
 import { pageGuard } from '@/api/lib/auth/auth/auth.guard';
 import { PERMISSION_LABEL } from '@/api/services/auth/auth/auth.roles';
 import { RoleEditorForm, DeleteRoleForm, RolePermissionLegend } from '@/web/components/roles/roles/roles.forms';
-import { Badge, btn, Card, EmptyState, Forbidden, PageHeader } from '@/web/components/ui/ui/ui';
+import { Badge, btn, Card, EmptyState, PageHeader } from '@/web/components/ui/ui/ui';
+import { accessDenied } from '@/web/app/layout/layout/layout.access-denied';
 
 export const metadata: Metadata = { title: 'บทบาทและสิทธิ์' };
 
-/** ค่า ?role= สำหรับฟอร์มสร้าง role ใหม่ */
-const NEW = 'new';
 const TAB = 'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-line px-4 font-medium text-muted aria-[current=page]:border-lime aria-[current=page]:bg-lime aria-[current=page]:text-bg';
 
-/** เลือก role ก่อน (แท็บด้านบน) แล้วแสดงข้อมูลและฟอร์มแก้ไขเฉพาะ role นั้น · ปุ่ม "เพิ่ม role" เปิดฟอร์มสร้างใหม่ */
+/** `/roles` — role แรก · ลิงก์เดิม `/roles?role=<id>` ถูกพาไป `/roles/<id>` */
 export default async function RolesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const legacy = (await searchParams).role;
+  if (typeof legacy === 'string' && /^[a-z][a-z0-9-]{1,39}$/.test(legacy)) redirect(`/roles/${legacy}`);
+  return <RolesScreen />;
+}
+
+/**
+ * เลือก role ก่อน (แท็บด้านบน `/roles/<id>`) แล้วแสดงข้อมูลและฟอร์มแก้ไขเฉพาะ role นั้น
+ * `creating` = หน้า `/roles/new` ฟอร์มสร้าง role ใหม่ · ไม่ส่ง roleId = role แรก
+ */
+export async function RolesScreen({ roleId, creating = false }: { roleId?: string; creating?: boolean }) {
   const { session, allowed } = await pageGuard('roles.manage');
-  if (!allowed || session.role !== 'admin') return <Forbidden />;
+  if (!allowed || session.role !== 'admin') return accessDenied();
   const roles = await listRoleDefinitions(session);
-  const requested = (await searchParams).role;
-  const wanted = typeof requested === 'string' ? requested : undefined;
-  const creating = wanted === NEW;
-  const role = creating ? undefined : (roles.find(r => r.id === wanted) ?? roles[0]);
+  const found = roleId ? roles.find(r => r.id === roleId) : undefined;
+  if (roleId && !found) redirect('/roles');
+  const role = creating ? undefined : (found ?? roles[0]);
 
   return (
     <>
@@ -30,7 +39,7 @@ export default async function RolesPage({ searchParams }: { searchParams: Promis
         kicker="จัดการโดย admin เท่านั้น"
         title="บทบาทและสิทธิ์"
         actions={
-          <Link href={`/roles?role=${NEW}`} aria-current={creating ? 'page' : undefined} className={btn.primary}>
+          <Link href="/roles/new" aria-current={creating ? 'page' : undefined} className={btn.primary}>
             <Plus aria-hidden className="size-5" />
             เพิ่ม role
           </Link>
@@ -39,7 +48,7 @@ export default async function RolesPage({ searchParams }: { searchParams: Promis
 
       <nav aria-label="เลือก role" className="-mx-4 flex gap-2 scrollbar-none overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
         {roles.map(r => (
-          <Link key={r.id} href={`/roles?role=${encodeURIComponent(r.id)}`} aria-current={r.id === role?.id ? 'page' : undefined} className={TAB}>
+          <Link key={r.id} href={`/roles/${r.id}`} aria-current={r.id === role?.id ? 'page' : undefined} className={TAB}>
             {r.name}
             <span className="rounded-full bg-black/20 px-2 text-xs">{r.userCount}</span>
           </Link>

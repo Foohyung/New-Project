@@ -43,7 +43,7 @@ async function signUp(page: Page, method: 'เงินสด' | 'PromptPay' = '
 
 test.describe('แดชบอร์ด', () => {
   test('แสดงคำทักทายและตัวเลขสำคัญ โดยไม่มี scroll แนวนอน', async ({ page }) => {
-    const response = await page.goto('/');
+    const response = await page.goto('/dashboard');
     expect(response?.headers()['content-security-policy']).toMatch(/'nonce-[^']+'/);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('คุณมน');
     await expect(page.getByText('เช็กอินวันนี้')).toBeVisible();
@@ -51,8 +51,23 @@ test.describe('แดชบอร์ด', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('หน้าแรกพาไปแดชบอร์ดที่ /dashboard และคงตัวกรองสาขาไว้', async ({ page }) => {
+    await page.goto('/?branch=x');
+    await expect(page).toHaveURL(/\/dashboard\?branch=x$/);
+    await expect(page.getByText('เช็กอินวันนี้')).toBeVisible();
+  });
+
+  test('หน้าเมนูทั้งหมด /more มีเฉพาะมือถือ: ขยายจอถึง 768px แล้วพากลับหน้าก่อนหน้า', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/members');
+    await page.goto('/more', { referer: page.url() });
+    await expect(page.getByRole('heading', { name: 'เมนูทั้งหมด' })).toBeVisible();
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await expect(page).toHaveURL(/\/members$/);
+  });
+
   test('มีเมนูหลักตามขนาดจอ', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/dashboard');
     const navs = page.getByRole('navigation', { name: 'เมนูหลัก' });
     await expect(navs.filter({ visible: true })).toHaveCount(1);
     const nav = navs.filter({ visible: true });
@@ -209,10 +224,12 @@ test.describe('บทบาทและสิทธิ์', () => {
 
   test('เคาน์เตอร์ไม่เห็นรายได้และรายงาน', async ({ page }) => {
     await asRole(page, 'front-desk');
-    await page.goto('/');
+    await page.goto('/dashboard');
     await expect(page.getByText('รายได้เดือนนี้')).toHaveCount(0);
+    // เปิดหน้าที่ไม่มีสิทธิ์ → ถูกพากลับหน้าแรกของตำแหน่งพร้อมแจ้งเตือน (ไม่มีหน้าก่อนหน้า)
     await page.goto('/reports');
-    await expect(page.getByRole('heading', { name: 'ไม่มีสิทธิ์เข้าถึง' })).toBeVisible();
+    await expect(page).not.toHaveURL(/\/reports/);
+    await expect(page.getByText(/ไม่มีสิทธิ์เปิดหน้านั้น/)).toBeVisible();
     expect((await page.request.get('/reports/export')).status()).toBe(403);
   });
 
@@ -342,13 +359,13 @@ test.describe('ชุดหาเงินและรักษาสมาช�
   });
 
   test('ผู้จัดการตั้งรอบแจ้งเตือน ส่งรอบวันนี้ และสร้างคูปองได้', async ({ page }) => {
-    await page.goto('/marketing');
+    await page.goto('/reminders');
     await expect(page.getByRole('heading', { name: 'วันนี้ต้องส่ง' })).toBeVisible();
     await page.getByRole('button', { name: 'ส่งรอบวันนี้เลย' }).click();
     await expect(page.getByText(/ส่งแล้ว \d+ คน|วันนี้ไม่มีใครถึงรอบ/)).toBeVisible();
     await expectNoHorizontalScroll(page);
 
-    await page.goto('/marketing/coupons');
+    await page.goto('/coupons');
     const code = `E2E${String(Date.now()).slice(-6)}`;
     await page.getByLabel('โค้ด', { exact: true }).fill(code);
     await page.getByLabel('คำอธิบาย').fill('ทดสอบอัตโนมัติ');
@@ -359,7 +376,7 @@ test.describe('ชุดหาเงินและรักษาสมาช�
   });
 
   test('ข้อความเตือนผิดตัวแปรบันทึกไม่ได้ และบอกวิธีแก้', async ({ page }) => {
-    await page.goto('/marketing');
+    await page.goto('/reminders');
     await page.getByText('ก่อน 7 วัน', { exact: true }).click();
     const box = page.getByLabel('ข้อความ').first();
     await box.fill('สวัสดี {ชือ} จ่ายที่ {ลิงก์ชำระ}');
@@ -372,8 +389,10 @@ test.describe('ชุดหาเงินและรักษาสมาช�
     await page.goto('/retention');
     await expect(page.getByRole('heading', { name: 'ต้องติดตาม' })).toBeVisible();
     await expectNoHorizontalScroll(page);
-    await page.goto('/marketing');
-    await expect(page.getByRole('heading', { name: 'ไม่มีสิทธิ์เข้าถึง' })).toBeVisible();
+    // มีหน้าก่อนหน้า → เด้งกลับหน้านั้น
+    await page.goto('/reminders', { referer: page.url() });
+    await expect(page).toHaveURL(/\/retention$/);
+    await expect(page.getByText(/ไม่มีสิทธิ์เปิดหน้านั้น/)).toBeVisible();
   });
 
   test('ตัดบัตรอัตโนมัติ: เห็นรายการตัดไม่ผ่านและส่งลิงก์จ่ายได้', async ({ page }) => {
@@ -384,12 +403,11 @@ test.describe('ชุดหาเงินและรักษาสมาช�
     await expect(page.getByText(/ตัดผ่าน \d+ · ไม่ผ่าน \d+|ไม่มีรายการถึงกำหนดวันนี้/)).toBeVisible();
   });
 
-  test('สมาชิกเปิดลิงก์จากข้อความเตือน เห็นราคาหลังลด และมีโค้ดชวนเพื่อน', async ({ page }) => {
+  test('สมาชิกเปิดลิงก์จากข้อความเตือน เห็นราคาหลังลด', async ({ page }) => {
     await asRole(page, 'member');
-    await page.goto('/me?coupon=RENEW10&from=reminder');
+    await page.goto('/me?coupon=RENEW10&ref=reminder');
     await expect(page.getByText(/ใช้โค้ด RENEW10 แล้ว/)).toBeVisible();
     await expect(page.getByText('฿1,080')).toBeVisible();
-    await expect(page.getByText('FRIEND-2318')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'ต่ออายุอัตโนมัติ' })).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
@@ -442,6 +460,19 @@ test.describe('ตัวกรองช่วงวันที่', () => {
 test.describe('เข้าสู่ระบบ', () => {
   test.beforeEach(async ({ page }) => {
     await page.context().clearCookies();
+  });
+
+  test('ยังไม่เข้าสู่ระบบ: หน้าแรกเป็นหน้าแนะนำระบบ แล้วกดเข้าสู่ระบบได้', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('ระบบจัดการฟิตเนส');
+    await expect(page.locator('#pricing')).toContainText('฿990');
+    await page.getByRole('button', { name: /รายปี/ }).click();
+    await expect(page.locator('#pricing')).toContainText('฿9,900');
+    await expectNoHorizontalScroll(page);
+    await page.getByRole('main').getByRole('link', { name: 'เข้าสู่ระบบ' }).first().click();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: 'เข้าสู่ระบบ' })).toBeVisible();
   });
 
   test('ยังไม่เข้าสู่ระบบถูกพาไปหน้า login แล้วกลับมาหน้าเดิม', async ({ page }) => {
@@ -520,16 +551,16 @@ test.describe('ตัวช่วยฝึกและอาหาร (สมา
       await menu.getByRole('button', { name: /ฝึก/ }).click();
       await expect(menu.getByRole('link', { name: 'อาหาร' })).toBeVisible();
     }
-    await page.goto('/me/workout');
+    await page.goto('/me/workouts');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('ฝึกวันนี้');
-    await page.goto('/me/food');
+    await page.goto('/me/nutrition');
     // ผู้จัดการยังไม่ได้กรอกข้อมูลร่างกาย → เห็นฟอร์มตั้งค่าของตัวเอง ไม่ใช่ข้อมูลของสมาชิก
     await expect(page.getByRole('button', { name: 'คำนวณเป้าอาหารของฉัน' })).toBeVisible();
   });
 
   test('เลือกกล้ามเนื้อทีละมัดจากภาพร่างกาย แล้วเพิ่มท่าลงโปรแกรมวันนี้', async ({ page }, testInfo) => {
     await asRole(page, 'member');
-    await page.goto('/me/workout');
+    await page.goto('/me/workouts');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('ฝึกวันนี้');
     await expectNoHorizontalScroll(page);
     const muscles = page.getByRole('group', { name: 'กล้ามเนื้อ', exact: true });
@@ -552,7 +583,7 @@ test.describe('ตัวช่วยฝึกและอาหาร (สมา
 
   test('อาหาร: เห็นเป้าวันนี้ บันทึกเมนูแนะนำ และถอน/ให้ความยินยอมข้อมูลสุขภาพ', async ({ page }, testInfo) => {
     await asRole(page, 'member');
-    await page.goto('/me/food');
+    await page.goto('/me/nutrition');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('อาหารวันนี้');
     await expectNoHorizontalScroll(page);
     test.skip(testInfo.project.name !== 'desktop', 'แก้ข้อมูลสุขภาพเฉพาะ desktop');

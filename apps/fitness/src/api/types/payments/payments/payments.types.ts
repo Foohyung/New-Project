@@ -1,6 +1,8 @@
 import type { PaymentMethod, PaymentStatus } from '@/api/services/payments/payments/payments.service';
 
 export interface PaymentDto {
+  branch?: string;
+  hasSlip: boolean;
   id: string;
   receiptNo: string;
   memberId: string;
@@ -13,6 +15,7 @@ export interface PaymentDto {
   status: PaymentStatus;
   createdAt: string;
   paidAt: string | null;
+  paymentDate: string | null;
   /** ระยะเวลาของแพ็กเกจ เช่น "1 เดือน" "10 ครั้ง" */
   packageDuration: string;
   coverage: { from: string; to: string } | null;
@@ -30,13 +33,25 @@ export const KIND_LABEL: Record<PaymentDto['kind'], string> = {
   daypass: 'Day pass',
 };
 
-/** ข้อมูลผู้ขายที่ต้องพิมพ์บนใบเสร็จ/ใบกำกับภาษีอย่างย่อ */
-export interface ShopProfile {
+/** หัวใบเสร็จที่แต่ละสาขาตั้งเองได้ (หน้า /payment-settings) */
+export interface ReceiptIssuer {
   brand: string;
   legalName: string;
-  branch: string;
   address: string;
   taxId: string;
   phone: string;
-  promptPayId: string;
+}
+
+/** ข้อมูลผู้ขายที่ต้องพิมพ์บนใบเสร็จ/ใบกำกับภาษีอย่างย่อ */
+export interface ShopProfile extends ReceiptIssuer {
+  branch: string;
+  logoSrc: string | null;
+  promptPayId: string | null;
+  promptPayQrUrl: string | null;
+}
+
+export interface PaymentSetup {
+  methods: PaymentMethod[];
+  promptPayId: string | null;
+  promptPayQrUrl: string | null;
 }

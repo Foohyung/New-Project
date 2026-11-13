@@ -49,6 +49,16 @@ describeDb('บัญชีผู้ใช้ตามสังกัด', () =>
     await expect(createManagedUser(owner, { ...base, login: 'escalate@fitflow.test', branch: owner.branch, role: 'admin' })).rejects.toThrow('INVALID_USER_ROLE');
   });
 
+  it('เรียงบทบาทตามจำนวน permission จากมากไปน้อยภายในกลุ่มเดียวกัน', async () => {
+    const roles = (await listUserOptions(admin)).roles;
+    for (let index = 1; index < roles.length; index += 1) {
+      const previous = roles[index - 1];
+      const current = roles[index];
+      if (!previous || !current || previous.system !== current.system) continue;
+      expect(previous.permissionCount).toBeGreaterThanOrEqual(current.permissionCount);
+    }
+  });
+
   it('admin เห็นชื่อเจ้าของของแต่ละสาขา · เจ้าของเห็นเฉพาะสาขาตัวเอง', async () => {
     await createManagedUser(admin, { ...base, login: 'elsewhere@fitflow.test', branch: 'สาขาอื่น' });
     const branches = await listBranches(admin);
@@ -113,9 +123,11 @@ describeDb('บัญชีผู้ใช้ตามสังกัด', () =>
 
   it('ลืมรหัสผ่าน: ส่งคำขอ (ไม่ซ้ำ · ไม่รับ admin) แล้วเจ้าของรีเซ็ตเป็นรหัสชั่วคราวที่บังคับเปลี่ยน', async () => {
     const staff = await createManagedUser(owner, { ...base, login: 'forgot@fitflow.test', branch: owner.branch });
-    await requestPasswordReset('FORGOT@fitflow.test');
-    await requestPasswordReset('forgot@fitflow.test');
-    await requestPasswordReset('no-such-user@fitflow.test');
+    const newRequest = await requestPasswordReset('FORGOT@fitflow.test');
+    expect(newRequest).toMatchObject({ name: staff.name, login: 'forgot@fitflow.test', branch: owner.branch });
+    expect(newRequest?.requestedAt).toBeInstanceOf(Date);
+    await expect(requestPasswordReset('forgot@fitflow.test')).resolves.toBeNull();
+    await expect(requestPasswordReset('no-such-user@fitflow.test')).resolves.toBeNull();
     const requests = await listPasswordResetRequests(owner);
     expect(requests.map(r => r.user.login)).toEqual(['forgot@fitflow.test']);
     const [request] = requests;

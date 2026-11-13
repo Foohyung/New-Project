@@ -26,7 +26,7 @@ const VARIANT = {
  */
 export function Dropdown({
   options, value, defaultValue, onChange, name, label, hideLabel = false, hint, error,
-  variant = 'field', align = 'start', inline = false, className = '', id,
+  variant = 'field', align = 'start', inline = false, className = '', id, maxListHeight = '16rem',
 }: {
   options: DropdownOption[];
   value?: string;
@@ -43,6 +43,7 @@ export function Dropdown({
   inline?: boolean;
   className?: string;
   id?: string;
+  maxListHeight?: '12rem' | '16rem';
 }) {
   const autoId = useId();
   const baseId = id ?? autoId;
@@ -170,7 +171,8 @@ export function Dropdown({
             id={listId}
             role="listbox"
             aria-labelledby={labelId}
-            className={`absolute top-full z-50 mt-1 max-h-64 w-max max-w-[min(24rem,calc(100vw-2rem))] min-w-full overflow-y-auto overscroll-contain rounded-xl border border-line bg-surface-2 p-1 shadow-[0_18px_40px_-12px_#000] ${align === 'end' ? 'right-0' : 'left-0'}`}
+            style={{ maxHeight: maxListHeight }}
+            className={`absolute top-full z-50 mt-1 w-max max-w-[min(24rem,calc(100vw-2rem))] min-w-full overflow-y-auto overscroll-contain rounded-xl border border-line bg-surface-2 p-1 shadow-[0_18px_40px_-12px_#000] ${align === 'end' ? 'right-0' : 'left-0'}`}
           >
             {options.map((o, i) => {
               const isSelected = i === selectedIndex;
@@ -190,7 +192,7 @@ export function Dropdown({
                   onClick={() => {
                     choose(i);
                   }}
-                  className={`flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm ${i === active ? 'bg-bg' : ''} ${o.disabled ? 'cursor-not-allowed opacity-45' : ''}`}
+                  className={`flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm ${i === active ? 'bg-lime/12 text-lime' : ''} ${o.disabled ? 'cursor-not-allowed opacity-45' : ''}`}
                 >
                   {o.icon && <span aria-hidden className={`flex shrink-0 ${isSelected ? 'text-lime' : 'text-muted'}`}>{o.icon}</span>}
                   {/* คำอธิบายอยู่บรรทัดเดียวกับชื่อ (ชิดขวา) — รายการไม่สูงเกิน */}

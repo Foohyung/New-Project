@@ -10,6 +10,8 @@ import { createMember, deleteMember, freezeMember, getMemberDetail, renewMember,
 import { formObject, knownFailure, validationFailure, type ActionResult } from '@/api/types/shared/shared/shared.action-result';
 import { FreezeSchema, MemberCreateSchema, MemberFieldsSchema, RenewSchema } from '@/api/schemas/members/members/members.schema';
 import { DEFAULT_MEMBER_PASSWORD, FREEZE_REJECT } from '@/api/services/members/members/members.service';
+import { deletedRedirectPath } from '@/api/lib/flash/flash/flash';
+import { today } from '@/api/lib/clock/clock/clock';
 
 function refreshMember(id: string) {
   revalidatePath('/members');
@@ -24,16 +26,21 @@ export async function createMemberAction(_prev: ActionResult, formData: FormData
   // 2. Validate
   const parsed = MemberCreateSchema.safeParse(formObject(formData));
   if (!parsed.success) return validationFailure(parsed.error);
-  const { packageId, method, name, phone, email, note, couponCode, marketingConsent } = parsed.data;
+  const { packageId, method, name, phone, email, note, couponCode, couponProof, marketingConsent, startsOn, paymentDate } = parsed.data;
+  const currentDate = today();
+  const dateErrors: Record<string, string> = {};
+  if (startsOn > currentDate) dateErrors.startsOn = 'วันที่เริ่มสิทธิ์ต้องไม่เกินวันนี้';
+  if (paymentDate > currentDate) dateErrors.paymentDate = 'วันที่ชำระเงินต้องไม่เกินวันนี้';
+  if (Object.keys(dateErrors).length > 0) return { ok: false, message: 'ตรวจสอบวันที่อีกครั้ง', fieldErrors: dateErrors };
   // 3–4. Authorize + Execute (DAL ตรวจสิทธิ์ members.manage และ payments.collect)
   let created: Awaited<ReturnType<typeof createMember>>;
   try {
-    created = await createMember(session, { name, phone, email, note, packageId, method, couponCode, marketingConsent, password: DEFAULT_MEMBER_PASSWORD });
+    created = await createMember(session, { name, phone, email, note, packageId, method, couponCode, couponProof, marketingConsent, startsOn, paymentDate, password: DEFAULT_MEMBER_PASSWORD });
   } catch (error) {
     return knownFailure(error);
   }
   // 5. Audit
-  await audit(session, 'member.create', 'member', created.memberId, { after: { name, phone, packageId, method, loginAccount: true } });
+  await audit(session, 'member.create', 'member', created.memberId, { after: { name, phone, packageId, method, startsOn, paymentDate, loginAccount: true } });
   refreshMember(created.memberId);
   redirect(created.paid ? `/members/${created.memberId}?created=1` : `/payments/${created.paymentId}?created=1`);
 }
@@ -54,7 +61,7 @@ export async function updateMemberAction(memberId: string, _prev: ActionResult, 
 
 /**
  * ลบสมาชิกถาวร · จากตาราง = คืนผลให้แสดง popup ในหน้าเดิม
- * จากหน้าโปรไฟล์ (backToList) = กลับหน้าสมาชิกทันที พร้อม ?deleted= ให้แสดง popup — ไม่ refresh หน้าโปรไฟล์ที่หายไปแล้ว (จะเป็น 404)
+ * จากหน้าโปรไฟล์ (backToList) = กลับหน้าสมาชิกทันที พร้อม ?deleted=1 (ชื่ออยู่ใน cookie) ให้แสดง popup — ไม่ refresh หน้าโปรไฟล์ที่หายไปแล้ว (จะเป็น 404)
  */
 export async function deleteMemberAction(memberId: string, backToList: boolean, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
@@ -69,7 +76,7 @@ export async function deleteMemberAction(memberId: string, backToList: boolean, 
   revalidatePath('/members');
   revalidatePath('/payments');
   revalidatePath('/');
-  if (backToList) redirect(`/members?deleted=${encodeURIComponent(name)}`);
+  if (backToList) redirect(await deletedRedirectPath('/members', name));
   return { ok: true, message: `ลบสมาชิก ${name} แล้ว` };
 }
 
@@ -78,7 +85,7 @@ export async function renewMemberAction(memberId: string, _prev: ActionResult, f
   const parsed = RenewSchema.safeParse(formObject(formData));
   if (!parsed.success) return validationFailure(parsed.error);
   try {
-    const result = await renewMember(session, memberId, parsed.data.packageId, parsed.data.method, parsed.data.couponCode);
+    const result = await renewMember(session, memberId, parsed.data.packageId, parsed.data.method, parsed.data.couponCode, parsed.data.couponProof);
     await audit(session, 'member.renew', 'payment', result.paymentId);
     refreshMember(memberId);
     if (!result.paid) return { ok: true, message: 'สร้างรายการรอชำระแล้ว ให้สมาชิกสแกน QR แล้วกดยืนยันเมื่อเงินเข้า', href: `/payments/${result.paymentId}` };

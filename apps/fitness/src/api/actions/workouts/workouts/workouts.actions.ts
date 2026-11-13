@@ -3,12 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireSession } from '@/api/lib/auth/auth/auth.session';
-import { addToMyPlan, removeFromMyPlan, setExerciseDone } from '@/api/dal/workouts/workouts/workouts.dal';
+import { addToMyPlan, clearMyPlan, removeFromMyPlan, toggleWorkoutSet } from '@/api/dal/workouts/workouts/workouts.dal';
 import { knownFailure, type ActionResult } from '@/api/types/shared/shared/shared.action-result';
 import { MAX_PLAN } from '@/api/services/workouts/workouts/workouts.service';
 
 const refresh = () => {
-  revalidatePath('/me/workout');
+  revalidatePath('/me/workouts');
 };
 
 const ExerciseIdsSchema = z.array(z.string().max(40)).min(1, 'เลือกท่าอย่างน้อย 1 ท่า').max(40);
@@ -28,12 +28,12 @@ export async function addToPlanAction(_prev: ActionResult, formData: FormData): 
   }
 }
 
-export async function toggleDoneAction(exerciseId: string, done: boolean, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
+export async function toggleWorkoutSetAction(exerciseId: string, setNumber: number, _prev: ActionResult, _formData: FormData): Promise<ActionResult> {
   const session = await requireSession();
   try {
-    await setExerciseDone(session, exerciseId, done);
+    await toggleWorkoutSet(session, exerciseId, setNumber);
     refresh();
-    return { ok: true, message: done ? 'ทำเสร็จแล้ว' : 'ยกเลิกแล้ว' };
+    return { ok: true, message: `บันทึกเซ็ตที่ ${String(setNumber)} แล้ว` };
   } catch (error) {
     return knownFailure(error);
   }
@@ -45,6 +45,17 @@ export async function removeFromPlanAction(exerciseId: string, _prev: ActionResu
     await removeFromMyPlan(session, exerciseId);
     refresh();
     return { ok: true, message: 'ลบออกจากโปรแกรมแล้ว' };
+  } catch (error) {
+    return knownFailure(error);
+  }
+}
+
+export async function clearWorkoutPlanAction(_prev: ActionResult, _formData: FormData): Promise<ActionResult> {
+  const session = await requireSession();
+  try {
+    await clearMyPlan(session);
+    refresh();
+    return { ok: true, message: 'ล้างรายการออกกำลังกายวันนี้แล้ว' };
   } catch (error) {
     return knownFailure(error);
   }

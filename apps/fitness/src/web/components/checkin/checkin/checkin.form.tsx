@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useActionState, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { CheckInState } from '@/api/actions/checkin/checkin/checkin.actions';
 import { checkInAction } from '@/api/actions/checkin/checkin/checkin.actions';
+import { FormDialog } from '@/web/components/ui/ui/ui.form-dialog';
 
 /** BarcodeDetector ยังไม่อยู่ใน lib.dom ของ TypeScript — ประกาศเฉพาะส่วนที่ใช้ */
 interface BarcodeDetectorLike {
@@ -79,6 +80,7 @@ function CameraScanner({ onResult, onClose }: { onResult: (value: string) => voi
 export function CheckInForm() {
   const [state, action, pending] = useActionState<CheckInState, FormData>(checkInAction, null);
   const [scanning, setScanning] = useState(false);
+  const [dismissedState, setDismissedState] = useState<CheckInState>(null);
   const canScan = useCanScan();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +96,7 @@ export function CheckInForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <form ref={formRef} action={action} className="rounded-2xl bg-gradient-to-br from-[#2a3a12] to-surface p-5 ring-1 ring-lime/25 sm:p-6">
+      <form ref={formRef} action={action} className="rounded-2xl bg-gradient-to-br from-lime/15 to-surface p-5 ring-1 ring-lime/25 sm:p-6">
         <div className="flex items-center gap-3">
           <span className="grid size-12 place-items-center rounded-xl bg-lime text-bg"><ScanLine aria-hidden className="size-6" /></span>
           <div>
@@ -133,6 +135,28 @@ export function CheckInForm() {
 
       {scanning && <CameraScanner onResult={onScan} onClose={closeScanner} />}
 
+      <FormDialog
+        open={state?.ok === false && state.code === 'expired' && dismissedState !== state}
+        onClose={() => {
+          setDismissedState(state);
+        }}
+        title="สมาชิกหมดอายุ"
+        subtitle="ไม่สามารถเช็กอินได้จนกว่าจะต่ออายุสมาชิก"
+      >
+        {state?.ok === false && state.code === 'expired' && (
+          <div role="alert" className="rounded-2xl border border-danger/40 bg-danger/10 p-4">
+            <p className="flex items-center gap-2 font-semibold text-danger"><CircleAlert aria-hidden className="size-5" />{state.message}</p>
+            {state.member && (
+              <>
+                <Link href={`/members/${state.member.id}`} className="tap mt-3 inline-block font-display text-xl font-semibold hover:underline">{state.member.name}</Link>
+                <p className="mt-1 text-sm text-muted">{state.member.code} · {state.member.packageName} · หมดอายุ {formatThaiDate(state.member.expiresOn)}</p>
+                <Link href={`/members/${state.member.id}`} className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-danger px-4 font-semibold text-bg">ต่ออายุให้สมาชิก</Link>
+              </>
+            )}
+          </div>
+        )}
+      </FormDialog>
+
       <div aria-live="polite">
         {state?.ok === true && (
           <div className="ff-pop-in rounded-2xl border border-lime/40 bg-lime/10 p-5">
@@ -141,13 +165,13 @@ export function CheckInForm() {
             <p className="text-sm text-muted">{state.member.code} · {state.member.packageName} · เหลือ {state.member.daysLeft} วัน (ถึง {formatThaiDate(state.member.expiresOn)})</p>
           </div>
         )}
-        {state?.ok === false && (
+        {state?.ok === false && state.code !== 'expired' && (
           <div role="alert" className="ff-shake rounded-2xl border border-danger/40 bg-danger/10 p-5">
             <p className="flex items-center gap-2 font-semibold text-danger"><CircleAlert aria-hidden className="size-5" />เช็กอินไม่ได้</p>
             {state.member && <Link href={`/members/${state.member.id}`} className="tap mt-2 inline-block font-display text-2xl font-semibold hover:underline">{state.member.name}</Link>}
             <p className="mt-1 text-sm">{state.message}</p>
-            {state.member && (state.code === 'expired' || state.code === 'frozen') && (
-              <Link href={`/members/${state.member.id}`} className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-danger px-4 font-semibold text-bg">{state.code === 'expired' ? 'ต่ออายุให้สมาชิก' : 'จัดการการพัก'}</Link>
+            {state.member && state.code === 'frozen' && (
+              <Link href={`/members/${state.member.id}`} className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-danger px-4 font-semibold text-bg">จัดการการพัก</Link>
             )}
           </div>
         )}
