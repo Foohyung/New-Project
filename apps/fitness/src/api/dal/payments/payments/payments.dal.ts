@@ -69,12 +69,11 @@ export async function paymentSettingsBranches(session: Session): Promise<string[
     ]);
     return [...new Set([...active, ...users.map(user => user.branch), session.branch])];
   }
-  const branches = await managedBranches(session);
-  if (session.role !== 'owner' || !branches) throw new ForbiddenError();
-  return branches;
+  if (session.role === 'owner') return (await managedBranches(session)) ?? [session.branch];
+  return [session.branch];
 }
 
-/** สาขาที่ผู้ใช้ตั้งค่าได้ (admin ทุกสาขา / owner เฉพาะสาขาที่ดูแล) — ไม่ได้ = ForbiddenError */
+/** สาขาที่ผู้ใช้ตั้งค่าได้: admin ทุกสาขา, owner สาขาที่ดูแล, role อื่นสาขาตัวเอง */
 export async function paymentSettingsBranch(session: Session, requestedBranch?: string): Promise<string> {
   const branch = requestedBranch || session.branch;
   if (session.role === 'admin') {
@@ -86,12 +85,12 @@ export async function paymentSettingsBranch(session: Session, requestedBranch?: 
     if (!known.has(branch)) throw new ForbiddenError();
     return branch;
   }
-  const branches = await managedBranches(session);
-  if (session.role !== 'owner' || !branches?.includes(branch)) throw new ForbiddenError();
+  const branches = session.role === 'owner' ? (await managedBranches(session)) ?? [session.branch] : [session.branch];
+  if (!branches.includes(branch)) throw new ForbiddenError();
   return branch;
 }
 
-/** อ่านการตั้งค่าจากหน้าตั้งค่า · จำกัดเฉพาะ admin และ owner ของสาขาปัจจุบัน */
+/** อ่านการตั้งค่าจากหน้าตั้งค่า โดยจำกัดสาขาตาม permission และขอบเขตบัญชี */
 export async function getPaymentSettings(session: Session, requestedBranch?: string): Promise<PaymentSetup & { hasPromptPayQr: boolean }> {
   await authorize(session, 'payments.configure');
   const branch = await paymentSettingsBranch(session, requestedBranch);

@@ -1,18 +1,17 @@
 import 'server-only';
 import { Prisma } from '@/api/lib/db/db/generated/prisma/client';
-import { ForbiddenError, authorize } from '@/api/lib/auth/auth/auth.rbac';
+import { authorize } from '@/api/lib/auth/auth/auth.rbac';
 import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { prisma } from '@/api/lib/db/db/db';
-import { isPermission, permissionsAllowedForRole, permissionsForRole, permissionsFromUnknown, type Permission } from '@/api/services/auth/auth/auth.roles';
+import { isPermission, permissionsForRole, permissionsFromUnknown, type Permission } from '@/api/services/auth/auth/auth.roles';
 import type { RoleDefinitionDto } from '@/api/types/users/users/users.types';
 
 async function authorizeRoleManagement(session: Session): Promise<void> {
   await authorize(session, 'roles.manage');
-  if (session.role !== 'admin') throw new ForbiddenError();
 }
 
-function validatePermissions(roleId: string, permissions: readonly Permission[]): void {
-  if (permissions.some(permission => !isPermission(permission)) || !permissionsAllowedForRole(roleId, permissions)) {
+function validatePermissions(permissions: readonly Permission[]): void {
+  if (permissions.some(permission => !isPermission(permission))) {
     throw new Error('INVALID_ROLE_PERMISSIONS');
   }
 }
@@ -37,7 +36,7 @@ export async function createRoleDefinition(
   input: { id: string; name: string; permissions: Permission[] },
 ): Promise<void> {
   await authorizeRoleManagement(session);
-  validatePermissions(input.id, input.permissions);
+  validatePermissions(input.permissions);
   try {
     await prisma().roleDefinition.create({
       data: {
@@ -63,7 +62,7 @@ export async function updateRoleDefinition(
 ): Promise<void> {
   await authorizeRoleManagement(session);
   if (input.id === 'admin') throw new Error('ADMIN_ROLE_PROTECTED');
-  validatePermissions(input.id, input.permissions);
+  validatePermissions(input.permissions);
   const role = await prisma().roleDefinition.findUnique({ where: { id: input.id }, select: { id: true } });
   if (!role) throw new Error('NOT_FOUND');
   await prisma().roleDefinition.update({

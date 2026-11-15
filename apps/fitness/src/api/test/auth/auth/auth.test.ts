@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { accountUsable, deniedTarget, isLocked, landingFor, LOCKOUT_MINUTES, MAX_FAILED_ATTEMPTS, normalizeIdentifier, recordFailure, safeNextPath, SESSION_IDLE_MS, SESSION_IDLE_MINUTES, sessionIdleExpired, type AttemptState } from '@/api/services/auth/auth/auth.service';
-import { hasPermission, permissionsAllowedForRole, permissionsForRole } from '@/api/services/auth/auth/auth.roles';
+import { hasPermission, permissionsForRole } from '@/api/services/auth/auth/auth.roles';
 
 describe('สิทธิ์จัดการระบบ', () => {
   it('admin และ owner จัดการบัญชีและแบรนด์สาขาได้', () => {
@@ -14,48 +14,43 @@ describe('สิทธิ์จัดการระบบ', () => {
     expect(hasPermission('manager', 'users.manage')).toBe(false);
   });
 
-  it('จัดการสาขาได้เฉพาะ admin', () => {
+  it('สิทธิ์จัดการสาขาถูกกำหนดตาม grants ของ role', () => {
     expect(hasPermission('admin', 'branches.manage')).toBe(true);
     expect(hasPermission('owner', 'branches.manage')).toBe(false);
     expect(hasPermission('manager', 'branches.manage')).toBe(false);
+    expect(hasPermission('manager', 'branches.manage', ['branches.manage'])).toBe(true);
   });
 
   it('สิทธิ์แบรนด์สาขาถูกกำหนดให้ admin ที่มี role grants อยู่แล้วด้วย', () => {
     expect(permissionsForRole('admin', ['roles.manage', 'branches.manage'])).toContain('branding.manage');
   });
 
-  it('กำหนดสิทธิ์ดูประวัติการเข้าสู่ระบบให้ role ได้จากหน้าจัดการ role', () => {
+  it('ให้ role ที่ได้รับ access.view ดูประวัติการเข้าสู่ระบบได้', () => {
     expect(hasPermission('admin', 'access.view')).toBe(true);
     expect(hasPermission('owner', 'access.view')).toBe(false);
-    // ประวัติการเข้าสู่ระบบสงวนให้ admin: role อื่นติ๊กให้ไม่ได้ และสิทธิ์ที่ค้างอยู่ถูกตัดทิ้ง
-    expect(permissionsAllowedForRole('owner', ['access.view'])).toBe(false);
-    expect(permissionsAllowedForRole('supervisor', ['access.view'])).toBe(false);
-    expect(permissionsForRole('owner', ['access.view'])).not.toContain('access.view');
+    expect(hasPermission('owner', 'access.view', ['access.view'])).toBe(true);
+    expect(permissionsForRole('owner', ['access.view'])).toContain('access.view');
     expect(permissionsForRole('admin', ['roles.manage', 'access.view'])).toContain('access.view');
-    expect(permissionsAllowedForRole('supervisor', ['branches.manage'])).toBe(false);
   });
 
-  it('ทุก role ระบบซื้อสินค้าหน้าร้านได้ โดยไม่รับสิทธิ์จัดการสินค้าเพิ่ม', () => {
+  it('role ระบบรับค่าเริ่มต้น sales.use ได้ แต่ admin ถอนสิทธิ์นี้ได้', () => {
     for (const role of ['admin', 'owner', 'manager', 'front-desk', 'trainer', 'member'] as const) {
       expect(hasPermission(role, 'sales.use')).toBe(true);
     }
+    expect(hasPermission('member', 'sales.use', ['portal.use'])).toBe(false);
+    expect(hasPermission('member', 'sales.use', ['sales.use'])).toBe(true);
     expect(hasPermission('trainer', 'products.manage')).toBe(false);
     expect(hasPermission('member', 'products.manage')).toBe(false);
   });
 
-  it('ให้ทุก role รับสิทธิ์ระบบได้ และสงวนการจัดการ role ให้ admin', () => {
+  it('role grants เป็นแหล่งสิทธิ์ที่กำหนดได้และถอนออกได้', () => {
     expect(hasPermission('supervisor', 'reports.view', ['reports.view'])).toBe(true);
     expect(hasPermission('supervisor', 'users.manage', ['reports.view'])).toBe(false);
-    expect(permissionsAllowedForRole('supervisor', ['members.view', 'payments.view'])).toBe(true);
-    expect(permissionsAllowedForRole('supervisor', ['portal.use', 'members.view', 'payments.confirm'])).toBe(true);
-    expect(permissionsAllowedForRole('supervisor', ['roles.manage'])).toBe(false);
-    expect(permissionsAllowedForRole('owner', ['branches.manage'])).toBe(false);
-    expect(permissionsAllowedForRole('admin', ['roles.manage', 'branches.manage'])).toBe(true);
-    expect(permissionsAllowedForRole('member', ['dashboard.view', 'members.manage', 'payments.view'])).toBe(true);
-    expect(permissionsAllowedForRole('trainer', ['revenue.view', 'users.manage', 'portal.use'])).toBe(true);
-    expect(permissionsForRole('member', ['portal.use', 'members.view', 'coach.use', 'payments.view'])).toEqual(['portal.use', 'members.view', 'coach.use', 'payments.view', 'sales.use']);
-    expect(permissionsForRole('trainer', ['dashboard.view', 'payments.confirm'])).toEqual(['dashboard.view', 'payments.confirm', 'sales.use']);
-    expect(hasPermission('supervisor', 'sales.use', ['reports.view'])).toBe(true);
+    expect(permissionsForRole('member', ['portal.use', 'members.view', 'coach.use', 'payments.view'])).toEqual(['portal.use', 'members.view', 'coach.use', 'payments.view']);
+    expect(permissionsForRole('trainer', ['dashboard.view', 'payments.confirm'])).toEqual(['dashboard.view', 'payments.confirm']);
+    expect(hasPermission('supervisor', 'sales.use', ['reports.view'])).toBe(false);
+    expect(hasPermission('supervisor', 'roles.manage', ['roles.manage'])).toBe(true);
+    expect(hasPermission('supervisor', 'payments.configure', ['payments.configure'])).toBe(true);
   });
 });
 

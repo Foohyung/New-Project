@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { Search } from 'lucide-react';
-import { PERMISSION_LABEL, PERMISSIONS, permissionsAllowedForRole, type Permission } from '@/api/services/auth/auth/auth.roles';
+import { PERMISSION_LABEL, PERMISSIONS, type Permission } from '@/api/services/auth/auth/auth.roles';
 import type { RoleDefinitionDto } from '@/api/types/users/users/users.types';
 import type { ActionResult } from '@/api/types/shared/shared/shared.action-result';
 import { ResultMessage, ResultText } from '@/web/components/ui/ui/ui.action-button';
@@ -15,13 +15,13 @@ const PERMISSION_GROUPS: { title: string; permissions: Permission[] }[] = [
   { title: 'ภาพรวมและรายงาน', permissions: ['dashboard.view', 'revenue.view', 'reports.view'] },
   { title: 'สมาชิกและหน้าร้าน', permissions: ['members.view', 'members.manage', 'checkin.use', 'retention.view'] },
   { title: 'คลาสและเทรนเนอร์', permissions: ['classes.view', 'classes.book', 'classes.manage', 'trainers.view', 'trainers.manage', 'pt.manage'] },
-  { title: 'การเงินและการตลาด', permissions: ['payments.view', 'payments.collect', 'payments.confirm', 'packages.manage', 'marketing.manage'] },
+  { title: 'การเงินและการตลาด', permissions: ['payments.view', 'payments.collect', 'payments.confirm', 'payments.configure', 'packages.manage', 'marketing.manage'] },
   { title: 'คอร์สและหน้าร้าน', permissions: ['courses.manage', 'sales.use', 'products.manage'] },
   { title: 'สมาชิกและการฝึก', permissions: ['portal.use', 'coach.use'] },
   { title: 'ระบบและแบรนด์', permissions: ['users.manage', 'roles.manage', 'branches.manage', 'branding.view', 'branding.manage', 'access.view'] },
 ];
 
-function PermissionCheckboxes({ selected, onChange, roleId }: { selected: Permission[]; onChange: (permission: Permission, checked: boolean) => void; roleId: string }) {
+function PermissionCheckboxes({ selected, onChange }: { selected: Permission[]; onChange: (permission: Permission, checked: boolean) => void }) {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLocaleLowerCase();
@@ -35,7 +35,6 @@ function PermissionCheckboxes({ selected, onChange, roleId }: { selected: Permis
     .map(group => ({
       ...group,
       permissions: group.permissions.filter(permission => {
-        if (!permissionsAllowedForRole(roleId, [permission])) return false;
         if (filter === 'selected' && !selected.includes(permission)) return false;
         if (!normalizedSearch) return true;
         return permission.toLocaleLowerCase().includes(normalizedSearch) ||
@@ -48,8 +47,7 @@ function PermissionCheckboxes({ selected, onChange, roleId }: { selected: Permis
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-line bg-bg/50 p-3 sm:p-4">
-      {selected.includes('sales.use') && <input type="hidden" name="permissions" value="sales.use" />}
-      {hiddenSelectedPermissions.filter(permission => permission !== 'sales.use').map(permission => <input key={permission} type="hidden" name="permissions" value={permission} />)}
+      {hiddenSelectedPermissions.map(permission => <input key={permission} type="hidden" name="permissions" value={permission} />)}
       <div className="relative">
         <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
         <input
@@ -80,8 +78,8 @@ function PermissionCheckboxes({ selected, onChange, roleId }: { selected: Permis
           <legend className="px-1 text-sm font-semibold">{group.title}</legend>
           <div className="flex flex-col gap-1.5">
             {group.permissions.map(permission => (
-              <label key={permission} title={permission === 'sales.use' ? 'ทุก role สามารถซื้อสินค้าหน้าร้านได้' : undefined} className={`flex min-h-11 ${permission === 'sales.use' ? 'cursor-not-allowed' : 'cursor-pointer'} items-center gap-3 rounded-xl border border-transparent px-3 text-sm text-muted transition-colors hover:border-line hover:bg-surface-2 has-[:checked]:border-lime/40 has-[:checked]:bg-lime/5 has-[:checked]:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-lime`}>
-                <input type="checkbox" name={permission === 'sales.use' ? undefined : 'permissions'} value={permission} checked={selected.includes(permission)} disabled={permission === 'sales.use'} onChange={event => { onChange(permission, event.target.checked); }} className="size-4 shrink-0 accent-lime" />
+              <label key={permission} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 text-sm text-muted transition-colors hover:border-line hover:bg-surface-2 has-[:checked]:border-lime/40 has-[:checked]:bg-lime/5 has-[:checked]:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-lime">
+                <input type="checkbox" name="permissions" value={permission} checked={selected.includes(permission)} onChange={event => { onChange(permission, event.target.checked); }} className="size-4 shrink-0 accent-lime" />
                 <span className="min-w-0 flex-1">{PERMISSION_LABEL[permission]}</span>
                 <code className="hidden text-[11px] text-faint sm:block">{permission}</code>
               </label>
@@ -110,13 +108,11 @@ export function RoleEditorForm({
 }) {
   const action = role ? updateAction : createAction;
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(action, null);
-  const [selected, setSelected] = useState<Permission[]>(() => [...new Set<Permission>([...(role?.permissions ?? []), 'sales.use'])]);
+  const [selected, setSelected] = useState<Permission[]>(() => [...new Set<Permission>(role?.permissions ?? [])]);
   const change = (permission: Permission, checked: boolean) => {
-    if (permission === 'sales.use' && !checked) return;
     setSelected(current => checked ? [...new Set([...current, permission])] : current.filter(value => value !== permission));
   };
   const errors = state && !state.ok ? state.fieldErrors ?? {} : {};
-  const roleId = role?.id ?? 'custom';
 
   return (
     <ConfirmForm action={formAction} confirm={role ? `บันทึกการแก้ไข role "${role.name}"? บัญชีที่ใช้ role นี้จะได้สิทธิ์ใหม่ทันที` : undefined} confirmTitle="ยืนยันการแก้ไข" confirmLabel="บันทึก" className="flex flex-col gap-4">
@@ -128,9 +124,9 @@ export function RoleEditorForm({
       <div>
         <h3 className="mb-2 text-sm font-semibold">เมนูและสิทธิ์การทำงาน</h3>
         <p className="mb-3 text-xs text-muted">
-          ทุกบทบาทซื้อสินค้าหน้าร้านได้ · สิทธิ์อื่นเลือกได้ตามต้องการ · สิทธิ์จัดการ role และสาขาสงวนไว้สำหรับ admin · ตรวจสิทธิ์ข้อมูลสมาชิกและเทรนเนอร์ตามบัญชีที่ผูกไว้
+          Admin กำหนดเปิด/ปิดทุกเมนูให้แต่ละ role ได้ · ตรวจสิทธิ์ข้อมูลสมาชิกและเทรนเนอร์ตามบัญชีที่ผูกไว้
         </p>
-        <PermissionCheckboxes selected={selected} onChange={change} roleId={roleId} />
+        <PermissionCheckboxes selected={selected} onChange={change} />
         {errors.permissions && <p className="mt-2 text-sm text-danger">{errors.permissions}</p>}
       </div>
       {/* ปุ่มหลักชิดขวา ข้อความผลลัพธ์อยู่ทางซ้ายของปุ่ม */}

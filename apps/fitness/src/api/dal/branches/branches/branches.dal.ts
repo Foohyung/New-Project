@@ -1,15 +1,14 @@
 import 'server-only';
 import { Prisma } from '@/api/lib/db/db/generated/prisma/client';
-import { ForbiddenError, authorize } from '@/api/lib/auth/auth/auth.rbac';
+import { authorize } from '@/api/lib/auth/auth/auth.rbac';
 import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { prisma, transaction } from '@/api/lib/db/db/db';
 import type { BranchInput } from '@/api/schemas/branches/branches/branches.schema';
 import type { BranchDto } from '@/api/types/branches/branches/branches.types';
 
-/** จัดการสาขาได้เฉพาะ role admin (สิทธิ์ branches.manage ให้ role อื่นไม่ได้ — ตรวจซ้ำที่นี่อีกชั้น) */
+/** จัดการสาขาได้เมื่อได้รับสิทธิ์ branches.manage */
 async function authorizeBranchManagement(session: Session): Promise<void> {
   await authorize(session, 'branches.manage');
-  if (session.role !== 'admin') throw new ForbiddenError();
 }
 
 /** ลำดับสาขา: เพิ่มก่อนอยู่ก่อน (สาขาที่ย้ายเข้าตารางพร้อมกันตอน migrate เรียงตามชื่อ) */

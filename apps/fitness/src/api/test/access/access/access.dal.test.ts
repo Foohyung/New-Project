@@ -13,13 +13,17 @@ const owner: Session = {
   permissions: ['access.view'],
 };
 
-it('ปฏิเสธการอ่านประวัติเข้าสู่ระบบของทุก role ที่ไม่ใช่ admin แม้มีสิทธิ์ access.view ค้างอยู่', async () => {
+it('ปฏิเสธการอ่านประวัติเข้าสู่ระบบเมื่อไม่มี access.view', async () => {
   await expect(getAccessLog({ ...owner, permissions: [] }, { from: '2026-11-01', to: '2026-11-01' })).rejects.toThrow('FORBIDDEN');
-  await expect(getAccessLog(owner, { from: '2026-11-01', to: '2026-11-01' })).rejects.toThrow('FORBIDDEN');
 });
 
 describeDb('แบ่งหน้าประวัติการเข้าสู่ระบบ', () => {
   beforeEach(resetDatabase, 30_000);
+
+  it('อนุญาต role อื่นเมื่อได้รับ access.view', async () => {
+    const result = await getAccessLog(owner, { from: '2026-11-01', to: '2026-11-01' });
+    expect(result).toMatchObject({ page: 1, total: 0 });
+  });
 
   it('แสดงไม่เกิน 10 รายการต่อหน้าและคงยอดรวมของทุกหน้า', async () => {
     await prisma().auditLog.createMany({

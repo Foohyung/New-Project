@@ -1,6 +1,6 @@
 import 'server-only';
 import type { Prisma } from '@/api/lib/db/db/generated/prisma/client';
-import { authorize, ForbiddenError } from '@/api/lib/auth/auth/auth.rbac';
+import { authorize } from '@/api/lib/auth/auth/auth.rbac';
 import type { Session } from '@/api/lib/auth/auth/auth.session';
 import { prisma } from '@/api/lib/db/db/db';
 import { describeAgent } from '@/api/services/access/access/access.service';
@@ -12,10 +12,9 @@ const PAGE_SIZE = 10;
 
 /**
  * ประวัติเข้า/ออกจากระบบตามช่วงวันที่ (เวลาไทย) พร้อม IP และอุปกรณ์ — อ่านจาก audit_logs (auth.login / auth.logout)
- * เฉพาะ role admin (access.view เป็นสิทธิ์สงวนของ admin)
+ * ตรวจด้วย permission access.view — ผู้ใช้ที่ได้รับสิทธิ์ดูข้อมูล IP ได้
  */
 export async function getAccessLog(session: Session, filter: DateRange & { ip?: string; page?: number }): Promise<AccessLogDto> {
-  if (session.role !== 'admin') throw new ForbiddenError();
   await authorize(session, 'access.view');
   const from = new Date(`${filter.from}T00:00:00+07:00`);
   const to = new Date(new Date(`${filter.to}T00:00:00+07:00`).getTime() + 86_400_000);

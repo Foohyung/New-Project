@@ -111,24 +111,11 @@ export function permissionsFromUnknown(value: unknown): Permission[] {
 }
 
 export function permissionsForRole(role: Role, grants: readonly Permission[]): Permission[] {
-  const allowed = role === 'admin' ? grants : grants.filter(permission =>
-    !ADMIN_ONLY_PERMISSIONS.includes(permission) && (role === 'owner' || permission !== 'payments.configure'),
-  );
   const adminPermissions: Permission[] = role === 'admin' ? ['branding.manage'] : [];
-  return [...new Set<Permission>([...allowed, ...adminPermissions, 'sales.use'])];
-}
-
-/** สิทธิ์ที่สงวนไว้ให้ role admin เท่านั้น: จัดการ role, สาขา และดูประวัติการเข้าสู่ระบบ (IP) — role อื่นติ๊กให้ไม่ได้ และถ้ามีค้างในฐานข้อมูลก็ไม่มีผล */
-export const ADMIN_ONLY_PERMISSIONS: readonly Permission[] = ['roles.manage', 'branches.manage', 'access.view'];
-
-export function permissionsAllowedForRole(role: string, grants: readonly Permission[]): boolean {
-  if (role === 'admin') return grants.includes('roles.manage');
-  if (role !== 'owner' && grants.includes('payments.configure')) return false;
-  return !grants.some(p => ADMIN_ONLY_PERMISSIONS.includes(p));
+  return [...new Set<Permission>([...grants, ...adminPermissions])];
 }
 
 export function hasPermission(role: Role, permission: Permission, grants?: readonly Permission[]): boolean {
-  if (permission === 'sales.use') return true;
   const permissions = grants ?? (isBuiltInRole(role) ? DEFAULT_ROLE_PERMISSIONS[role] : []);
   return permissions.includes(permission);
 }
